@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FitCoach</title>
+<!-- PWA / iOS : installable en plein écran via "Ajouter à l'écran d'accueil" -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitCoach">
+<meta name="theme-color" content="#0f0f0f">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' rx='40' fill='%230f0f0f'/%3E%3Ctext x='50%25' y='58%25' font-family='Georgia,serif' font-size='110' font-weight='700' fill='%23c8f060' text-anchor='middle'%3EF%3C/text%3E%3C/svg%3E">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22FitCoach%22%2C%22short_name%22%3A%22FitCoach%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f0f0f%22%2C%22theme_color%22%3A%22%230f0f0f%22%2C%22start_url%22%3A%22.%22%7D">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--bg2:#161616;--bg3:#1e1e1e;--bg4:#252525;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f0ede8;--text2:#8a8780;--text3:#5a5855;
+  --accent:#c8f060;--accent2:#a8d040;
+  --red:#ff6b5b;--amber:#f5a623;--blue:#5b9cf6;--teal:#3ecfb0;--purple:#a78bfa;
+  --r:12px;--r2:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;overflow-x:hidden}
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:var(--bg)}
+.header{padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'DM Serif Display',serif;font-size:22px;letter-spacing:-.5px}.logo span{color:var(--accent)}
+.week-badge{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2);font-weight:500}
+.weight-bar{margin:12px 20px 0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.weight-bar-label{font-size:12px;color:var(--text2);white-space:nowrap}
+.weight-bar input{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;padding:6px 10px;width:80px;text-align:center;outline:none;-moz-appearance:textfield}
+.weight-bar input::-webkit-outer-spin-button,.weight-bar input::-webkit-inner-spin-button{-webkit-appearance:none}
+.weight-bar input:focus{border-color:var(--accent)}
+.weight-bar-unit{font-size:13px;color:var(--text2)}
+.weight-bar-btn{margin-left:auto;background:var(--accent);color:#0f0f0f;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer;white-space:nowrap}
+.weight-bar-btn:active{background:var(--accent2)}
+.weight-bar-prev{font-size:11px;color:var(--text3);white-space:nowrap;text-align:right;flex-shrink:0}
+.nav{display:flex;padding:14px 20px 0;gap:2px;border-bottom:1px solid var(--border)}
+.nav-btn{flex:1;background:none;border:none;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;padding:7px 1px 11px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-align:center}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.page{display:none;padding:16px 20px 60px}
+.page.active{display:block;animation:fadeIn .22s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.section-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:14px;letter-spacing:-.3px}
+.section-sub{font-size:12px;color:var(--text2);margin-top:2px;font-family:'DM Sans',sans-serif;font-weight:400}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px}
+/* WEEK SELECTOR */
+.week-tabs{display:flex;gap:6px;margin-bottom:14px}
+.week-tab{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:8px 6px;font-size:12px;cursor:pointer;color:var(--text2);font-weight:600;text-align:center;transition:all .2s}
+.week-tab.active{background:var(--accent);color:#0f0f0f;border-color:var(--accent)}
+/* SESSION */
+.session-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.session-header{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.session-icon{width:40px;height:40px;border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.si-a{background:rgba(167,139,250,.15)}.si-b{background:rgba(62,207,176,.15)}.si-cardio{background:rgba(91,156,246,.15)}.si-rest{background:rgba(138,135,128,.1)}
+.session-title{font-weight:600;font-size:14px}
+.session-meta{font-size:12px;color:var(--text2);margin-top:1px}
+.session-tag{margin-left:auto;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+.tag-a{background:rgba(167,139,250,.15);color:var(--purple)}
+.tag-b{background:rgba(62,207,176,.15);color:var(--teal)}
+.tag-cardio{background:rgba(91,156,246,.15);color:var(--blue)}
+.tag-rest{background:rgba(138,135,128,.1);color:var(--text3)}
+/* EXO */
+.exo-list{padding:4px 0}
+.exo-item{border-bottom:1px solid var(--border)}
+.exo-item:last-child{border-bottom:none}
+.exo-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}
+.exo-num{width:26px;height:26px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text2);flex-shrink:0;transition:all .2s}
+.exo-num.done{background:var(--accent);color:#0f0f0f}
+.exo-name{font-weight:500;font-size:13px}
+.exo-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.exo-chevron{color:var(--text3);font-size:14px;transition:transform .22s;flex-shrink:0;margin-left:auto}
+.exo-chevron.open{transform:rotate(180deg)}
+.exo-expand{display:none;background:var(--bg3)}
+.exo-expand.open{display:block}
+/* ILLUSTRATION */
+.exo-illus{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px}
+.illus-svg{flex-shrink:0;opacity:.85}
+.illus-info{flex:1}
+.illus-tip{font-size:12px;color:var(--text2);line-height:1.6}
+.illus-muscles{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.muscle-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(200,240,96,.12);color:var(--accent)}
+/* CHARGE */
+.charge-block{padding:12px 16px;border-bottom:1px solid var(--border)}
+.charge-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.charge-label{font-size:12px;color:var(--text2);min-width:80px}
+.charge-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:-.5px}
+.charge-unit{font-size:12px;color:var(--text2);margin-left:2px}
+.charge-inputs{display:flex;gap:6px;align-items:center}
+.charge-inputs input{background:var(--bg4);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-size:14px;font-weight:600;padding:7px 10px;width:70px;text-align:center;font-family:'DM Sans',sans-serif;outline:none}
+.charge-inputs input:focus{border-color:var(--accent)}
+.charge-save-btn{background:var(--accent);color:#0f0f0f;border:none;border-radius:6px;font-size:12px;font-weight:700;padding:8px 12px;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.perf-hist{font-size:11px;color:var(--text3);line-height:1.8}
+.perf-hist span{color:var(--accent);font-weight:600}
+/* REP BUBBLES */
+.series-row{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.series-row:last-of-type{border-bottom:none}
+.series-label{font-size:12px;font-weight:600;color:var(--text2);min-width:54px;flex-shrink:0}
+.series-label.done{color:var(--accent)}.series-label.active{color:var(--text)}
+.bubbles-wrap{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.bubble{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);cursor:pointer;transition:all .15s;flex-shrink:0;user-select:none}
+.bubble:active{transform:scale(.88)}
+.bubble.done{background:var(--accent);border-color:var(--accent);color:#0f0f0f}
+.bubble.partial{border-color:var(--blue);color:var(--blue)}
+.rest-cd{font-size:11px;font-weight:600;color:var(--amber);min-width:34px;text-align:right;flex-shrink:0}
+.series-actions{display:flex;gap:8px;padding:10px 16px 14px;border-top:1px solid var(--border)}
+.sbtn{flex:1;padding:10px;border-radius:var(--r2);border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.sbtn-go{background:var(--accent);color:#0f0f0f}
+.sbtn-go:active{background:var(--accent2)}
+.sbtn-go.resting{background:var(--amber)}
+.sbtn-reset{background:var(--bg4);color:var(--text3);border:1px solid var(--border2);flex:0;padding:10px 14px}
+/* BALANCE */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:13px}
+.metric-lbl{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.metric-val{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-.5px}
+.metric-unit{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text2)}
+.metric-status{font-size:10px;padding:2px 6px;border-radius:20px;display:inline-block;margin-top:5px;font-weight:600}
+.s-bad{background:rgba(255,107,91,.15);color:var(--red)}
+.s-warn{background:rgba(245,166,35,.15);color:var(--amber)}
+.s-ok{background:rgba(200,240,96,.15);color:var(--accent)}
+.form-title{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.form-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+label{font-size:11px;color:var(--text2);font-weight:500}
+input[type=number],input[type=date],input[type=text],select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:9px 12px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--bg3)}
+.btn{display:block;width:100%;padding:13px;border-radius:var(--r2);border:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;margin-top:10px}
+.btn-primary{background:var(--accent);color:#0f0f0f}
+.btn-primary:active{background:var(--accent2)}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+.hist-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.hist-item:last-child{border-bottom:none}
+.hist-date{font-size:11px;color:var(--text3);min-width:46px;font-weight:500}
+.hist-vals{flex:1;display:flex;gap:10px}
+.hv{font-size:13px;font-weight:500}.hv span{font-size:10px;color:var(--text3);font-weight:400}
+.trend{font-size:12px;font-weight:600}.trend.up{color:var(--red)}.trend.dn{color:var(--accent)}
+/* PROGRESS */
+.obj-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.obj-item:last-child{border-bottom:none}
+.obj-lbl{flex:1;font-size:13px;color:var(--text2)}
+.obj-cur{font-weight:600;font-size:13px}.obj-tgt{font-size:11px;color:var(--text3)}
+.obj-bw{width:56px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.obj-bf{height:4px;border-radius:2px}
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--accent);color:#0f0f0f;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;transition:transform .28s;z-index:200;white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+::-webkit-scrollbar{width:0;height:0}
+/* iOS safe areas (encoche / barre du bas) */
+.app{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+/* WIZARD — flux de lancement */
+.wizard{position:fixed;inset:0;z-index:300;background:var(--bg);display:none;flex-direction:column;max-width:480px;margin:0 auto;overflow-y:auto;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.wizard.show{display:flex}
+.wz-top{display:flex;justify-content:space-between;align-items:center;padding:16px 22px 0}
+.wz-inner{flex:1;display:flex;flex-direction:column;justify-content:center;padding:20px 22px 30px}
+.wz-step{display:none}
+.wz-step.active{display:block;animation:fadeIn .25s ease}
+.wz-hi{font-family:'DM Serif Display',serif;font-size:30px;line-height:1.15;margin-bottom:8px}
+.wz-hi span{color:var(--accent)}
+.wz-sub{font-size:14px;color:var(--text2);margin-bottom:22px;line-height:1.55}
+.wz-big{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:'DM Serif Display',serif;font-size:34px;text-align:center;padding:18px;outline:none;-moz-appearance:textfield}
+.wz-big::-webkit-outer-spin-button,.wz-big::-webkit-inner-spin-button{-webkit-appearance:none}
+.wz-big:focus{border-color:var(--accent)}
+.wz-macros{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.wz-opt{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;width:100%;text-align:left;color:var(--text);font-family:inherit;font-size:14px}
+.wz-opt:active{transform:scale(.99)}
+.wz-opt.reco{border-color:var(--accent);background:rgba(200,240,96,.06)}
+.wz-opt-ic{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--bg3);overflow:hidden}
+.wz-opt-ic svg{width:40px;height:40px}
+.wz-opt-tt{font-weight:600}
+.wz-opt-ds{font-size:11px;color:var(--text2);margin-top:1px}
+.wz-badge{margin-left:auto;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--accent);color:#0f0f0f;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.wz-nav{display:flex;gap:10px;margin-top:20px}
+.wz-nav .btn{margin-top:0}
+.wz-dots{display:flex;gap:6px;justify-content:center;padding:16px}
+.wz-dot{width:7px;height:7px;border-radius:50%;background:var(--bg4);transition:all .2s}
+.wz-dot.on{background:var(--accent);width:20px;border-radius:4px}
+.wz-skip{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;padding:10px;width:100%;margin-top:4px}
+.day-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+<!-- ========================= WIZARD (flux de lancement) ========================= -->
+<div class="wizard" id="wizard">
+  <div class="wz-top">
+    <div class="logo">Fit<span>Coach</span></div>
+    <button class="wz-skip" style="width:auto" onclick="closeWizard()">Passer ✕</button>
+  </div>
+  <div class="wz-inner">
+    <!-- Étape 0 : poids -->
+    <div class="wz-step active" id="wz-0">
+      <div class="wz-hi">Bonjour <span>Clément</span></div>
+      <div class="wz-sub" id="wz-weight-sub">Combien pèses-tu aujourd'hui&nbsp;?</div>
+      <input class="wz-big" type="number" id="wz-weight" inputmode="decimal" step="0.1" placeholder="—">
+      <div class="wz-nav"><button class="btn btn-primary" onclick="wzWeightNext()">Continuer</button></div>
+    </div>
+    <!-- Étape 1 : macros d'hier -->
+    <div class="wz-step" id="wz-1">
+      <div class="wz-hi">Hier, côté <span>assiette</span></div>
+      <div class="wz-sub">Qu'as-tu mangé hier&nbsp;? Utile pour le suivi — laisse vide si tu ne sais pas.</div>
+      <label style="font-size:12px;color:var(--text2)">Calories totales (kcal)</label>
+      <input class="wz-big" style="font-size:26px;padding:14px;margin-top:5px" type="number" id="wz-kcal" inputmode="numeric" placeholder="2200">
+      <div class="wz-macros">
+        <div class="form-group"><label>Protéines (g)</label><input type="number" id="wz-prot" inputmode="numeric" placeholder="150"></div>
+        <div class="form-group"><label>Glucides (g)</label><input type="number" id="wz-gluc" inputmode="numeric" placeholder="200"></div>
+        <div class="form-group"><label>Lipides (g)</label><input type="number" id="wz-lip" inputmode="numeric" placeholder="70"></div>
+        <div class="form-group"><label>Fibres (g)</label><input type="number" id="wz-fibre" inputmode="numeric" placeholder="30"></div>
+      </div>
+      <div class="wz-nav">
+        <button class="btn btn-ghost" onclick="wzGo(0)">Retour</button>
+        <button class="btn btn-primary" onclick="wzMacrosNext(false)">Continuer</button>
+      </div>
+      <button class="wz-skip" onclick="wzMacrosNext(true)">Passer cette étape</button>
+    </div>
+    <!-- Étape 2 : choix de l'activité -->
+    <div class="wz-step" id="wz-2">
+      <div class="wz-hi">Ton <span>activité</span> du jour</div>
+      <div class="wz-sub">On te conseille la suite logique, mais tu choisis librement.</div>
+      <div id="wz-options"></div>
+      <button class="wz-skip" onclick="wzGo(1)">Retour</button>
+    </div>
+    <!-- Étape 3 : intro séance -->
+    <div class="wz-step" id="wz-3"><div id="wz-intro"></div></div>
+  </div>
+  <div class="wz-dots" id="wz-dots"></div>
+</div>
+
+<div class="app">
+
+<div class="header">
+  <div class="logo">Fit<span>Coach</span></div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="day-btn" onclick="openWizard()">☀ Ma journée</button>
+    <div class="week-badge" id="weekBadge">—</div>
+  </div>
+</div>
+
+<div class="weight-bar">
+  <div class="weight-bar-label">⚖️ Poids</div>
+  <input type="number" id="daily-weight" placeholder="—" step="0.1" min="50" max="200">
+  <div class="weight-bar-unit">kg</div>
+  <button class="weight-bar-btn" onclick="saveDailyWeight()">OK</button>
+  <div class="weight-bar-prev" id="weight-prev"></div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('training',this)">Programme</button>
+  <button class="nav-btn" onclick="showPage('balance',this)">Balance</button>
+  <button class="nav-btn" onclick="showPage('progress',this)">Suivi</button>
+  <button class="nav-btn" onclick="showPage('garmin',this)">Garmin</button>
+</nav>
+
+<!-- PAGE PROGRAMME -->
+<div class="page active" id="page-training">
+  <div class="section-title">Programme<div class="section-sub">3× full-body / semaine — illustrations + charges</div></div>
+  <div class="week-tabs" id="weekTabs"></div>
+  <div id="sessionContent"></div>
+</div>
+
+<!-- PAGE BALANCE -->
+<div class="page" id="page-balance">
+  <div class="section-title">Balance<div class="section-sub">Mesures corporelles</div></div>
+  <div class="metrics-grid" id="lastMetrics"></div>
+  <div class="card">
+    <div class="form-title">Nouvelle mesure</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
+      <div class="form-group"><label>Poids (kg)</label><input type="number" id="b-poids" placeholder="106.5" step="0.1"></div>
+      <div class="form-group"><label>IMG (%)</label><input type="number" id="b-img" placeholder="32.0" step="0.1"></div>
+      <div class="form-group"><label>Hydratation (%)</label><input type="number" id="b-hydra" placeholder="49.8" step="0.1"></div>
+      <div class="form-group"><label>Graisse s.-cut. (%)</label><input type="number" id="b-gsc" placeholder="28.7" step="0.1"></div>
+      <div class="form-group"><label>Graisse viscérale</label><input type="number" id="b-gv" placeholder="15" step="1"></div>
+      <div class="form-group"><label>Taux protéines (%)</label><input type="number" id="b-prot" placeholder="14.5" step="0.1"></div>
+      <div class="form-group"><label>Âge du corps</label><input type="number" id="b-age" placeholder="54" step="1"></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveBalance()">Enregistrer</button>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:12px">Historique</div>
+    <div id="balanceHist"></div>
+  </div>
+</div>
+
+<!-- PAGE SUIVI -->
+<div class="page" id="page-progress">
+  <div class="section-title">Suivi<div class="section-sub">Objectif : 95 kg — actuellement 107 kg</div></div>
+  <div class="card"><div class="form-title" style="margin-bottom:12px">Objectifs clés</div><div id="objList"></div></div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:8px">Poids — 30 derniers jours</div>
+    <div id="weightChart"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:8px">Nutrition — phase en cours</div>
+    <div id="nutritionBlock"></div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:8px">Progression des charges</div>
+    <div id="chargesChart"></div>
+  </div>
+  <div class="card" style="margin-top:10px"><div class="form-title" style="margin-bottom:12px">Conseils</div><div id="tips"></div></div>
+</div>
+
+<!-- PAGE GARMIN -->
+<div class="page" id="page-garmin">
+  <div class="section-title">Export Garmin<div class="section-sub">Fichiers à importer dans Garmin Connect</div></div>
+  <div class="card">
+    <div class="form-title" style="margin-bottom:12px">Comment importer</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8">
+      1. Télécharge les fichiers ci-dessous<br>
+      2. Ouvre <strong style="color:var(--text)">connect.garmin.com</strong> sur ordinateur<br>
+      3. Menu <strong style="color:var(--text)">Entraînement → Entraînements</strong><br>
+      4. Clique <strong style="color:var(--text)">Importer</strong> et sélectionne le fichier .fit<br>
+      5. La séance apparaît sur ta montre à la prochaine synchro
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">🔴 Séance 1 — Full-body Force</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Squat · Développé couché · Tirage poulie · Fentes · Élévations latérales · Gainage</div>
+    <button class="btn btn-primary" style="margin-top:0" onclick="downloadGarmin('S1')">⬇ Télécharger FitCoach_Seance_1</button>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">🟢 Séance 2 — Full-body Charnière</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Soulevé de terre roumain · Incliné · Rowing · Presse · Curl · Crunch</div>
+    <button class="btn btn-primary" style="margin-top:0" onclick="downloadGarmin('S2')">⬇ Télécharger FitCoach_Seance_2</button>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">🟣 Séance 3 — Full-body Volume</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Presse · Développé couché · Tirage poulie · Fentes · Face pull · Triceps</div>
+    <button class="btn btn-primary" style="margin-top:0" onclick="downloadGarmin('S3')">⬇ Télécharger FitCoach_Seance_3</button>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px">🚴 Foncier Zone 2 — 45 min (optionnel)</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">FC cible 120-135 bpm · Vélo ou tapis · les jours de repos</div>
+    <button class="btn btn-primary" style="margin-top:0" onclick="downloadGarmin('Z2')">⬇ Télécharger FitCoach_Zone2</button>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:12px">Remonter les données post-séance</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">Après chaque séance en salle, note ici les charges et reps réelles pour que je puisse ajuster le programme.</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Séance</label>
+        <select id="fb-seance"><option value="S1">Séance 1</option><option value="S2">Séance 2</option><option value="S3">Séance 3</option></select>
+      </div>
+      <div class="form-group"><label>Date</label><input type="date" id="fb-date"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>Exercice</label>
+        <select id="fb-exo"></select>
+      </div>
+      <div class="form-group"><label>Charge utilisée (kg)</label><input type="number" id="fb-charge" placeholder="40" step="2.5"></div>
+      <div class="form-group"><label>Reps réalisées</label><input type="number" id="fb-reps" placeholder="8" step="1"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>Commentaire (optionnel)</label><input type="text" id="fb-comment" placeholder="Trop lourd, douleur épaule..."></div>
+    </div>
+    <button class="btn btn-primary" onclick="saveFeedback()">Enregistrer le retour</button>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:12px">Historique des retours</div>
+    <div id="feedbackHist"></div>
+  </div>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const PRELOADED={"balanceData":[{"date":"2019-09-26","poids":105.8,"imc":30.9,"img":30.9,"hydra":50.4,"gsc":27.7,"gv":14.0,"prot":14.9,"age":45.0,"muscle":65.6},{"date":"2019-09-30","poids":104.2,"imc":30.4,"img":31.8,"hydra":50.0,"gsc":28.5,"gv":14.0,"prot":14.5,"age":45.0,"muscle":63.2},{"date":"2019-10-07","poids":103.6,"imc":30.2,"img":31.1,"hydra":50.4,"gsc":27.9,"gv":14.0,"prot":14.8,"age":45.0,"muscle":63.7},{"date":"2019-10-14","poids":102.3,"imc":29.8,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":13.0,"prot":14.8,"age":45.0,"muscle":63.2},{"date":"2019-10-21","poids":101.1,"imc":29.5,"img":31.0,"hydra":50.6,"gsc":27.8,"gv":13.0,"prot":14.7,"age":44.0,"muscle":62.1},{"date":"2019-10-28","poids":99.9,"imc":29.1,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":44.0,"muscle":61.7},{"date":"2019-11-04","poids":98.9,"imc":28.8,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":44.0,"muscle":61.2},{"date":"2019-11-12","poids":99.4,"imc":29.0,"img":30.0,"hydra":51.3,"gsc":26.9,"gv":13.0,"prot":14.9,"age":44.0,"muscle":62.3},{"date":"2019-11-15","poids":99.4,"imc":29.0,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":44.0,"muscle":62.5},{"date":"2019-11-18","poids":98.8,"imc":28.8,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":13.0,"prot":14.9,"age":44.0,"muscle":61.6},{"date":"2019-11-25","poids":99.0,"imc":28.9,"img":29.7,"hydra":51.5,"gsc":26.6,"gv":13.0,"prot":15.0,"age":44.0,"muscle":62.3},{"date":"2019-12-02","poids":98.0,"imc":28.6,"img":29.8,"hydra":51.5,"gsc":26.7,"gv":12.0,"prot":14.9,"age":44.0,"muscle":61.6},{"date":"2019-12-08","poids":96.0,"imc":28.0,"img":29.1,"hydra":51.9,"gsc":26.1,"gv":12.0,"prot":15.2,"age":43.0,"muscle":60.9},{"date":"2019-12-16","poids":97.2,"imc":28.4,"img":29.3,"hydra":51.8,"gsc":26.3,"gv":12.0,"prot":15.1,"age":43.0,"muscle":61.7},{"date":"2019-12-23","poids":96.4,"imc":28.1,"img":29.3,"hydra":51.9,"gsc":26.3,"gv":12.0,"prot":15.0,"age":43.0,"muscle":61.1},{"date":"2020-01-05","poids":97.1,"imc":28.3,"img":28.7,"hydra":52.2,"gsc":25.7,"gv":12.0,"prot":15.2,"age":43.0,"muscle":62.3},{"date":"2020-01-13","poids":96.4,"imc":28.1,"img":29.2,"hydra":51.8,"gsc":26.2,"gv":12.0,"prot":15.2,"age":43.0,"muscle":61.1},{"date":"2020-01-21","poids":96.0,"imc":28.0,"img":29.3,"hydra":51.8,"gsc":26.3,"gv":12.0,"prot":15.1,"age":43.0,"muscle":60.6},{"date":"2020-01-28","poids":96.1,"imc":28.0,"img":29.2,"hydra":51.8,"gsc":26.2,"gv":12.0,"prot":15.2,"age":43.0,"muscle":60.9},{"date":"2020-02-04","poids":96.1,"imc":28.0,"img":29.0,"hydra":52.0,"gsc":26.0,"gv":12.0,"prot":15.2,"age":43.0,"muscle":61.1},{"date":"2020-02-25","poids":97.1,"imc":28.3,"img":29.5,"hydra":51.6,"gsc":26.4,"gv":12.0,"prot":15.1,"age":43.0,"muscle":61.2},{"date":"2020-03-04","poids":96.5,"imc":28.1,"img":29.6,"hydra":51.6,"gsc":26.5,"gv":12.0,"prot":15.0,"age":43.0,"muscle":60.7},{"date":"2020-03-10","poids":97.3,"imc":28.4,"img":30.4,"hydra":51.0,"gsc":27.2,"gv":12.0,"prot":14.8,"age":43.0,"muscle":60.1},{"date":"2020-03-11","poids":97.6,"imc":28.5,"img":29.5,"hydra":51.6,"gsc":26.4,"gv":12.0,"prot":15.1,"age":44.0,"muscle":61.6},{"date":"2020-05-20","poids":96.4,"imc":28.1,"img":29.5,"hydra":51.7,"gsc":26.4,"gv":12.0,"prot":15.0,"age":44.0,"muscle":60.8},{"date":"2020-05-26","poids":96.7,"imc":28.2,"img":29.9,"hydra":51.4,"gsc":26.8,"gv":12.0,"prot":14.9,"age":44.0,"muscle":60.5},{"date":"2020-06-02","poids":96.3,"imc":28.1,"img":29.4,"hydra":51.7,"gsc":26.4,"gv":12.0,"prot":15.1,"age":44.0,"muscle":60.9},{"date":"2020-06-09","poids":96.6,"imc":28.2,"img":29.3,"hydra":51.8,"gsc":26.3,"gv":12.0,"prot":15.1,"age":44.0,"muscle":61.3},{"date":"2020-06-23","poids":96.5,"imc":28.1,"img":29.1,"hydra":52.0,"gsc":26.1,"gv":12.0,"prot":15.1,"age":44.0,"muscle":61.4},{"date":"2020-07-06","poids":97.3,"imc":28.4,"img":29.6,"hydra":51.5,"gsc":26.5,"gv":12.0,"prot":15.1,"age":45.0,"muscle":61.4},{"date":"2020-07-14","poids":98.8,"imc":28.8,"img":29.6,"hydra":51.5,"gsc":26.5,"gv":13.0,"prot":15.1,"age":45.0,"muscle":62.4},{"date":"2020-07-21","poids":98.0,"imc":28.6,"img":29.6,"hydra":51.6,"gsc":26.5,"gv":12.0,"prot":15.0,"age":45.0,"muscle":62.0},{"date":"2020-07-28","poids":98.5,"imc":28.7,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":13.0,"prot":14.9,"age":45.0,"muscle":61.5},{"date":"2020-07-30","poids":99.4,"imc":29.0,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":13.0,"prot":15.0,"age":45.0,"muscle":62.3},{"date":"2020-08-11","poids":99.3,"imc":29.0,"img":29.8,"hydra":51.3,"gsc":26.7,"gv":13.0,"prot":15.1,"age":45.0,"muscle":62.5},{"date":"2020-08-18","poids":98.2,"imc":28.6,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":13.0,"prot":15.0,"age":45.0,"muscle":61.6},{"date":"2020-08-25","poids":98.5,"imc":28.7,"img":30.1,"hydra":51.1,"gsc":27.0,"gv":13.0,"prot":15.0,"age":45.0,"muscle":61.5},{"date":"2020-09-02","poids":98.5,"imc":28.7,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":13.0,"prot":14.9,"age":45.0,"muscle":61.6},{"date":"2020-09-08","poids":98.3,"imc":28.7,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":13.0,"prot":15.0,"age":45.0,"muscle":61.6},{"date":"2020-09-15","poids":98.4,"imc":28.7,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":13.0,"prot":15.0,"age":45.0,"muscle":61.6},{"date":"2020-11-10","poids":101.7,"imc":29.7,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.1},{"date":"2020-11-17","poids":101.2,"imc":29.5,"img":29.5,"hydra":51.6,"gsc":26.4,"gv":13.0,"prot":15.1,"age":46.0,"muscle":64.2},{"date":"2020-11-20","poids":101.4,"imc":29.6,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":13.0,"prot":15.0,"age":46.0,"muscle":64.0},{"date":"2020-11-26","poids":100.6,"imc":29.3,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.3},{"date":"2020-12-02","poids":100.9,"imc":29.4,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.9},{"date":"2020-12-08","poids":101.2,"imc":29.5,"img":30.2,"hydra":51.1,"gsc":27.1,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.4},{"date":"2020-12-12","poids":100.1,"imc":29.2,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.4},{"date":"2020-12-14","poids":100.5,"imc":29.3,"img":31.1,"hydra":50.4,"gsc":27.9,"gv":13.0,"prot":14.8,"age":45.0,"muscle":61.4},{"date":"2020-12-15","poids":99.4,"imc":29.0,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.2},{"date":"2020-12-29","poids":99.5,"imc":29.0,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":45.0,"muscle":62.6},{"date":"2020-12-31","poids":100.4,"imc":29.3,"img":30.2,"hydra":51.1,"gsc":27.1,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.8},{"date":"2021-01-03","poids":101.1,"imc":29.5,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.1},{"date":"2021-01-04","poids":100.0,"imc":29.2,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.3},{"date":"2021-01-05","poids":100.0,"imc":29.2,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.3},{"date":"2021-01-06","poids":100.9,"imc":29.4,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.5},{"date":"2021-01-07","poids":101.2,"imc":29.5,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.1},{"date":"2021-01-10","poids":100.0,"imc":29.2,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.4},{"date":"2021-01-12","poids":100.8,"imc":29.4,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.9},{"date":"2021-01-13","poids":101.3,"imc":29.5,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.3},{"date":"2021-01-14","poids":101.5,"imc":29.6,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.3},{"date":"2021-01-15","poids":101.5,"imc":29.6,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.6},{"date":"2021-01-16","poids":101.0,"imc":29.5,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.3},{"date":"2021-01-17","poids":101.0,"imc":29.5,"img":30.3,"hydra":51.1,"gsc":27.2,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.3},{"date":"2021-01-18","poids":100.3,"imc":29.3,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.5},{"date":"2021-01-20","poids":99.9,"imc":29.1,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":45.0,"muscle":63.0},{"date":"2021-01-22","poids":99.6,"imc":29.1,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":45.0,"muscle":62.7},{"date":"2021-01-23","poids":100.3,"imc":29.3,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.7},{"date":"2021-01-26","poids":100.7,"imc":29.4,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.9},{"date":"2021-01-31","poids":101.0,"imc":29.5,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.7},{"date":"2021-02-02","poids":100.2,"imc":29.2,"img":30.2,"hydra":51.1,"gsc":27.1,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.6},{"date":"2021-02-04","poids":101.7,"imc":29.7,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.7},{"date":"2021-02-09","poids":101.3,"imc":29.5,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.8},{"date":"2021-02-10","poids":101.8,"imc":29.7,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.0},{"date":"2021-02-15","poids":101.7,"imc":29.7,"img":31.0,"hydra":50.6,"gsc":27.8,"gv":13.0,"prot":14.7,"age":46.0,"muscle":62.8},{"date":"2021-02-16","poids":101.7,"imc":29.7,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.1},{"date":"2021-02-23","poids":101.7,"imc":29.7,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.4},{"date":"2021-02-24","poids":101.5,"imc":29.6,"img":30.4,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.4},{"date":"2021-02-26","poids":101.3,"imc":29.5,"img":30.5,"hydra":50.8,"gsc":27.3,"gv":13.0,"prot":14.9,"age":46.0,"muscle":63.0},{"date":"2021-03-01","poids":101.3,"imc":29.5,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.9},{"date":"2021-03-03","poids":101.0,"imc":29.5,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.0},{"date":"2021-03-05","poids":101.3,"imc":29.5,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.8},{"date":"2021-03-07","poids":100.9,"imc":29.4,"img":30.6,"hydra":50.9,"gsc":27.4,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.7},{"date":"2021-03-09","poids":99.9,"imc":29.1,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":13.0,"prot":15.0,"age":45.0,"muscle":63.0},{"date":"2021-03-15","poids":101.9,"imc":29.7,"img":30.7,"hydra":50.8,"gsc":27.5,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.2},{"date":"2021-03-16","poids":101.0,"imc":29.5,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.8},{"date":"2021-03-18","poids":101.6,"imc":29.6,"img":31.0,"hydra":50.6,"gsc":27.8,"gv":13.0,"prot":14.7,"age":46.0,"muscle":62.6},{"date":"2021-03-20","poids":101.0,"imc":29.5,"img":30.6,"hydra":50.9,"gsc":27.4,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.9},{"date":"2021-03-21","poids":100.7,"imc":29.4,"img":30.6,"hydra":50.9,"gsc":27.4,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.6},{"date":"2021-03-22","poids":101.4,"imc":29.6,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":46.0,"muscle":63.0},{"date":"2021-03-23","poids":100.4,"imc":29.3,"img":30.1,"hydra":51.1,"gsc":27.0,"gv":13.0,"prot":15.0,"age":45.0,"muscle":63.0},{"date":"2021-03-24","poids":100.4,"imc":29.3,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.9},{"date":"2021-03-26","poids":100.4,"imc":29.3,"img":29.7,"hydra":51.4,"gsc":26.6,"gv":13.0,"prot":15.1,"age":45.0,"muscle":63.5},{"date":"2021-03-27","poids":99.9,"imc":29.1,"img":29.6,"hydra":51.5,"gsc":26.5,"gv":13.0,"prot":15.1,"age":45.0,"muscle":63.1},{"date":"2021-03-29","poids":100.1,"imc":29.2,"img":29.8,"hydra":51.3,"gsc":26.7,"gv":13.0,"prot":15.1,"age":45.0,"muscle":63.1},{"date":"2021-03-30","poids":99.2,"imc":28.9,"img":30.1,"hydra":51.3,"gsc":27.0,"gv":13.0,"prot":14.8,"age":45.0,"muscle":62.1},{"date":"2021-04-04","poids":99.1,"imc":28.9,"img":30.0,"hydra":51.3,"gsc":26.9,"gv":13.0,"prot":14.9,"age":45.0,"muscle":62.2},{"date":"2021-04-05","poids":99.1,"imc":28.9,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":13.0,"prot":15.0,"age":45.0,"muscle":62.2},{"date":"2021-04-06","poids":99.1,"imc":28.9,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":45.0,"muscle":62.5},{"date":"2021-04-27","poids":99.1,"imc":28.9,"img":30.2,"hydra":51.1,"gsc":27.1,"gv":13.0,"prot":14.9,"age":46.0,"muscle":62.0},{"date":"2021-05-04","poids":100.1,"imc":29.2,"img":30.3,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":15.0,"age":46.0,"muscle":62.4},{"date":"2021-05-11","poids":100.3,"imc":29.3,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":13.0,"prot":14.9,"age":46.0,"muscle":62.7},{"date":"2021-05-18","poids":100.0,"imc":29.2,"img":30.4,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.4},{"date":"2021-05-25","poids":100.5,"imc":29.3,"img":30.4,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.6},{"date":"2021-06-01","poids":101.0,"imc":29.5,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":13.0,"prot":15.0,"age":47.0,"muscle":63.4},{"date":"2021-06-09","poids":101.5,"imc":29.6,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.0},{"date":"2021-06-15","poids":101.5,"imc":29.6,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.0},{"date":"2021-06-22","poids":100.4,"imc":29.3,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.4},{"date":"2021-06-29","poids":101.3,"imc":29.5,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.9},{"date":"2021-07-23","poids":101.4,"imc":29.6,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.9},{"date":"2021-09-04","poids":101.0,"imc":29.5,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.9},{"date":"2021-09-06","poids":101.2,"imc":29.5,"img":30.6,"hydra":50.9,"gsc":27.4,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.0},{"date":"2021-09-09","poids":100.2,"imc":29.2,"img":30.4,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.5},{"date":"2021-09-14","poids":100.9,"imc":29.4,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.5},{"date":"2021-09-21","poids":100.4,"imc":29.3,"img":30.6,"hydra":50.7,"gsc":27.4,"gv":13.0,"prot":14.9,"age":46.0,"muscle":62.3},{"date":"2021-09-29","poids":100.1,"imc":29.2,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":46.0,"muscle":63.3},{"date":"2021-10-07","poids":99.6,"imc":29.1,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":13.0,"prot":15.0,"age":46.0,"muscle":62.6},{"date":"2021-10-12","poids":100.8,"imc":29.4,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":13.0,"prot":14.9,"age":47.0,"muscle":63.0},{"date":"2021-10-19","poids":99.8,"imc":29.1,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":46.0,"muscle":62.0},{"date":"2021-10-28","poids":100.9,"imc":29.4,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.3},{"date":"2021-11-03","poids":101.4,"imc":29.6,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":13.0,"prot":15.0,"age":47.0,"muscle":63.9},{"date":"2021-11-09","poids":102.3,"imc":29.8,"img":31.2,"hydra":50.4,"gsc":28.0,"gv":14.0,"prot":14.7,"age":47.0,"muscle":62.8},{"date":"2021-11-11","poids":102.8,"imc":30.0,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":14.0,"prot":14.8,"age":47.0,"muscle":64.1},{"date":"2021-11-17","poids":102.2,"imc":29.8,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":47.0,"muscle":63.4},{"date":"2021-11-23","poids":101.1,"imc":29.5,"img":30.7,"hydra":50.8,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.8},{"date":"2021-11-30","poids":102.0,"imc":29.8,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.3},{"date":"2021-12-07","poids":101.3,"imc":29.5,"img":30.7,"hydra":50.8,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.8},{"date":"2021-12-14","poids":102.1,"imc":29.8,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":47.0,"muscle":63.3},{"date":"2021-12-21","poids":102.0,"imc":29.8,"img":31.1,"hydra":50.4,"gsc":27.9,"gv":14.0,"prot":14.8,"age":47.0,"muscle":62.9},{"date":"2021-12-28","poids":103.6,"imc":30.2,"img":30.6,"hydra":50.7,"gsc":27.4,"gv":14.0,"prot":14.9,"age":47.0,"muscle":64.6},{"date":"2022-01-04","poids":102.9,"imc":30.0,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":47.0,"muscle":63.9},{"date":"2022-01-11","poids":101.9,"imc":29.7,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.3},{"date":"2022-01-18","poids":101.9,"imc":29.7,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.3},{"date":"2022-01-25","poids":101.1,"imc":29.5,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.1},{"date":"2022-02-01","poids":102.3,"imc":29.8,"img":30.7,"hydra":50.8,"gsc":27.5,"gv":14.0,"prot":14.8,"age":47.0,"muscle":63.6},{"date":"2022-02-03","poids":101.8,"imc":29.7,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.2},{"date":"2022-02-13","poids":100.4,"imc":29.3,"img":31.0,"hydra":50.6,"gsc":27.8,"gv":13.0,"prot":14.7,"age":46.0,"muscle":61.9},{"date":"2022-02-15","poids":101.4,"imc":29.6,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.0},{"date":"2022-02-22","poids":101.2,"imc":29.5,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":47.0,"muscle":62.9},{"date":"2022-02-28","poids":101.6,"imc":29.6,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.3},{"date":"2022-03-08","poids":101.4,"imc":29.6,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":13.0,"prot":14.8,"age":47.0,"muscle":63.2},{"date":"2022-03-15","poids":102.7,"imc":30.0,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":14.0,"prot":14.8,"age":47.0,"muscle":63.9},{"date":"2022-03-30","poids":102.6,"imc":29.9,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":14.0,"prot":14.8,"age":47.0,"muscle":63.8},{"date":"2022-04-05","poids":102.3,"imc":29.8,"img":31.2,"hydra":50.5,"gsc":28.0,"gv":14.0,"prot":14.6,"age":47.0,"muscle":63.1},{"date":"2022-07-12","poids":102.3,"imc":29.8,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":14.0,"prot":14.8,"age":48.0,"muscle":63.6},{"date":"2022-07-23","poids":102.9,"imc":30.0,"img":31.4,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.6,"age":48.0,"muscle":63.3},{"date":"2022-08-16","poids":103.0,"imc":30.0,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":48.0,"muscle":63.5},{"date":"2022-08-22","poids":103.7,"imc":30.2,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":48.0,"muscle":64.3},{"date":"2022-08-29","poids":103.7,"imc":30.2,"img":31.2,"hydra":50.4,"gsc":28.0,"gv":14.0,"prot":14.7,"age":48.0,"muscle":64.3},{"date":"2022-09-05","poids":103.6,"imc":30.2,"img":31.1,"hydra":50.4,"gsc":27.9,"gv":14.0,"prot":14.8,"age":48.0,"muscle":64.0},{"date":"2022-09-12","poids":104.0,"imc":30.3,"img":31.4,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.6,"age":48.0,"muscle":64.0},{"date":"2022-09-13","poids":104.0,"imc":30.3,"img":31.3,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.8,"age":48.0,"muscle":64.0},{"date":"2023-01-13","poids":101.9,"imc":29.7,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":14.0,"prot":14.8,"age":48.0,"muscle":63.5},{"date":"2023-02-06","poids":103.3,"imc":30.1,"img":31.0,"hydra":50.6,"gsc":27.8,"gv":14.0,"prot":14.7,"age":48.0,"muscle":64.0},{"date":"2023-02-13","poids":102.8,"imc":30.0,"img":31.4,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.6,"age":48.0,"muscle":63.3},{"date":"2023-03-21","poids":105.0,"imc":30.6,"img":31.9,"hydra":49.9,"gsc":28.6,"gv":14.0,"prot":14.5,"age":49.0,"muscle":63.9},{"date":"2023-04-07","poids":103.9,"imc":30.3,"img":31.6,"hydra":50.0,"gsc":28.3,"gv":14.0,"prot":14.7,"age":48.0,"muscle":63.5},{"date":"2023-04-12","poids":104.3,"imc":30.4,"img":31.5,"hydra":50.1,"gsc":28.2,"gv":14.0,"prot":14.7,"age":49.0,"muscle":64.0},{"date":"2023-04-17","poids":104.6,"imc":30.5,"img":31.7,"hydra":49.9,"gsc":28.4,"gv":14.0,"prot":14.7,"age":50.0,"muscle":64.0},{"date":"2023-04-19","poids":103.7,"imc":30.2,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":50.0,"muscle":63.7},{"date":"2023-04-25","poids":104.8,"imc":30.6,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":14.0,"prot":14.6,"age":50.0,"muscle":64.3},{"date":"2023-06-07","poids":106.2,"imc":31.0,"img":32.2,"hydra":49.6,"gsc":28.9,"gv":15.0,"prot":14.5,"age":50.0,"muscle":64.6},{"date":"2023-06-12","poids":106.2,"imc":31.0,"img":32.2,"hydra":49.6,"gsc":28.9,"gv":15.0,"prot":14.5,"age":50.0,"muscle":64.5},{"date":"2023-06-17","poids":105.7,"imc":30.8,"img":31.9,"hydra":49.9,"gsc":28.6,"gv":15.0,"prot":14.5,"age":50.0,"muscle":64.5},{"date":"2023-07-16","poids":105.9,"imc":30.9,"img":32.0,"hydra":49.8,"gsc":28.7,"gv":15.0,"prot":14.5,"age":50.0,"muscle":64.7},{"date":"2023-08-25","poids":104.0,"imc":30.3,"img":32.0,"hydra":49.9,"gsc":28.7,"gv":14.0,"prot":14.4,"age":50.0,"muscle":63.1},{"date":"2023-08-28","poids":102.6,"imc":29.9,"img":31.2,"hydra":50.4,"gsc":28.0,"gv":14.0,"prot":14.7,"age":49.0,"muscle":63.3},{"date":"2023-12-29","poids":103.7,"imc":30.2,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":50.0,"muscle":63.9},{"date":"2024-01-07","poids":105.1,"imc":30.7,"img":31.9,"hydra":49.8,"gsc":28.6,"gv":14.0,"prot":14.6,"age":50.0,"muscle":64.2},{"date":"2024-01-15","poids":105.1,"imc":30.7,"img":31.9,"hydra":49.9,"gsc":28.6,"gv":14.0,"prot":14.5,"age":50.0,"muscle":64.2},{"date":"2024-01-31","poids":104.7,"imc":30.5,"img":31.6,"hydra":50.0,"gsc":28.3,"gv":14.0,"prot":14.7,"age":50.0,"muscle":64.2},{"date":"2024-02-02","poids":105.6,"imc":30.8,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":15.0,"prot":14.6,"age":50.0,"muscle":64.9},{"date":"2024-02-08","poids":102.9,"imc":30.0,"img":31.5,"hydra":50.2,"gsc":28.2,"gv":14.0,"prot":14.6,"age":49.0,"muscle":63.2},{"date":"2024-02-13","poids":102.9,"imc":30.0,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":49.0,"muscle":63.4},{"date":"2024-02-17","poids":102.2,"imc":29.8,"img":30.6,"hydra":50.7,"gsc":27.4,"gv":14.0,"prot":14.9,"age":49.0,"muscle":63.8},{"date":"2024-02-20","poids":102.2,"imc":29.8,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":49.0,"muscle":63.5},{"date":"2024-11-05","poids":106.3,"imc":31.0,"img":32.5,"hydra":49.4,"gsc":29.1,"gv":15.0,"prot":14.4,"age":51.0,"muscle":64.1},{"date":"2024-11-06","poids":106.9,"imc":31.2,"img":32.2,"hydra":49.6,"gsc":28.9,"gv":15.0,"prot":14.5,"age":52.0,"muscle":65.2},{"date":"2024-11-07","poids":106.6,"imc":31.1,"img":32.0,"hydra":49.7,"gsc":28.7,"gv":15.0,"prot":14.6,"age":52.0,"muscle":65.3},{"date":"2024-11-08","poids":106.6,"imc":31.1,"img":32.0,"hydra":49.7,"gsc":28.7,"gv":15.0,"prot":14.6,"age":52.0,"muscle":65.2},{"date":"2024-11-11","poids":106.6,"imc":31.1,"img":32.5,"hydra":49.5,"gsc":29.1,"gv":15.0,"prot":14.4,"age":52.0,"muscle":64.5},{"date":"2024-11-12","poids":105.8,"imc":30.9,"img":32.1,"hydra":49.7,"gsc":28.8,"gv":15.0,"prot":14.5,"age":51.0,"muscle":64.4},{"date":"2024-11-13","poids":105.5,"imc":30.8,"img":32.4,"hydra":49.5,"gsc":29.0,"gv":15.0,"prot":14.4,"age":51.0,"muscle":63.8},{"date":"2024-11-14","poids":105.5,"imc":30.8,"img":32.2,"hydra":49.6,"gsc":28.9,"gv":15.0,"prot":14.5,"age":51.0,"muscle":64.1},{"date":"2024-11-15","poids":105.5,"imc":30.8,"img":32.1,"hydra":49.8,"gsc":28.8,"gv":15.0,"prot":14.4,"age":51.0,"muscle":64.4},{"date":"2024-11-18","poids":105.0,"imc":30.6,"img":31.8,"hydra":49.9,"gsc":28.5,"gv":15.0,"prot":14.6,"age":51.0,"muscle":64.2},{"date":"2024-11-19","poids":105.3,"imc":30.7,"img":32.1,"hydra":49.7,"gsc":28.8,"gv":15.0,"prot":14.5,"age":51.0,"muscle":64.0},{"date":"2024-11-20","poids":105.0,"imc":30.6,"img":31.9,"hydra":49.9,"gsc":28.6,"gv":15.0,"prot":14.5,"age":51.0,"muscle":64.1},{"date":"2024-11-21","poids":105.5,"imc":30.8,"img":32.0,"hydra":49.8,"gsc":28.7,"gv":15.0,"prot":14.5,"age":51.0,"muscle":64.4},{"date":"2024-11-22","poids":105.3,"imc":30.7,"img":31.8,"hydra":49.9,"gsc":28.5,"gv":15.0,"prot":14.6,"age":51.0,"muscle":64.5},{"date":"2024-11-23","poids":105.3,"imc":30.7,"img":31.8,"hydra":49.9,"gsc":28.5,"gv":15.0,"prot":14.6,"age":51.0,"muscle":64.7},{"date":"2024-11-24","poids":105.5,"imc":30.8,"img":31.8,"hydra":49.9,"gsc":28.5,"gv":15.0,"prot":14.6,"age":51.0,"muscle":64.8},{"date":"2024-11-25","poids":104.0,"imc":30.3,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":14.0,"prot":14.8,"age":51.0,"muscle":65.1},{"date":"2024-11-26","poids":104.8,"imc":30.6,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":15.0,"prot":14.6,"age":51.0,"muscle":64.4},{"date":"2024-11-27","poids":105.3,"imc":30.7,"img":31.3,"hydra":50.2,"gsc":28.1,"gv":15.0,"prot":14.8,"age":51.0,"muscle":65.2},{"date":"2024-11-28","poids":104.6,"imc":30.5,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":64.6},{"date":"2024-11-30","poids":105.5,"imc":30.8,"img":31.5,"hydra":50.1,"gsc":28.2,"gv":15.0,"prot":14.7,"age":51.0,"muscle":65.2},{"date":"2024-12-01","poids":104.8,"imc":30.6,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":15.0,"prot":14.6,"age":51.0,"muscle":64.3},{"date":"2024-12-02","poids":104.2,"imc":30.4,"img":32.2,"hydra":49.7,"gsc":28.9,"gv":15.0,"prot":14.4,"age":51.0,"muscle":63.1},{"date":"2024-12-03","poids":103.6,"imc":30.2,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.8},{"date":"2024-12-04","poids":104.8,"imc":30.6,"img":31.5,"hydra":50.1,"gsc":28.2,"gv":14.0,"prot":14.7,"age":51.0,"muscle":64.6},{"date":"2024-12-05","poids":104.7,"imc":30.5,"img":31.3,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.7},{"date":"2024-12-06","poids":102.8,"imc":30.0,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.0},{"date":"2024-12-09","poids":103.3,"imc":30.1,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":14.0,"prot":14.6,"age":51.0,"muscle":63.1},{"date":"2024-12-10","poids":103.7,"imc":30.2,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":64.0},{"date":"2024-12-11","poids":103.5,"imc":30.2,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.9},{"date":"2024-12-12","poids":104.1,"imc":30.4,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":64.3},{"date":"2024-12-13","poids":104.4,"imc":30.5,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.9},{"date":"2024-12-14","poids":104.4,"imc":30.5,"img":31.1,"hydra":50.4,"gsc":27.9,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.7},{"date":"2024-12-16","poids":104.7,"imc":30.5,"img":31.6,"hydra":50.1,"gsc":28.3,"gv":14.0,"prot":14.6,"age":51.0,"muscle":64.5},{"date":"2024-12-17","poids":102.1,"imc":29.8,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":50.0,"muscle":63.0},{"date":"2024-12-18","poids":102.9,"imc":30.0,"img":31.5,"hydra":50.1,"gsc":28.2,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.2},{"date":"2024-12-19","poids":102.9,"imc":30.0,"img":31.5,"hydra":50.2,"gsc":28.2,"gv":14.0,"prot":14.6,"age":51.0,"muscle":63.3},{"date":"2024-12-20","poids":103.4,"imc":30.2,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":14.0,"prot":14.6,"age":51.0,"muscle":63.4},{"date":"2024-12-30","poids":103.2,"imc":30.1,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":14.0,"prot":14.9,"age":51.0,"muscle":64.9},{"date":"2024-12-31","poids":102.0,"imc":29.8,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":50.0,"muscle":63.2},{"date":"2025-01-01","poids":103.3,"imc":30.1,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.7},{"date":"2025-01-03","poids":103.2,"imc":30.1,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.8},{"date":"2025-01-04","poids":102.2,"imc":29.8,"img":31.5,"hydra":50.2,"gsc":28.2,"gv":14.0,"prot":14.6,"age":50.0,"muscle":62.7},{"date":"2025-01-05","poids":102.9,"imc":30.0,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.4},{"date":"2025-01-06","poids":103.6,"imc":30.2,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.4},{"date":"2025-01-07","poids":102.1,"imc":29.8,"img":30.2,"hydra":51.0,"gsc":27.1,"gv":14.0,"prot":15.0,"age":50.0,"muscle":64.4},{"date":"2025-01-08","poids":103.2,"imc":30.1,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.2},{"date":"2025-01-09","poids":102.0,"imc":29.8,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":14.0,"prot":14.8,"age":50.0,"muscle":63.9},{"date":"2025-01-10","poids":102.7,"imc":30.0,"img":30.5,"hydra":50.8,"gsc":27.3,"gv":14.0,"prot":14.9,"age":51.0,"muscle":64.4},{"date":"2025-01-11","poids":103.2,"imc":30.1,"img":32.6,"hydra":49.4,"gsc":29.2,"gv":15.0,"prot":14.4,"age":51.0,"muscle":61.4},{"date":"2025-01-13","poids":104.6,"imc":30.5,"img":31.4,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":64.6},{"date":"2025-01-14","poids":102.2,"imc":29.8,"img":30.2,"hydra":51.0,"gsc":27.1,"gv":14.0,"prot":15.0,"age":50.0,"muscle":64.5},{"date":"2025-01-15","poids":104.4,"imc":30.5,"img":31.9,"hydra":49.8,"gsc":28.6,"gv":15.0,"prot":14.6,"age":51.0,"muscle":63.8},{"date":"2025-01-16","poids":104.5,"imc":30.5,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":51.0,"muscle":65.4},{"date":"2025-01-17","poids":103.2,"imc":30.1,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":14.0,"prot":14.9,"age":51.0,"muscle":64.9},{"date":"2025-01-20","poids":103.2,"imc":30.1,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.6},{"date":"2025-01-21","poids":102.4,"imc":29.9,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":14.0,"prot":14.8,"age":50.0,"muscle":63.7},{"date":"2025-01-22","poids":103.0,"imc":30.0,"img":31.8,"hydra":49.9,"gsc":28.5,"gv":14.0,"prot":14.6,"age":51.0,"muscle":62.9},{"date":"2025-01-23","poids":103.5,"imc":30.2,"img":30.9,"hydra":50.5,"gsc":27.7,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.5},{"date":"2025-01-24","poids":103.5,"imc":30.2,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.8},{"date":"2025-01-28","poids":102.9,"imc":30.0,"img":32.2,"hydra":49.6,"gsc":28.9,"gv":14.0,"prot":14.5,"age":51.0,"muscle":62.0},{"date":"2025-01-29","poids":103.4,"imc":30.2,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.9},{"date":"2025-01-30","poids":103.7,"imc":30.2,"img":31.1,"hydra":50.5,"gsc":27.9,"gv":14.0,"prot":14.7,"age":51.0,"muscle":64.3},{"date":"2025-01-31","poids":102.4,"imc":29.9,"img":30.5,"hydra":50.8,"gsc":27.3,"gv":14.0,"prot":14.9,"age":50.0,"muscle":64.3},{"date":"2025-02-03","poids":101.6,"imc":29.6,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":14.0,"prot":14.9,"age":50.0,"muscle":63.9},{"date":"2025-02-04","poids":102.8,"imc":30.0,"img":31.1,"hydra":50.5,"gsc":27.9,"gv":14.0,"prot":14.7,"age":51.0,"muscle":63.8},{"date":"2025-02-05","poids":103.8,"imc":30.3,"img":30.9,"hydra":50.5,"gsc":27.7,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.6},{"date":"2025-02-06","poids":102.4,"imc":29.9,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":14.0,"prot":14.9,"age":50.0,"muscle":64.5},{"date":"2025-02-07","poids":103.8,"imc":30.3,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":51.0,"muscle":64.8},{"date":"2025-02-16","poids":101.8,"imc":29.7,"img":31.0,"hydra":50.6,"gsc":27.8,"gv":14.0,"prot":14.7,"age":50.0,"muscle":63.1},{"date":"2025-02-22","poids":101.2,"imc":29.5,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":14.0,"prot":14.8,"age":50.0,"muscle":63.0},{"date":"2025-02-24","poids":102.5,"imc":29.9,"img":31.2,"hydra":50.4,"gsc":28.0,"gv":14.0,"prot":14.7,"age":50.0,"muscle":63.3},{"date":"2025-02-25","poids":101.0,"imc":29.5,"img":29.6,"hydra":51.5,"gsc":26.5,"gv":13.0,"prot":15.1,"age":50.0,"muscle":64.3},{"date":"2025-02-28","poids":101.5,"imc":29.6,"img":29.8,"hydra":51.3,"gsc":26.7,"gv":14.0,"prot":15.1,"age":50.0,"muscle":64.4},{"date":"2025-03-03","poids":102.6,"imc":29.9,"img":31.1,"hydra":50.5,"gsc":27.9,"gv":14.0,"prot":14.7,"age":50.0,"muscle":63.5},{"date":"2025-03-04","poids":100.9,"imc":29.4,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":14.0,"prot":14.9,"age":50.0,"muscle":63.6},{"date":"2025-03-07","poids":100.6,"imc":29.3,"img":29.4,"hydra":51.6,"gsc":26.4,"gv":13.0,"prot":15.2,"age":50.0,"muscle":64.2},{"date":"2025-03-11","poids":100.8,"imc":29.4,"img":29.6,"hydra":51.4,"gsc":26.5,"gv":13.0,"prot":15.2,"age":50.0,"muscle":64.1},{"date":"2025-03-13","poids":101.6,"imc":29.6,"img":29.8,"hydra":51.3,"gsc":26.7,"gv":14.0,"prot":15.1,"age":50.0,"muscle":64.4},{"date":"2025-03-14","poids":100.7,"imc":29.4,"img":29.8,"hydra":51.3,"gsc":26.7,"gv":13.0,"prot":15.1,"age":50.0,"muscle":63.9},{"date":"2025-03-18","poids":101.1,"imc":29.5,"img":29.5,"hydra":51.5,"gsc":26.4,"gv":13.0,"prot":15.2,"age":50.0,"muscle":64.5},{"date":"2025-03-21","poids":100.7,"imc":29.4,"img":30.4,"hydra":51.0,"gsc":27.2,"gv":14.0,"prot":14.8,"age":50.0,"muscle":63.2},{"date":"2025-03-25","poids":100.7,"imc":29.4,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":14.0,"prot":14.9,"age":50.0,"muscle":63.3},{"date":"2025-03-28","poids":100.3,"imc":29.3,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":14.0,"prot":14.8,"age":50.0,"muscle":62.7},{"date":"2025-04-01","poids":100.3,"imc":29.3,"img":30.3,"hydra":51.1,"gsc":27.2,"gv":14.0,"prot":14.8,"age":50.0,"muscle":63.1},{"date":"2025-04-04","poids":100.0,"imc":29.2,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":14.0,"prot":14.9,"age":50.0,"muscle":62.7},{"date":"2025-04-16","poids":101.2,"imc":29.5,"img":29.9,"hydra":51.2,"gsc":26.8,"gv":14.0,"prot":15.1,"age":51.0,"muscle":64.2},{"date":"2025-04-22","poids":101.0,"imc":29.5,"img":30.5,"hydra":50.8,"gsc":27.3,"gv":14.0,"prot":14.9,"age":51.0,"muscle":63.3},{"date":"2025-04-25","poids":100.9,"imc":29.4,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":14.0,"prot":15.0,"age":51.0,"muscle":63.9},{"date":"2025-04-29","poids":100.0,"imc":29.2,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":14.0,"prot":14.8,"age":51.0,"muscle":62.2},{"date":"2025-05-02","poids":100.0,"imc":29.2,"img":29.7,"hydra":51.4,"gsc":26.6,"gv":14.0,"prot":15.1,"age":51.0,"muscle":63.6},{"date":"2025-05-06","poids":100.8,"imc":29.4,"img":30.1,"hydra":51.1,"gsc":27.0,"gv":14.0,"prot":15.0,"age":51.0,"muscle":63.7},{"date":"2025-05-09","poids":100.8,"imc":29.4,"img":30.1,"hydra":51.2,"gsc":27.0,"gv":14.0,"prot":14.9,"age":51.0,"muscle":63.7},{"date":"2025-05-15","poids":100.0,"imc":29.2,"img":30.0,"hydra":51.2,"gsc":26.9,"gv":14.0,"prot":15.0,"age":51.0,"muscle":63.3},{"date":"2025-05-19","poids":99.5,"imc":29.0,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":13.0,"prot":15.0,"age":51.0,"muscle":63.0},{"date":"2025-05-22","poids":100.5,"imc":29.3,"img":31.5,"hydra":50.2,"gsc":28.2,"gv":14.0,"prot":14.6,"age":51.0,"muscle":61.4},{"date":"2025-06-02","poids":99.7,"imc":29.1,"img":29.9,"hydra":51.3,"gsc":26.8,"gv":14.0,"prot":15.0,"age":51.0,"muscle":63.2},{"date":"2025-06-06","poids":99.7,"imc":29.1,"img":29.8,"hydra":51.4,"gsc":26.7,"gv":13.0,"prot":15.0,"age":51.0,"muscle":63.3},{"date":"2025-06-10","poids":100.0,"imc":29.2,"img":30.9,"hydra":50.7,"gsc":27.7,"gv":14.0,"prot":14.7,"age":51.0,"muscle":62.2},{"date":"2025-06-13","poids":99.7,"imc":29.1,"img":29.4,"hydra":51.6,"gsc":26.4,"gv":13.0,"prot":15.2,"age":51.0,"muscle":63.8},{"date":"2025-06-20","poids":99.7,"imc":29.1,"img":30.3,"hydra":51.0,"gsc":27.2,"gv":14.0,"prot":14.9,"age":51.0,"muscle":62.6},{"date":"2025-06-24","poids":99.3,"imc":29.0,"img":29.7,"hydra":51.4,"gsc":26.6,"gv":13.0,"prot":15.1,"age":51.0,"muscle":63.0},{"date":"2025-07-01","poids":100.5,"imc":29.3,"img":30.2,"hydra":51.1,"gsc":27.1,"gv":14.0,"prot":14.9,"age":51.0,"muscle":63.4},{"date":"2025-08-04","poids":101.1,"imc":29.5,"img":30.5,"hydra":50.8,"gsc":27.3,"gv":14.0,"prot":14.9,"age":51.0,"muscle":63.3},{"date":"2025-08-22","poids":103.3,"imc":30.1,"img":31.5,"hydra":50.1,"gsc":28.2,"gv":14.0,"prot":14.7,"age":52.0,"muscle":63.6},{"date":"2025-09-04","poids":102.5,"imc":29.9,"img":30.3,"hydra":50.9,"gsc":27.2,"gv":14.0,"prot":15.0,"age":52.0,"muscle":64.5},{"date":"2025-09-05","poids":102.1,"imc":29.8,"img":30.2,"hydra":51.0,"gsc":27.1,"gv":14.0,"prot":15.0,"age":52.0,"muscle":64.5},{"date":"2025-09-12","poids":100.9,"imc":29.4,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":14.0,"prot":14.8,"age":51.0,"muscle":62.8},{"date":"2025-09-15","poids":101.6,"imc":29.6,"img":30.5,"hydra":50.8,"gsc":27.3,"gv":14.0,"prot":14.9,"age":51.0,"muscle":63.8},{"date":"2025-09-18","poids":101.3,"imc":29.5,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":51.0,"muscle":62.9},{"date":"2025-09-23","poids":103.4,"imc":30.2,"img":31.1,"hydra":50.4,"gsc":27.9,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.4},{"date":"2025-09-26","poids":102.0,"imc":29.8,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":63.5},{"date":"2025-09-30","poids":101.4,"imc":29.6,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":51.0,"muscle":63.2},{"date":"2025-10-03","poids":102.4,"imc":29.9,"img":32.2,"hydra":49.7,"gsc":28.9,"gv":14.0,"prot":14.4,"age":52.0,"muscle":61.8},{"date":"2025-10-07","poids":102.3,"imc":29.8,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":63.5},{"date":"2025-10-13","poids":102.1,"imc":29.8,"img":30.8,"hydra":50.6,"gsc":27.6,"gv":14.0,"prot":14.8,"age":52.0,"muscle":63.7},{"date":"2025-10-17","poids":103.3,"imc":30.1,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.5},{"date":"2025-10-23","poids":103.3,"imc":30.1,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.5},{"date":"2025-11-04","poids":103.0,"imc":30.0,"img":31.2,"hydra":50.4,"gsc":28.0,"gv":14.0,"prot":14.7,"age":52.0,"muscle":64.0},{"date":"2025-11-08","poids":104.8,"imc":30.6,"img":31.7,"hydra":50.0,"gsc":28.4,"gv":15.0,"prot":14.6,"age":52.0,"muscle":64.5},{"date":"2025-11-14","poids":103.0,"imc":30.0,"img":30.9,"hydra":50.6,"gsc":27.7,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.1},{"date":"2025-11-17","poids":102.6,"imc":29.9,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.3},{"date":"2025-11-21","poids":101.3,"imc":29.5,"img":30.4,"hydra":50.9,"gsc":27.2,"gv":14.0,"prot":14.9,"age":51.0,"muscle":63.8},{"date":"2025-11-25","poids":101.9,"imc":29.7,"img":30.5,"hydra":50.9,"gsc":27.3,"gv":14.0,"prot":14.8,"age":51.0,"muscle":63.9},{"date":"2025-12-02","poids":101.1,"imc":29.5,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":14.0,"prot":14.8,"age":51.0,"muscle":63.1},{"date":"2025-12-05","poids":102.3,"imc":29.8,"img":30.2,"hydra":51.0,"gsc":27.1,"gv":14.0,"prot":15.0,"age":52.0,"muscle":64.5},{"date":"2025-12-15","poids":101.2,"imc":29.5,"img":30.6,"hydra":50.8,"gsc":27.4,"gv":14.0,"prot":14.8,"age":51.0,"muscle":63.3},{"date":"2026-01-05","poids":103.2,"imc":30.1,"img":30.9,"hydra":50.5,"gsc":27.7,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.3},{"date":"2026-01-09","poids":103.2,"imc":30.1,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.2},{"date":"2026-01-13","poids":103.2,"imc":30.1,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.2},{"date":"2026-01-20","poids":103.1,"imc":30.1,"img":31.7,"hydra":50.1,"gsc":28.4,"gv":14.0,"prot":14.5,"age":52.0,"muscle":63.3},{"date":"2026-01-30","poids":103.5,"imc":30.2,"img":31.0,"hydra":50.4,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.4},{"date":"2026-02-03","poids":103.0,"imc":30.0,"img":30.7,"hydra":50.7,"gsc":27.5,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.4},{"date":"2026-02-06","poids":103.0,"imc":30.0,"img":30.8,"hydra":50.7,"gsc":27.6,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.3},{"date":"2026-02-10","poids":103.5,"imc":30.2,"img":30.6,"hydra":50.7,"gsc":27.4,"gv":14.0,"prot":14.9,"age":52.0,"muscle":64.8},{"date":"2026-03-02","poids":103.4,"imc":30.2,"img":31.3,"hydra":50.2,"gsc":28.1,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.0},{"date":"2026-03-05","poids":103.4,"imc":30.2,"img":31.0,"hydra":50.4,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.3},{"date":"2026-03-10","poids":102.9,"imc":30.0,"img":30.9,"hydra":50.5,"gsc":27.7,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.1},{"date":"2026-03-16","poids":103.3,"imc":30.1,"img":31.2,"hydra":50.3,"gsc":28.0,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.1},{"date":"2026-03-20","poids":103.9,"imc":30.3,"img":31.2,"hydra":50.4,"gsc":28.0,"gv":14.0,"prot":14.7,"age":52.0,"muscle":64.5},{"date":"2026-03-23","poids":103.9,"imc":30.3,"img":31.0,"hydra":50.5,"gsc":27.8,"gv":14.0,"prot":14.8,"age":52.0,"muscle":64.7},{"date":"2026-03-27","poids":105.0,"imc":30.6,"img":31.2,"hydra":50.3,"gsc":28.0,"gv":15.0,"prot":14.8,"age":52.0,"muscle":65.2},{"date":"2026-04-07","poids":105.0,"imc":30.6,"img":31.3,"hydra":50.3,"gsc":28.1,"gv":15.0,"prot":14.7,"age":52.0,"muscle":65.1},{"date":"2026-04-28","poids":105.4,"imc":30.7,"img":31.2,"hydra":50.3,"gsc":28.0,"gv":15.0,"prot":14.8,"age":54.0,"muscle":65.7},{"date":"2026-05-22","poids":106.6,"imc":31.1,"img":32.0,"hydra":49.8,"gsc":28.7,"gv":15.0,"prot":14.5,"age":54.0,"muscle":65.5},{"date":"2026-06-14","poids":108.0,"imc":31.5,"img":32.6,"hydra":49.3,"gsc":29.2,"gv":16.0,"prot":14.4,"age":54.0,"muscle":65.4},{"date":"2026-06-16","poids":106.7,"imc":31.1,"img":32.0,"hydra":49.8,"gsc":28.7,"gv":15.0,"prot":14.5,"age":54.0,"muscle":65.5}],"dailyWeights":{"2019-09-26":105.8,"2019-09-30":104.2,"2019-10-07":103.6,"2019-10-14":102.3,"2019-10-21":101.1,"2019-10-28":99.9,"2019-11-04":98.9,"2019-11-12":99.4,"2019-11-15":99.4,"2019-11-18":98.8,"2019-11-25":99.0,"2019-12-02":98.0,"2019-12-08":96.0,"2019-12-16":97.2,"2019-12-23":96.4,"2020-01-05":97.1,"2020-01-13":96.4,"2020-01-21":96.0,"2020-01-28":96.1,"2020-02-04":96.1,"2020-02-25":97.1,"2020-03-04":96.5,"2020-03-10":97.3,"2020-03-11":97.6,"2020-05-20":96.4,"2020-05-26":96.7,"2020-06-02":96.3,"2020-06-09":96.6,"2020-06-23":96.5,"2020-07-06":97.3,"2020-07-14":98.8,"2020-07-21":98.0,"2020-07-28":98.5,"2020-07-30":99.4,"2020-08-11":99.3,"2020-08-18":98.2,"2020-08-25":98.5,"2020-09-02":98.5,"2020-09-08":98.3,"2020-09-15":98.4,"2020-11-10":101.7,"2020-11-17":101.2,"2020-11-20":101.4,"2020-11-26":100.6,"2020-12-02":100.9,"2020-12-08":101.2,"2020-12-12":100.1,"2020-12-14":100.5,"2020-12-15":99.4,"2020-12-29":99.5,"2020-12-31":100.4,"2021-01-03":101.1,"2021-01-04":100.0,"2021-01-05":100.0,"2021-01-06":100.9,"2021-01-07":101.2,"2021-01-10":100.0,"2021-01-12":100.8,"2021-01-13":101.3,"2021-01-14":101.5,"2021-01-15":101.5,"2021-01-16":101.0,"2021-01-17":101.0,"2021-01-18":100.3,"2021-01-20":99.9,"2021-01-22":99.6,"2021-01-23":100.3,"2021-01-26":100.7,"2021-01-31":101.0,"2021-02-02":100.2,"2021-02-04":101.7,"2021-02-09":101.3,"2021-02-10":101.8,"2021-02-15":101.7,"2021-02-16":101.7,"2021-02-23":101.7,"2021-02-24":101.5,"2021-02-26":101.3,"2021-03-01":101.3,"2021-03-03":101.0,"2021-03-05":101.3,"2021-03-07":100.9,"2021-03-09":99.9,"2021-03-15":101.9,"2021-03-16":101.0,"2021-03-18":101.6,"2021-03-20":101.0,"2021-03-21":100.7,"2021-03-22":101.4,"2021-03-23":100.4,"2021-03-24":100.4,"2021-03-26":100.4,"2021-03-27":99.9,"2021-03-29":100.1,"2021-03-30":99.2,"2021-04-04":99.1,"2021-04-05":99.1,"2021-04-06":99.1,"2021-04-27":99.1,"2021-05-04":100.1,"2021-05-11":100.3,"2021-05-18":100.0,"2021-05-25":100.5,"2021-06-01":101.0,"2021-06-09":101.5,"2021-06-15":101.5,"2021-06-22":100.4,"2021-06-29":101.3,"2021-07-23":101.4,"2021-09-04":101.0,"2021-09-06":101.2,"2021-09-09":100.2,"2021-09-14":100.9,"2021-09-21":100.4,"2021-09-29":100.1,"2021-10-07":99.6,"2021-10-12":100.8,"2021-10-19":99.8,"2021-10-28":100.9,"2021-11-03":101.4,"2021-11-09":102.3,"2021-11-11":102.8,"2021-11-17":102.2,"2021-11-23":101.1,"2021-11-30":102.0,"2021-12-07":101.3,"2021-12-14":102.1,"2021-12-21":102.0,"2021-12-28":103.6,"2022-01-04":102.9,"2022-01-11":101.9,"2022-01-18":101.9,"2022-01-25":101.1,"2022-02-01":102.3,"2022-02-03":101.8,"2022-02-13":100.4,"2022-02-15":101.4,"2022-02-22":101.2,"2022-02-28":101.6,"2022-03-08":101.4,"2022-03-15":102.7,"2022-03-30":102.6,"2022-04-05":102.3,"2022-07-12":102.3,"2022-07-23":102.9,"2022-08-16":103.0,"2022-08-22":103.7,"2022-08-29":103.7,"2022-09-05":103.6,"2022-09-12":104.0,"2022-09-13":104.0,"2023-01-13":101.9,"2023-02-06":103.3,"2023-02-13":102.8,"2023-03-21":105.0,"2023-04-07":103.9,"2023-04-12":104.3,"2023-04-17":104.6,"2023-04-19":103.7,"2023-04-25":104.8,"2023-06-07":106.2,"2023-06-12":106.2,"2023-06-17":105.7,"2023-07-16":105.9,"2023-08-25":104.0,"2023-08-28":102.6,"2023-12-29":103.7,"2024-01-07":105.1,"2024-01-15":105.1,"2024-01-31":104.7,"2024-02-02":105.6,"2024-02-08":102.9,"2024-02-13":102.9,"2024-02-17":102.2,"2024-02-20":102.2,"2024-11-05":106.3,"2024-11-06":106.9,"2024-11-07":106.6,"2024-11-08":106.6,"2024-11-11":106.6,"2024-11-12":105.8,"2024-11-13":105.5,"2024-11-14":105.5,"2024-11-15":105.5,"2024-11-18":105.0,"2024-11-19":105.3,"2024-11-20":105.0,"2024-11-21":105.5,"2024-11-22":105.3,"2024-11-23":105.3,"2024-11-24":105.5,"2024-11-25":104.0,"2024-11-26":104.8,"2024-11-27":105.3,"2024-11-28":104.6,"2024-11-30":105.5,"2024-12-01":104.8,"2024-12-02":104.2,"2024-12-03":103.6,"2024-12-04":104.8,"2024-12-05":104.7,"2024-12-06":102.8,"2024-12-09":103.3,"2024-12-10":103.7,"2024-12-11":103.5,"2024-12-12":104.1,"2024-12-13":104.4,"2024-12-14":104.4,"2024-12-16":104.7,"2024-12-17":102.1,"2024-12-18":102.9,"2024-12-19":102.9,"2024-12-20":103.4,"2024-12-30":103.2,"2024-12-31":102.0,"2025-01-01":103.3,"2025-01-03":103.2,"2025-01-04":102.2,"2025-01-05":102.9,"2025-01-06":103.6,"2025-01-07":102.1,"2025-01-08":103.2,"2025-01-09":102.0,"2025-01-10":102.7,"2025-01-11":103.2,"2025-01-13":104.6,"2025-01-14":102.2,"2025-01-15":104.4,"2025-01-16":104.5,"2025-01-17":103.2,"2025-01-20":103.2,"2025-01-21":102.4,"2025-01-22":103.0,"2025-01-23":103.5,"2025-01-24":103.5,"2025-01-28":102.9,"2025-01-29":103.4,"2025-01-30":103.7,"2025-01-31":102.4,"2025-02-03":101.6,"2025-02-04":102.8,"2025-02-05":103.8,"2025-02-06":102.4,"2025-02-07":103.8,"2025-02-16":101.8,"2025-02-22":101.2,"2025-02-24":102.5,"2025-02-25":101.0,"2025-02-28":101.5,"2025-03-03":102.6,"2025-03-04":100.9,"2025-03-07":100.6,"2025-03-11":100.8,"2025-03-13":101.6,"2025-03-14":100.7,"2025-03-18":101.1,"2025-03-21":100.7,"2025-03-25":100.7,"2025-03-28":100.3,"2025-04-01":100.3,"2025-04-04":100.0,"2025-04-16":101.2,"2025-04-22":101.0,"2025-04-25":100.9,"2025-04-29":100.0,"2025-05-02":100.0,"2025-05-06":100.8,"2025-05-09":100.8,"2025-05-15":100.0,"2025-05-19":99.5,"2025-05-22":100.5,"2025-06-02":99.7,"2025-06-06":99.7,"2025-06-10":100.0,"2025-06-13":99.7,"2025-06-20":99.7,"2025-06-24":99.3,"2025-07-01":100.5,"2025-08-04":101.1,"2025-08-22":103.3,"2025-09-04":102.5,"2025-09-05":102.1,"2025-09-12":100.9,"2025-09-15":101.6,"2025-09-18":101.3,"2025-09-23":103.4,"2025-09-26":102.0,"2025-09-30":101.4,"2025-10-03":102.4,"2025-10-07":102.3,"2025-10-13":102.1,"2025-10-17":103.3,"2025-10-23":103.3,"2025-11-04":103.0,"2025-11-08":104.8,"2025-11-14":103.0,"2025-11-17":102.6,"2025-11-21":101.3,"2025-11-25":101.9,"2025-12-02":101.1,"2025-12-05":102.3,"2025-12-15":101.2,"2026-01-05":103.2,"2026-01-09":103.2,"2026-01-13":103.2,"2026-01-20":103.1,"2026-01-30":103.5,"2026-02-03":103.0,"2026-02-06":103.0,"2026-02-10":103.5,"2026-03-02":103.4,"2026-03-05":103.4,"2026-03-10":102.9,"2026-03-16":103.3,"2026-03-20":103.9,"2026-03-23":103.9,"2026-03-27":105.0,"2026-04-07":105.0,"2026-04-28":105.4,"2026-05-22":106.6,"2026-06-14":108.0,"2026-06-16":106.7},"activities":[{"date":"2026-07-17","type":"Cardio","dist":0.0,"dur":"00:55","cal":630.0,"fc":135.0,"fcmax":160.0,"te":3.6,"notes":""},{"date":"2026-07-05","type":"Randonn\u00e9e","dist":6.64,"dur":"03:27","cal":1585.0,"fc":119.0,"fcmax":167.0,"te":3.4,"notes":""},{"date":"2026-07-04","type":"Randonn\u00e9e","dist":6.95,"dur":"05:16","cal":2250.0,"fc":115.0,"fcmax":165.0,"te":3.4,"notes":""},{"date":"2026-06-30","type":"Cardio","dist":0.0,"dur":"00:58","cal":590.0,"fc":122.0,"fcmax":154.0,"te":3.0,"notes":""},{"date":"2026-06-18","type":"Cardio","dist":0.0,"dur":"01:00","cal":632.0,"fc":127.0,"fcmax":161.0,"te":3.0,"notes":""},{"date":"2026-06-16","type":"Cardio","dist":0.0,"dur":"01:21","cal":963.0,"fc":142.0,"fcmax":176.0,"te":4.9,"notes":""},{"date":"2026-06-12","type":"Cardio","dist":0.0,"dur":"01:05","cal":612.0,"fc":128.0,"fcmax":173.0,"te":3.2,"notes":""},{"date":"2026-06-09","type":"Cardio","dist":0.0,"dur":"01:06","cal":813.0,"fc":143.0,"fcmax":184.0,"te":4.6,"notes":""},{"date":"2026-06-05","type":"Cardio","dist":0.0,"dur":"00:50","cal":630.0,"fc":135.0,"fcmax":162.0,"te":3.2,"notes":""},{"date":"2026-05-28","type":"Cardio","dist":0.0,"dur":"00:40","cal":349.0,"fc":113.0,"fcmax":136.0,"te":1.9,"notes":""},{"date":"2026-05-26","type":"Cardio","dist":0.0,"dur":"00:48","cal":508.0,"fc":128.0,"fcmax":155.0,"te":3.2,"notes":""},{"date":"2026-05-21","type":"Cardio","dist":0.0,"dur":"00:37","cal":347.0,"fc":118.0,"fcmax":152.0,"te":2.2,"notes":""},{"date":"2026-05-19","type":"Cardio","dist":0.0,"dur":"03:21","cal":1248.0,"fc":100.0,"fcmax":166.0,"te":3.5,"notes":""},{"date":"2026-05-15","type":"Cardio","dist":0.0,"dur":"01:55","cal":793.0,"fc":110.0,"fcmax":151.0,"te":2.7,"notes":""},{"date":"2026-05-12","type":"Cardio","dist":0.0,"dur":"00:00","cal":null,"fc":104.0,"fcmax":104.0,"te":0.0,"notes":""},{"date":"2026-05-12","type":"Cardio","dist":0.0,"dur":"01:08","cal":847.0,"fc":142.0,"fcmax":171.0,"te":4.3,"notes":""},{"date":"2026-05-07","type":"Cardio","dist":0.0,"dur":"01:45","cal":769.0,"fc":112.0,"fcmax":150.0,"te":2.6,"notes":""},{"date":"2026-05-05","type":"Cardio","dist":0.0,"dur":"01:03","cal":763.0,"fc":138.0,"fcmax":179.0,"te":4.0,"notes":""},{"date":"2026-04-30","type":"Cardio","dist":0.0,"dur":"00:06","cal":67.0,"fc":116.0,"fcmax":129.0,"te":0.8,"notes":""}]};
+
+// =================================================================
+// PROGRAMME 3× FULL-BODY
+// =================================================================
+// Base d'exercices (référencés dans les 3 séances). Charge indexée par id :
+// un même exercice garde la même charge de travail quelle que soit la séance.
+const EXO = {
+  squat:{id:'squat', name:'Squat barre', sets:4, reps:8, restSec:90, initCharge:40, prog:2.5, muscles:['Quadriceps','Fessiers','Ischio-jambiers'],
+     tip:'Pieds largeur épaules, pointes légèrement en V. Descendez jusqu\'à ce que les cuisses soient parallèles au sol. Gardez le dos droit et les genoux alignés sur les orteils.',
+     svg:'squat'},
+  presse:{id:'presse', name:'Presse à cuisses', sets:3, reps:12, restSec:90, initCharge:60, prog:5, muscles:['Quadriceps','Fessiers'],
+     tip:'Pieds à largeur de bassin sur la plateforme. Descendez lentement jusqu\'à 90°, poussez sans verrouiller les genoux.',
+     svg:'presse'},
+  fentes:{id:'fentes', name:'Fentes haltères', sets:3, reps:10, restSec:90, initCharge:10, prog:2, muscles:['Quadriceps','Fessiers','Équilibre'],
+     tip:'Un grand pas en avant, genou arrière à 2 cm du sol. Buste droit, genou avant ne dépasse pas l\'orteil.',
+     svg:'fentes'},
+  bench:{id:'bench', name:'Développé couché barre', sets:4, reps:8, restSec:90, initCharge:40, prog:2.5, muscles:['Pectoraux','Triceps','Épaules'],
+     tip:'Coudes à 45° (jamais à 90°). Descente 2 secondes jusqu\'à la poitrine. Poussez en expirant.',
+     svg:'bench'},
+  incline:{id:'incline', name:'Développé incliné haltères', sets:3, reps:10, restSec:90, initCharge:14, prog:2, muscles:['Pectoraux haut','Épaules'],
+     tip:'Banc à 30-45°. Même technique que couché. Contrôlez la descente.',
+     svg:'incline'},
+  lateral:{id:'lateral', name:'Élévations latérales', sets:3, reps:15, restSec:60, initCharge:6, prog:1, muscles:['Deltoïdes latéraux'],
+     tip:'Bras légèrement fléchis, montez jusqu\'à hauteur des épaules. Évitez de hausser les épaules.',
+     svg:'lateral'},
+  planche:{id:'planche', name:'Gainage planche', sets:3, reps:0, restSec:45, initCharge:0, prog:0, isTime:true, timeReps:45, muscles:['Abdominaux','Core'],
+     tip:'Corps en ligne droite tête-talons. Contractez fessiers et abdos. Respirez normalement.',
+     svg:'planche'},
+  rdl:{id:'rdl', name:'Soulevé de terre roumain', sets:4, reps:6, restSec:120, initCharge:50, prog:5, muscles:['Ischio-jambiers','Fessiers','Bas du dos'],
+     tip:'DOS PLAT impératif. Poussez les hanches vers l\'arrière, descendez les haltères le long des jambes jusqu\'à mi-tibia. Remontez en contractant les fessiers.',
+     svg:'rdl'},
+  pulldown:{id:'pulldown', name:'Tirage poulie haute', sets:4, reps:10, restSec:90, initCharge:40, prog:5, muscles:['Dorsaux','Biceps'],
+     tip:'Prise large, tirez vers le haut de la poitrine. Le mouvement vient des dorsaux, pas des bras. Ne tirez pas derrière la nuque.',
+     svg:'pulldown'},
+  rowing:{id:'rowing', name:'Rowing barre', sets:3, reps:10, restSec:90, initCharge:40, prog:2.5, muscles:['Dorsaux','Rhomboïdes','Biceps'],
+     tip:'Penché à 45°, dos plat. Tirez la barre vers le nombril en serrant les omoplates. Contrôlez la descente.',
+     svg:'rowing'},
+  facepull:{id:'facepull', name:'Tirage câble visage', sets:3, reps:15, restSec:60, initCharge:15, prog:2.5, muscles:['Deltoïdes arrière','Coiffe'],
+     tip:'Corde à hauteur de visage. Tirez vers le front en écartant les mains. Maintenu 1 seconde. Protège les épaules.',
+     svg:'facepull'},
+  curl:{id:'curl', name:'Curl biceps barre', sets:3, reps:12, restSec:60, initCharge:20, prog:2.5, muscles:['Biceps'],
+     tip:'Coudes fixes contre le corps. Fléchissez en supinant. Ne balancez pas le buste.',
+     svg:'curl'},
+  triceps:{id:'triceps', name:'Extension triceps câble', sets:3, reps:12, restSec:60, initCharge:15, prog:2.5, muscles:['Triceps'],
+     tip:'Coudes collés au corps, fixes. Poussez vers le bas jusqu\'à extension complète. Contrôlez la remontée.',
+     svg:'triceps'},
+  crunch:{id:'crunch', name:'Crunch câble', sets:3, reps:15, restSec:45, initCharge:15, prog:5, muscles:['Abdominaux'],
+     tip:'À genoux face à la poulie haute. Fléchissez le buste vers le bas en contractant les abdos. Ne tirez pas avec les bras.',
+     svg:'crunch'},
+};
+
+// 3 séances full-body : chaque groupe musculaire est stimulé 3×/semaine,
+// ce qui protège la masse musculaire pendant la sèche.
+const SEANCE_1 = {
+  id:'S1', label:'Séance 1', sub:'Full-body — Force', icon:'🔴', tag:'tag-a', si:'si-a',
+  exercises:[ EXO.squat, EXO.bench, EXO.pulldown, EXO.fentes, EXO.lateral, EXO.planche ]
+};
+const SEANCE_2 = {
+  id:'S2', label:'Séance 2', sub:'Full-body — Charnière', icon:'🟢', tag:'tag-b', si:'si-b',
+  exercises:[ EXO.rdl, EXO.incline, EXO.rowing, EXO.presse, EXO.curl, EXO.crunch ]
+};
+const SEANCE_3 = {
+  id:'S3', label:'Séance 3', sub:'Full-body — Volume', icon:'🟣', tag:'tag-a', si:'si-a',
+  exercises:[ EXO.presse, EXO.bench, EXO.pulldown, EXO.fentes, EXO.facepull, EXO.triceps ]
+};
+
+const SEANCE_CARDIO = {
+  id:'Z2', label:'Foncier Zone 2', sub:'45 min FC 120-135 bpm', icon:'🚴', tag:'tag-cardio', si:'si-cardio',
+  exercises:[
+    {id:'z2', name:'Vélo ou Tapis — Zone 2', sets:1, reps:0, restSec:0, initCharge:0, prog:0, isTime:true, timeReps:2700,
+     muscles:['Cardio','Endurance'],
+     tip:'Maintenir FC 120-135 bpm pendant 45 min. Si tu montes au-dessus, ralentis. Tu dois pouvoir parler en continu. C\'est la zone qui brûle directement les graisses sans fatiguer les muscles.',
+     svg:'z2'}
+  ]
+};
+
+// Accès par identifiant de séance
+const SEANCE_MAP = { S1:SEANCE_1, S2:SEANCE_2, S3:SEANCE_3, Z2:SEANCE_CARDIO };
+// Séances muscu remontables dans le feedback / export (hors cardio)
+const SEANCES_MUSCU = [SEANCE_1, SEANCE_2, SEANCE_3];
+
+const WEEK_SCHEDULE = [
+  {day:'Lun', seance:'S1'},
+  {day:'Mar', seance:'rest'},
+  {day:'Mer', seance:'S2'},
+  {day:'Jeu', seance:'rest'},
+  {day:'Ven', seance:'S3'},
+  {day:'Sam', seance:'rest'},
+  {day:'Dim', seance:'rest'},
+];
+
+// SVG Illustrations — cartes musculaires anatomiques (muscle ciblé en rouge)
+const _MC = { out:'#2b3149', base:'#aab2c8', red:'#e0435a', line:'#2b314966' };
+const _mc = (a,m) => ((Array.isArray(a)?a.includes(m):a===m) ? _MC.red : _MC.base);
+
+function bodyFront(a){
+  return `<svg width="88" height="88" viewBox="0 0 100 100" fill="none" stroke="${_MC.out}" stroke-width="2" stroke-linejoin="round">
+  <path d="M43,10 L57,10 L58,17 L72,22 Q81,26 81,36 L81,54 Q81,61 74,61 L69,58 Q67,49 65,43 L64,72 Q62,84 52,88 L48,88 Q38,84 36,72 L35,43 Q33,49 31,58 L26,61 Q19,61 19,54 L19,36 Q19,26 28,22 L42,17 Z" fill="${_MC.base}"/>
+  <path d="M44,12 L56,12 L57,18 L43,18 Z" fill="${_MC.base}" stroke-width="1.4"/>
+  <path d="M42,18 Q28,19 24,30 Q23,38 31,39 Q39,37 40,27 Z" fill="${_mc(a,'delts')}" stroke-width="1.4"/>
+  <path d="M58,18 Q72,19 76,30 Q77,38 69,39 Q61,37 60,27 Z" fill="${_mc(a,'delts')}" stroke-width="1.4"/>
+  <path d="M49,26 L40,27 Q34,30 35,38 Q39,44 49,42 Z" fill="${_mc(a,'chest')}" stroke-width="1.4"/>
+  <path d="M51,26 L60,27 Q66,30 65,38 Q61,44 51,42 Z" fill="${_mc(a,'chest')}" stroke-width="1.4"/>
+  <path d="M43,44 L57,44 L56,68 Q50,73 44,68 Z" fill="${_mc(a,'abs')}" stroke-width="1.4"/>
+  <line x1="50" y1="45" x2="50" y2="69" stroke="${_MC.line}" stroke-width="1.2"/>
+  <line x1="44" y1="52" x2="56" y2="52" stroke="${_MC.line}" stroke-width="1.2"/>
+  <line x1="44" y1="59" x2="56" y2="59" stroke="${_MC.line}" stroke-width="1.2"/>
+  <path d="M42,46 Q36,49 37,63 L42,66 Z" fill="${_mc(a,'abs')}" stroke-width="1.2" opacity=".9"/>
+  <path d="M58,46 Q64,49 63,63 L58,66 Z" fill="${_mc(a,'abs')}" stroke-width="1.2" opacity=".9"/>
+  <path d="M24,39 Q19,41 19,53 Q19,60 25,60 Q30,58 29,48 L28,40 Z" fill="${_mc(a,'arm')}" stroke-width="1.4"/>
+  <path d="M76,39 Q81,41 81,53 Q81,60 75,60 Q70,58 71,48 L72,40 Z" fill="${_mc(a,'arm')}" stroke-width="1.4"/>
+  </svg>`;
+}
+
+function bodyBack(a){
+  return `<svg width="88" height="88" viewBox="0 0 100 100" fill="none" stroke="${_MC.out}" stroke-width="2" stroke-linejoin="round">
+  <path d="M43,10 L57,10 L58,17 L72,22 Q81,26 81,36 L81,54 Q81,61 74,61 L69,58 Q67,49 65,43 L64,72 Q62,84 52,88 L48,88 Q38,84 36,72 L35,43 Q33,49 31,58 L26,61 Q19,61 19,54 L19,36 Q19,26 28,22 L42,17 Z" fill="${_MC.base}"/>
+  <path d="M42,18 Q28,19 24,30 Q23,38 31,39 Q39,37 40,27 Z" fill="${_mc(a,'reardelts')}" stroke-width="1.4"/>
+  <path d="M58,18 Q72,19 76,30 Q77,38 69,39 Q61,37 60,27 Z" fill="${_mc(a,'reardelts')}" stroke-width="1.4"/>
+  <path d="M44,13 L56,13 Q60,22 58,30 L50,34 L42,30 Q40,22 44,13 Z" fill="${_mc(a,'traps')}" stroke-width="1.4"/>
+  <path d="M41,31 Q33,36 35,52 L48,46 L49,33 Z" fill="${_mc(a,'lats')}" stroke-width="1.4"/>
+  <path d="M59,31 Q67,36 65,52 L52,46 L51,33 Z" fill="${_mc(a,'lats')}" stroke-width="1.4"/>
+  <path d="M45,47 L55,47 L54,68 Q50,72 46,68 Z" fill="${_mc(a,'lowerback')}" stroke-width="1.4"/>
+  <line x1="50" y1="48" x2="50" y2="69" stroke="${_MC.line}" stroke-width="1.2"/>
+  <path d="M24,39 Q19,41 19,53 Q19,60 25,60 Q30,58 29,48 L28,40 Z" fill="${_mc(a,'arm')}" stroke-width="1.4"/>
+  <path d="M76,39 Q81,41 81,53 Q81,60 75,60 Q70,58 71,48 L72,40 Z" fill="${_mc(a,'arm')}" stroke-width="1.4"/>
+  </svg>`;
+}
+
+function bodyArm(a){
+  return `<svg width="88" height="88" viewBox="0 0 100 100" fill="none" stroke="${_MC.out}" stroke-width="2" stroke-linejoin="round">
+  <path d="M26,22 Q40,17 48,27 Q50,35 41,38 Q29,37 25,30 Z" fill="${_mc(a,'delts')}" stroke-width="1.8"/>
+  <path d="M37,30 L27,33 Q22,50 30,66 L38,66 Q34,48 37,30 Z" fill="${_mc(a,'triceps')}" stroke-width="1.8"/>
+  <path d="M37,30 L48,33 Q54,49 45,66 L38,66 Q40,48 37,30 Z" fill="${_mc(a,'biceps')}" stroke-width="1.8"/>
+  <path d="M30,66 L46,66 L45,73 L31,73 Z" fill="${_MC.base}" stroke-width="1.5"/>
+  <path d="M32,72 Q40,80 58,80 Q70,80 72,72 Q64,66 48,68 Q38,69 32,72 Z" fill="${_mc(a,'forearm')}" stroke-width="1.8"/>
+  <path d="M70,68 Q79,70 78,78 Q76,83 69,81 Q66,74 70,68 Z" fill="${_MC.base}" stroke-width="1.5"/>
+  </svg>`;
+}
+
+function legsFront(a){
+  return `<svg width="88" height="88" viewBox="0 0 100 100" fill="none" stroke="${_MC.out}" stroke-width="2" stroke-linejoin="round">
+  <path d="M30,14 Q50,10 70,14 L68,26 Q50,30 32,26 Z" fill="${_mc(a,'glutes')}" stroke-width="1.6"/>
+  <path d="M33,26 Q28,44 34,60 L46,60 Q48,42 46,26 Z" fill="${_mc(a,'quads')}" stroke-width="1.6"/>
+  <path d="M67,26 Q72,44 66,60 L54,60 Q52,42 54,26 Z" fill="${_mc(a,'quads')}" stroke-width="1.6"/>
+  <line x1="40" y1="30" x2="40" y2="58" stroke="${_MC.line}" stroke-width="1.2"/>
+  <line x1="60" y1="30" x2="60" y2="58" stroke="${_MC.line}" stroke-width="1.2"/>
+  <path d="M35,60 L46,60 L45,68 L36,68 Z" fill="${_MC.base}" stroke-width="1.4"/>
+  <path d="M65,60 L54,60 L55,68 L64,68 Z" fill="${_MC.base}" stroke-width="1.4"/>
+  <path d="M36,68 Q34,80 38,90 L45,90 Q46,78 45,68 Z" fill="${_mc(a,'calves')}" stroke-width="1.6"/>
+  <path d="M64,68 Q66,80 62,90 L55,90 Q54,78 55,68 Z" fill="${_mc(a,'calves')}" stroke-width="1.6"/>
+  </svg>`;
+}
+
+function legsBack(a){
+  return `<svg width="88" height="88" viewBox="0 0 100 100" fill="none" stroke="${_MC.out}" stroke-width="2" stroke-linejoin="round">
+  <path d="M31,16 Q40,12 49,16 Q50,28 40,30 Q31,28 31,16 Z" fill="${_mc(a,'glutes')}" stroke-width="1.6"/>
+  <path d="M69,16 Q60,12 51,16 Q50,28 60,30 Q69,28 69,16 Z" fill="${_mc(a,'glutes')}" stroke-width="1.6"/>
+  <path d="M33,30 Q28,46 34,60 L46,60 Q48,44 45,30 Z" fill="${_mc(a,'hamstrings')}" stroke-width="1.6"/>
+  <path d="M67,30 Q72,46 66,60 L54,60 Q52,44 55,30 Z" fill="${_mc(a,'hamstrings')}" stroke-width="1.6"/>
+  <path d="M35,60 L46,60 L45,68 L36,68 Z" fill="${_MC.base}" stroke-width="1.4"/>
+  <path d="M65,60 L54,60 L55,68 L64,68 Z" fill="${_MC.base}" stroke-width="1.4"/>
+  <path d="M36,68 Q33,80 38,90 L45,90 Q47,78 45,68 Z" fill="${_mc(a,'calves')}" stroke-width="1.6"/>
+  <path d="M64,68 Q67,80 62,90 L55,90 Q53,78 55,68 Z" fill="${_mc(a,'calves')}" stroke-width="1.6"/>
+  </svg>`;
+}
+
+function bodyCardio(){
+  return `<svg width="88" height="88" viewBox="0 0 100 100" fill="none" stroke="${_MC.out}" stroke-width="2" stroke-linejoin="round">
+  <path d="M43,10 L57,10 L58,17 L72,22 Q81,26 81,36 L81,54 Q81,61 74,61 L69,58 Q67,49 65,43 L64,72 Q62,84 52,88 L48,88 Q38,84 36,72 L35,43 Q33,49 31,58 L26,61 Q19,61 19,54 L19,36 Q19,26 28,22 L42,17 Z" fill="${_MC.base}"/>
+  <path d="M50,38 q-6,-8 -12,-2 q-5,6 2,13 l10,10 l10,-10 q7,-7 2,-13 q-6,-6 -12,2 Z" fill="${_MC.red}" stroke="${_MC.out}" stroke-width="1.6"/>
+  </svg>`;
+}
+
+const ILLUSTRATIONS = {
+  squat:    legsFront('quads'),
+  presse:   legsFront('quads'),
+  fentes:   legsFront(['quads','glutes']),
+  bench:    bodyFront('chest'),
+  incline:  bodyFront('chest'),
+  lateral:  bodyFront('delts'),
+  planche:  bodyFront('abs'),
+  rdl:      legsBack(['hamstrings','glutes']),
+  pulldown: bodyBack('lats'),
+  rowing:   bodyBack('lats'),
+  facepull: bodyBack(['traps','reardelts']),
+  curl:     bodyArm('biceps'),
+  triceps:  bodyArm('triceps'),
+  crunch:   bodyFront('abs'),
+  z2:       bodyCardio(),
+};
+
+// =================================================================
+// STATE
+// =================================================================
+let ST = {
+  currentWeekDay: new Date().getDay()===0?6:new Date().getDay()-1,
+  balanceData:[], activities:[], doneExos:{}, seriesState:{},
+  dailyWeights:{}, charges:{}, feedbacks:[],
+  nutrition:[], lastStrength:null, lastWizard:null,
+  weekStart: weekStartDate(),
+};
+let restIntervals={};
+
+function weekStartDate(){
+  const d=new Date(); const day=d.getDay()||7;
+  d.setDate(d.getDate()-day+1); return d.toISOString().split('T')[0];
+}
+function today(){ return new Date().toISOString().split('T')[0]; }
+function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; }
+function fmtDate(d){ if(!d)return''; const p=d.split('-'); return p[2]+'/'+p[1]; }
+function fmtSec(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
+
+function load(){
+  const s=localStorage.getItem('fc5');
+  if(!s)return;
+  const p=JSON.parse(s);
+  ST.balanceData=p.balanceData||[];
+  ST.activities=p.activities||[];
+  ST.doneExos=p.doneExos||{};
+  ST.seriesState=p.seriesState||{};
+  ST.dailyWeights=p.dailyWeights||{};
+  ST.charges=p.charges||{};
+  ST.feedbacks=p.feedbacks||[];
+  ST.nutrition=p.nutrition||[];
+  ST.lastStrength=p.lastStrength||null;
+  ST.lastWizard=p.lastWizard||null;
+}
+function save(){
+  localStorage.setItem('fc5',JSON.stringify({
+    balanceData:ST.balanceData, activities:ST.activities,
+    doneExos:ST.doneExos, seriesState:ST.seriesState,
+    dailyWeights:ST.dailyWeights, charges:ST.charges,
+    feedbacks:ST.feedbacks, nutrition:ST.nutrition,
+    lastStrength:ST.lastStrength, lastWizard:ST.lastWizard,
+  }));
+}
+
+function initPreloaded(){
+  if(!localStorage.getItem('fc5')){
+    ST.balanceData=PRELOADED.balanceData;
+    ST.dailyWeights=PRELOADED.dailyWeights;
+    ST.activities=PRELOADED.activities;
+    save();
+  } else {
+    load();
+    const existD=new Set(ST.balanceData.map(b=>b.date));
+    PRELOADED.balanceData.forEach(b=>{ if(!existD.has(b.date)) ST.balanceData.push(b); });
+    const existA=new Set(ST.activities.map(a=>a.date+'_'+(a.dur||'')));
+    PRELOADED.activities.forEach(a=>{ if(!existA.has(a.date+'_'+(a.dur||''))) ST.activities.push(a); });
+    Object.assign(ST.dailyWeights, PRELOADED.dailyWeights);
+    save();
+  }
+}
+
+// =================================================================
+// NAV
+// =================================================================
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='progress')renderProgress();
+  if(id==='garmin')renderFeedbackHist();
+}
+
+// =================================================================
+// POIDS DU JOUR
+// =================================================================
+function saveDailyWeight(){
+  const val=parseFloat(document.getElementById('daily-weight').value);
+  if(!val||val<30||val>300){ toast('Entrez un poids valide'); return; }
+  ST.dailyWeights[today()]=val;
+  const ex=ST.balanceData.find(b=>b.date===today());
+  if(!ex) ST.balanceData.push({date:today(),poids:val});
+  else ex.poids=val;
+  save(); renderWeightPrev(); toast('Poids enregistré : '+val+' kg ✓');
+}
+function renderWeightPrev(){
+  const inp=document.getElementById('daily-weight');
+  const el=document.getElementById('weight-prev');
+  const tw=ST.dailyWeights[today()];
+  if(tw) inp.value=tw;
+  const yd=new Date(); yd.setDate(yd.getDate()-1);
+  const yw=ST.dailyWeights[yd.toISOString().split('T')[0]];
+  if(tw&&yw){
+    const diff=(tw-yw).toFixed(1); const sign=diff>0?'+':'';
+    el.innerHTML=`<span style="color:var(--text3)">Hier ${yw}kg</span><br><span style="color:${diff>0?'var(--red)':' var(--accent)'};font-weight:600">${sign}${diff}</span>`;
+  } else if(yw){ el.innerHTML=`<span style="color:var(--text3)">Hier<br>${yw} kg</span>`; }
+  else el.textContent='';
+}
+
+// =================================================================
+// PROGRAMME
+// =================================================================
+function getSeanceForDay(dayIdx){
+  const s=WEEK_SCHEDULE[dayIdx];
+  if(!s) return null;
+  return SEANCE_MAP[s.seance] || null; // null = repos
+}
+
+function getCurrentCharge(exoId){
+  return ST.charges[exoId] || null;
+}
+
+function getExoChargeDisplay(exo){
+  const saved=ST.charges[exo.id];
+  return saved ? saved.charge : exo.initCharge;
+}
+
+function renderWeekTabs(){
+  const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  document.getElementById('weekTabs').innerHTML=days.map((d,i)=>{
+    const s=WEEK_SCHEDULE[i];
+    const label=s.seance==='rest'?'Repos':(SEANCE_MAP[s.seance]?.label||s.seance);
+    return `<div class="week-tab${i===ST.currentWeekDay?' active':''}" onclick="selectDay(${i})">${d}<br><span style="font-size:9px;opacity:.7">${label}</span></div>`;
+  }).join('');
+}
+
+function selectDay(i){ ST.currentWeekDay=i; renderWeekTabs(); renderSession(); }
+
+function renderSession(){
+  const seance=getSeanceForDay(ST.currentWeekDay);
+  const dayName=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay];
+
+  if(!seance){
+    document.getElementById('sessionContent').innerHTML=`
+      <div class="session-card">
+        <div class="session-header">
+          <div class="session-icon si-rest">😴</div>
+          <div><div class="session-title">Repos</div><div class="session-meta">${dayName} — récupération</div></div>
+          <span class="session-tag tag-rest">Repos</span>
+        </div>
+        <div style="padding:20px;text-align:center;color:var(--text2);font-size:13px;line-height:1.8">
+          Journée de récupération musculaire.<br>
+          <strong style="color:var(--text)">Cardio Zone 2 optionnel</strong> : 30-45 min vélo/marche à FC 120-135 bpm pour accélérer la sèche sans gêner la récup.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const dayKey=dayName+'_'+ST.weekStart;
+  let html=`<div class="session-card">
+    <div class="session-header">
+      <div class="session-icon ${seance.si}">${seance.icon}</div>
+      <div><div class="session-title">${seance.label}</div><div class="session-meta">${dayName} · ${seance.sub}</div></div>
+      <span class="session-tag ${seance.tag}">${seance.id}</span>
+    </div>
+    <div class="exo-list">`;
+
+  seance.exercises.forEach((ex,i)=>{
+    const exoKey=dayKey+'_'+i;
+    const allDone=!!ST.doneExos[exoKey];
+    const tk='t_'+seance.id+'_'+ST.currentWeekDay+'_'+i;
+    const ts=ST.seriesState[tk]||{doneSets:0,phase:'idle',restRemaining:0,repsDone:{}};
+    const charge=getExoChargeDisplay(ex);
+
+    // Charge history
+    const hist=ST.feedbacks.filter(f=>f.exoId===ex.id).slice(-3);
+    const histHTML=hist.length?hist.map(f=>`<div>${fmtDate(f.date)} — <span>${f.charge}kg × ${f.reps} reps${f.comment?' — '+f.comment:''}</span></div>`).join(''):'';
+
+    // Series rows
+    let seriesHTML='';
+    if(ex.isTime){
+      // Time-based (planche, Z2)
+      const isDone=!!ST.doneExos[exoKey];
+      seriesHTML+=`<div class="series-row">
+        <div class="series-label${isDone?' done':''}">${isDone?'✓ ':''}${ex.sets > 1 ? ex.sets+' fois' : ''}</div>
+        <div class="bubbles-wrap"><div class="bubble${isDone?' done':''}" onclick="markDone('${exoKey}',${i})">${isDone?'✓ Fait':(ex.timeReps>=60?Math.round(ex.timeReps/60)+' min':(ex.timeReps)+' sec')}</div></div>
+      </div>`;
+    } else {
+      for(let s=0;s<ex.sets;s++){
+        const setDone=ts.doneSets>s||allDone;
+        const setActive=ts.doneSets===s&&!allDone;
+        const isResting=setActive&&ts.phase==='resting';
+        let bubbles='';
+        for(let r=0;r<ex.reps;r++){
+          const rk='r_'+s+'_'+r;
+          const rDone=setDone||!!ts.repsDone[rk];
+          bubbles+=`<div class="bubble${rDone?' done':setActive?' partial':''}" onclick="clickBubble('${tk}',${s},${r},'${exoKey}',${i})">${rDone?'✓':r+1}</div>`;
+        }
+        const restLabel=setDone?'':(isResting?`<span style="color:var(--amber);font-weight:700">${ts.restRemaining}s</span>`:'');
+        seriesHTML+=`<div class="series-row">
+          <div class="series-label${setDone?' done':setActive?' active':''}">${setDone?'✓ ':''}Série ${s+1}</div>
+          <div class="bubbles-wrap">${bubbles}</div>
+          <div class="rest-cd" id="rc-${tk}-${s}">${restLabel}</div>
+        </div>`;
+      }
+      const btnLabel=allDone?'✓ Terminé':
+        ts.phase==='resting'?`⏭ Passer (${ts.restRemaining}s)`:
+        ts.doneSets>=ex.sets?'✓ Terminé':`▶ Top départ — série ${ts.doneSets+1}`;
+      seriesHTML+=`<div class="series-actions">
+        <button class="sbtn sbtn-go${ts.phase==='resting'?' resting':''}" id="sbtn-${i}" onclick="seriesAction('${tk}',${i},'${exoKey}',${ex.restSec})" ${allDone||ts.doneSets>=ex.sets?'disabled style="opacity:.5"':''}>
+          ${btnLabel}
+        </button>
+        <button class="sbtn sbtn-reset" onclick="seriesReset('${tk}',${i},'${exoKey}')">↺</button>
+      </div>`;
+    }
+
+    html+=`<div class="exo-item" id="ei-${i}">
+      <div class="exo-header" onclick="toggleExpand(${i})">
+        <div class="exo-num${allDone?' done':''}" id="en-${i}">${allDone?'✓':i+1}</div>
+        <div style="flex:1">
+          <div class="exo-name">${ex.name}</div>
+          <div class="exo-sub">${ex.isTime?(ex.timeReps>=60?Math.round(ex.timeReps/60)+' min':ex.timeReps+'s'):(ex.sets+' × '+ex.reps+' reps')} · <span style="color:var(--accent);font-weight:600">${ex.initCharge>0?charge+' kg':'-'}</span></div>
+        </div>
+        <span class="exo-chevron" id="ec-${i}">▾</span>
+      </div>
+      <div class="exo-expand" id="ee-${i}">
+        <div class="exo-illus">
+          <div class="illus-svg">${ILLUSTRATIONS[ex.svg]||''}</div>
+          <div class="illus-info">
+            <div class="illus-tip">${ex.tip}</div>
+            <div class="illus-muscles">${ex.muscles.map(m=>`<span class="muscle-tag">${m}</span>`).join('')}</div>
+          </div>
+        </div>
+        ${ex.initCharge>0?`<div class="charge-block">
+          <div class="charge-row">
+            <div class="charge-label">Charge actuelle</div>
+            <div class="charge-val">${charge}<span class="charge-unit">kg</span></div>
+          </div>
+          ${hist.length?`<div class="perf-hist">${histHTML}</div>`:''}
+          <div style="margin-top:10px;font-size:11px;color:var(--text2);margin-bottom:6px">Mettre à jour la charge :</div>
+          <div class="charge-inputs">
+            <input type="number" id="ci-${i}" value="${charge}" step="2.5" min="0">
+            <button class="charge-save-btn" onclick="saveCharge('${ex.id}',${i})">Enregistrer</button>
+          </div>
+        </div>`:''}
+        ${seriesHTML}
+      </div>
+    </div>`;
+  });
+
+  html+=`</div></div>`;
+  document.getElementById('sessionContent').innerHTML=html;
+}
+
+function saveCharge(exoId, exoI){
+  const val=parseFloat(document.getElementById('ci-'+exoI).value);
+  if(!val&&val!==0){ toast('Charge invalide'); return; }
+  ST.charges[exoId]={charge:val, date:today()};
+  save();
+  renderSession();
+  setTimeout(()=>toggleExpand(exoI),30);
+  toast('Charge mise à jour : '+val+' kg ✓');
+}
+
+function toggleExpand(i){
+  const ee=document.getElementById('ee-'+i);
+  const ec=document.getElementById('ec-'+i);
+  const open=ee.classList.contains('open');
+  document.querySelectorAll('.exo-expand').forEach(e=>e.classList.remove('open'));
+  document.querySelectorAll('.exo-chevron').forEach(c=>c.classList.remove('open'));
+  if(!open){ ee.classList.add('open'); ec.classList.add('open'); }
+}
+
+function markDone(exoKey,idx){
+  ST.doneExos[exoKey]=true; save();
+  const en=document.getElementById('en-'+idx);
+  if(en){ en.textContent='✓'; en.classList.add('done'); }
+  toast('Exercice terminé ✓');
+}
+
+// =================================================================
+// SERIES + BUBBLES
+// =================================================================
+function getTS(tk){ return ST.seriesState[tk]||(ST.seriesState[tk]={doneSets:0,phase:'idle',restRemaining:0,repsDone:{}}); }
+
+function clickBubble(tk,setIdx,repIdx,exoKey,exoI){
+  const ts=getTS(tk);
+  if(ts.doneSets!==setIdx)return;
+  const rk='r_'+setIdx+'_'+repIdx;
+  ts.repsDone[rk]=!ts.repsDone[rk];
+  const ex=getSeanceForDay(ST.currentWeekDay)?.exercises[exoI];
+  if(!ex)return;
+  let doneCount=0;
+  for(let r=0;r<ex.reps;r++){ if(ts.repsDone['r_'+setIdx+'_'+r]) doneCount++; }
+  if(doneCount>=ex.reps&&ts.phase!=='resting'){
+    ts.doneSets=setIdx+1;
+    ts.phase='idle';
+    beep(880,120); setTimeout(()=>beep(1100,180),150);
+    if(ts.doneSets>=ex.sets){ ST.doneExos[exoKey]=true; save(); toast('Exercice terminé ✓'); }
+    else { toast('Série '+(setIdx+1)+' ✓ — repos '+ex.restSec+'s'); startRest(tk,setIdx,ex.restSec,exoI,exoKey); return; }
+  }
+  save(); renderSession(); setTimeout(()=>toggleExpand(exoI),30);
+}
+
+function seriesAction(tk,exoI,exoKey,restSec){
+  const ts=getTS(tk);
+  if(ts.phase==='resting'){ if(restIntervals[tk])clearInterval(restIntervals[tk]); ts.phase='idle'; ts.restRemaining=0; save(); renderSession(); setTimeout(()=>toggleExpand(exoI),30); return; }
+  const ex=getSeanceForDay(ST.currentWeekDay)?.exercises[exoI];
+  if(!ex||ts.doneSets>=ex.sets){ toast('Toutes les séries terminées !'); return; }
+  beep(880,150); setTimeout(()=>beep(1100,200),180);
+  toast('Série '+(ts.doneSets+1)+' — partez !');
+}
+
+function startRest(tk,setIdx,restSec,exoI,exoKey){
+  if(restIntervals[tk])clearInterval(restIntervals[tk]);
+  const ts=getTS(tk);
+  ts.phase='resting'; ts.restRemaining=restSec; save();
+  renderSession(); setTimeout(()=>toggleExpand(exoI),30);
+  restIntervals[tk]=setInterval(()=>{
+    const t=getTS(tk);
+    if(t.phase!=='resting'){ clearInterval(restIntervals[tk]); return; }
+    t.restRemaining--;
+    const rc=document.getElementById('rc-'+tk+'-'+setIdx);
+    const sb=document.getElementById('sbtn-'+exoI);
+    if(rc)rc.innerHTML=`<span style="color:var(--amber);font-weight:700">${t.restRemaining}s</span>`;
+    if(sb)sb.textContent='⏭ Passer ('+t.restRemaining+'s)';
+    if(t.restRemaining<=3)beep(660,80);
+    if(t.restRemaining<=0){ clearInterval(restIntervals[tk]); t.phase='idle'; t.restRemaining=0; save(); beep(880,150); setTimeout(()=>beep(1100,200),180); renderSession(); setTimeout(()=>toggleExpand(exoI),30); }
+    save();
+  },1000);
+}
+
+function seriesReset(tk,exoI,exoKey){
+  if(restIntervals[tk])clearInterval(restIntervals[tk]);
+  delete ST.seriesState[tk];
+  delete ST.doneExos[exoKey];
+  save(); renderSession(); setTimeout(()=>toggleExpand(exoI),30);
+}
+
+function beep(freq,dur){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(); const g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value=freq; g.gain.value=0.2;
+    o.start(); o.stop(ctx.currentTime+dur/1000);
+    setTimeout(()=>ctx.close(),dur+100);
+  }catch(e){}
+}
+
+// =================================================================
+// BALANCE
+// =================================================================
+function renderLastMetrics(){
+  const last=ST.balanceData.filter(b=>b.poids).slice(-1)[0];
+  if(!last){ document.getElementById('lastMetrics').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text3);font-size:13px">Ajoutez votre première mesure</div>`; return; }
+  const m=[
+    {l:'Poids',v:last.poids,u:'kg',s:last.poids>100?'bad':last.poids>95?'warn':'ok',sl:last.poids>100?'Objectif -'+(last.poids-95).toFixed(1)+'kg':'✓ Objectif atteint'},
+    {l:'Gr. s.-cut.',v:last.gsc,u:'%',s:last.gsc>25?'bad':last.gsc>15?'warn':'ok',sl:'Cible <15%'},
+    {l:'Hydratation',v:last.hydra,u:'%',s:last.hydra<50?'bad':last.hydra<55?'warn':'ok',sl:'Cible 55-65%'},
+    {l:'IMG',v:last.img,u:'%',s:last.img>30?'bad':last.img>22?'warn':'ok',sl:'Cible <22%'},
+    {l:'Gr. viscérale',v:last.gv,u:'',s:last.gv>12?'bad':last.gv>9?'warn':'ok',sl:'Cible <9'},
+    {l:'Protéines',v:last.prot,u:'%',s:last.prot<14?'bad':last.prot<16?'warn':'ok',sl:'Cible 16-18%'},
+  ];
+  document.getElementById('lastMetrics').innerHTML=m.map(x=>`<div class="metric-card">
+    <div class="metric-lbl">${x.l}</div>
+    <div class="metric-val">${x.v!=null?x.v:'—'}<span class="metric-unit">${x.u}</span></div>
+    <div class="metric-status s-${x.s}">${x.sl}</div>
+  </div>`).join('');
+}
+
+function renderBalanceHist(){
+  const wrap=document.getElementById('balanceHist');
+  const data=ST.balanceData.filter(b=>b.poids).slice().reverse().slice(0,10);
+  if(!data.length){ wrap.innerHTML='<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px">Aucune donnée</div>'; return; }
+  wrap.innerHTML=data.map((d,i)=>{
+    const prev=data[i+1];
+    const tr=prev&&d.poids&&prev.poids?(d.poids-prev.poids):0;
+    const ts=tr===0?'':(tr>0?`<span class="trend up">▲+${Math.abs(tr).toFixed(1)}</span>`:`<span class="trend dn">▼-${Math.abs(tr).toFixed(1)}</span>`);
+    return `<div class="hist-item">
+      <div class="hist-date">${fmtDate(d.date)}</div>
+      <div class="hist-vals">
+        <div class="hv">${d.poids||'—'}<span>kg</span></div>
+        <div class="hv">${d.gsc||'—'}<span>%G</span></div>
+        <div class="hv">${d.hydra||'—'}<span>%H</span></div>
+      </div>${ts}
+    </div>`;
+  }).join('');
+}
+
+function saveBalance(){
+  const d={
+    date:document.getElementById('b-date').value||today(),
+    poids:parseFloat(document.getElementById('b-poids').value)||null,
+    img:parseFloat(document.getElementById('b-img').value)||null,
+    hydra:parseFloat(document.getElementById('b-hydra').value)||null,
+    gsc:parseFloat(document.getElementById('b-gsc').value)||null,
+    gv:parseFloat(document.getElementById('b-gv').value)||null,
+    prot:parseFloat(document.getElementById('b-prot').value)||null,
+    age:parseFloat(document.getElementById('b-age').value)||null,
+  };
+  if(!d.poids){ toast('Entrez au moins le poids'); return; }
+  ST.balanceData.push(d);
+  ST.dailyWeights[d.date]=d.poids;
+  save(); renderLastMetrics(); renderBalanceHist(); renderWeightPrev();
+  ['b-poids','b-img','b-hydra','b-gsc','b-gv','b-prot','b-age'].forEach(id=>document.getElementById(id).value='');
+  toast('Mesure enregistrée ✓');
+}
+
+// =================================================================
+// PROGRESS
+// =================================================================
+function renderProgress(){
+  const last=ST.balanceData.filter(b=>b.poids).slice(-1)[0];
+  const objs=[
+    {l:'Poids',c:last?.poids||107,t:95,u:'kg',inv:true},
+    {l:'Gr. s.-cut.',c:last?.gsc||28.7,t:15,u:'%',inv:true},
+    {l:'IMG',c:last?.img||32,t:22,u:'%',inv:true},
+    {l:'Hydratation',c:last?.hydra||49.8,t:58,u:'%',inv:false},
+    {l:'Gr. viscérale',c:last?.gv||15,t:9,u:'',inv:true},
+    {l:'Protéines',c:last?.prot||14.5,t:16,u:'%',inv:false},
+  ];
+  const colors={ok:'var(--accent)',warn:'var(--amber)',bad:'var(--red)'};
+  document.getElementById('objList').innerHTML=objs.map(o=>{
+    const start=o.inv?o.c:0; const range=o.inv?(o.c-o.t):o.t;
+    const prog=o.inv?Math.max(5,Math.min(95,(1-(o.c-o.t)/Math.max(o.c,1))*100)):Math.min(95,o.c/o.t*100);
+    const status=o.inv?(o.c<=o.t?'ok':o.c<=o.t*1.1?'warn':'bad'):(o.c>=o.t?'ok':o.c>=o.t*.9?'warn':'bad');
+    return `<div class="obj-item">
+      <div class="obj-lbl">${o.l}</div>
+      <div><div class="obj-cur">${o.c}<span style="font-size:11px;color:var(--text3);font-weight:400">${o.u}</span></div>
+      <div class="obj-tgt">${o.inv?'<':'≥'}${o.t}${o.u}</div></div>
+      <div class="obj-bw"><div class="obj-bf" style="width:${Math.round(prog)}%;background:${colors[status]}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Weight chart 30 days
+  const days30=[]; for(let i=29;i>=0;i--){ const d=new Date(); d.setDate(d.getDate()-i); days30.push(d.toISOString().split('T')[0]); }
+  const wVals=days30.map(d=>ST.dailyWeights[d]||null);
+  const valid=wVals.filter(v=>v!==null);
+  if(valid.length<2){ document.getElementById('weightChart').innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">Enregistrez votre poids quotidiennement</div>'; }
+  else {
+    const minW=Math.min(...valid)-0.5, maxW=Math.max(...valid)+0.5, range=maxW-minW||1;
+    const W=300,H=70;
+    const pts=wVals.map((v,i)=>{ if(v===null)return null; const x=Math.round(i/29*W); const y=Math.round(H-(v-minW)/range*H); return {x,y,v,d:days30[i]}; }).filter(Boolean);
+    let path='M'+pts[0].x+','+pts[0].y; pts.slice(1).forEach(p=>path+=' L'+p.x+','+p.y);
+    // Target line
+    const ty=Math.round(H-(95-minW)/range*H);
+    document.getElementById('weightChart').innerHTML=`<svg viewBox="0 0 ${W} ${H+24}" width="100%">
+      <line x1="0" y1="${ty}" x2="${W}" y2="${ty}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4 3" opacity=".4"/>
+      <text x="${W-2}" y="${ty-4}" text-anchor="end" font-size="9" fill="var(--accent)" opacity=".7">95kg</text>
+      <path d="${path}" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${pts.filter((_,i)=>i%5===0||i===pts.length-1).map(p=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="var(--red)"/><text x="${p.x}" y="${p.y-6}" text-anchor="middle" font-size="9" fill="#8a8780">${p.v}</text>`).join('')}
+      <text x="0" y="${H+20}" font-size="9" fill="#5a5855">${fmtDate(days30[0])}</text>
+      <text x="${W}" y="${H+20}" text-anchor="end" font-size="9" fill="#5a5855">${fmtDate(days30[29])}</text>
+    </svg>`;
+  }
+
+  // Nutrition (phase sèche / maintenance)
+  renderNutrition(last);
+  // Charges progression (tous les exercices)
+  renderChargesChart();
+
+  // Tips
+  const tips=[];
+  if(last?.poids>100) tips.push({i:'⚖️',t:`${(last.poids-95).toFixed(1)} kg restants pour atteindre 95 kg. Déficit de 300-400 kcal/jour suffit.`});
+  if((last?.prot||0)<15) tips.push({i:'🥩',t:'Protéines trop basses. 150g/jour minimum — priorité absolue chaque repas.'});
+  if(ST.feedbacks.length===0) tips.push({i:'📊',t:'Remonte tes charges après chaque séance dans l\'onglet Garmin pour que j\'ajuste le programme.'});
+  const weekActs=ST.activities.filter(a=>a.date>=ST.weekStart);
+  if(weekActs.length>=3) tips.push({i:'🎉',t:'3 séances cette semaine — objectif atteint ! Continue.'});
+  if(!tips.length) tips.push({i:'✅',t:'Continue comme ça. Les charges augmentent, le programme fonctionne.'});
+  document.getElementById('tips').innerHTML=tips.map(t=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:18px;flex-shrink:0">${t.i}</span><span style="font-size:13px;color:var(--text2);line-height:1.6">${t.t}</span></div>`).join('');
+}
+
+function renderChargesChart(){
+  // Exercices uniques des 3 séances (chargés), sans doublon
+  const seen=new Set(); const exos=[];
+  SEANCES_MUSCU.forEach(s=>s.exercises.forEach(e=>{
+    if(e.initCharge>0 && !seen.has(e.id)){ seen.add(e.id); exos.push(e); }
+  }));
+  const data=exos.map(e=>{
+    const current=ST.charges[e.id]?.charge||e.initCharge;
+    return {name:e.name.split(' ').slice(0,2).join(' '), current, init:e.initCharge};
+  });
+  const maxC=Math.max(...data.map(d=>d.current), 1);
+  const cont=document.getElementById('chargesChart');
+  if(!cont) return;
+  if(!data.length){ cont.innerHTML=''; return; }
+  cont.innerHTML=data.map(d=>{
+    const gain=d.current-d.init;
+    return `
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--text2);min-width:90px">${d.name}</div>
+      <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">
+        <div style="height:6px;border-radius:3px;background:var(--accent);width:${Math.max(6,(d.current/maxC)*100)}%"></div>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--accent);min-width:46px;text-align:right">${d.current}kg</div>
+      <div style="font-size:10px;color:${gain>0?'var(--accent)':'var(--text3)'};min-width:34px;text-align:right">${gain>0?'+'+gain:'—'}</div>
+    </div>`;}).join('');
+}
+
+// Nutrition : bascule automatique sèche → maintenance selon le poids
+function renderNutrition(last){
+  const cont=document.getElementById('nutritionBlock');
+  if(!cont) return;
+  const poids=last?.poids || 107;
+  const cut = poids > 95.5; // marge pour éviter le yo-yo autour de 95
+  const phase = cut ? 'Sèche' : 'Maintenance';
+  const phaseColor = cut ? 'var(--amber)' : 'var(--accent)';
+  // Cibles (issues de l'analyse : déficit léger 300-400 kcal, protéines prioritaires)
+  const kcalRepos = cut ? 2100 : 2450;
+  const kcalSport = cut ? 2400 : 2750;
+  const prot = cut ? 160 : 150; // g/j — protéines hautes surtout en sèche
+  const desc = cut
+    ? `Objectif : ${(poids-95).toFixed(1)} kg à perdre. Déficit léger de 300-400 kcal/jour — pas plus, pour garder le muscle gagné.`
+    : `95 kg atteint 🎯 Passe en maintenance : on stabilise autour de 95 kg et on continue de renforcer.`;
+  cont.innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${phaseColor}22;color:${phaseColor};text-transform:uppercase;letter-spacing:.5px">${phase}</span>
+      <span style="font-size:12px;color:var(--text2)">Poids actuel : <strong style="color:var(--text)">${poids} kg</strong></span>
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">${desc}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px;text-align:center">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px">${kcalRepos}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">kcal repos</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px;text-align:center">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px">${kcalSport}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">kcal sport</div>
+      </div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:10px;text-align:center">
+        <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--accent)">${prot}g</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">protéines/j</div>
+      </div>
+    </div>
+    ${renderIntakeRow(prot)}`;
+}
+
+// Dernier apport enregistré (via le flux de lancement) vs cible protéines
+function renderIntakeRow(protTarget){
+  if(!ST.nutrition||!ST.nutrition.length) return '';
+  const last=[...ST.nutrition].sort((a,b)=>a.date<b.date?-1:1).pop();
+  const chip=(lbl,val,unit,ok)=>`<div style="flex:1;text-align:center">
+      <div style="font-size:15px;font-weight:600;color:${ok===false?'var(--amber)':'var(--text)'}">${val||'—'}<span style="font-size:10px;color:var(--text3)">${val?unit:''}</span></div>
+      <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">${lbl}</div></div>`;
+  return `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Dernier apport saisi · <strong style="color:var(--text)">${fmtDate(last.date)}</strong></div>
+    <div style="display:flex;gap:6px">
+      ${chip('kcal',last.kcal,'',null)}
+      ${chip('Prot',last.prot,'g',last.prot>=protTarget)}
+      ${chip('Gluc',last.gluc,'g',null)}
+      ${chip('Lip',last.lip,'g',null)}
+      ${chip('Fibres',last.fibre,'g',last.fibre>=25)}
+    </div></div>`;
+}
+
+// =================================================================
+// GARMIN
+// =================================================================
+function populateFeedbackExo(){
+  const seance=document.getElementById('fb-seance').value;
+  const exos=(SEANCE_MAP[seance]||SEANCE_1).exercises;
+  document.getElementById('fb-exo').innerHTML=exos.filter(e=>e.initCharge>0).map(e=>`<option value="${e.id}">${e.name}</option>`).join('');
+}
+
+function saveFeedback(){
+  const seance=document.getElementById('fb-seance').value;
+  const exoId=document.getElementById('fb-exo').value;
+  const charge=parseFloat(document.getElementById('fb-charge').value);
+  const reps=parseInt(document.getElementById('fb-reps').value);
+  const comment=document.getElementById('fb-comment').value;
+  const date=document.getElementById('fb-date').value||today();
+  if(!charge||!reps){ toast('Remplis charge et reps'); return; }
+
+  const fb={date,seance,exoId,charge,reps,comment};
+  ST.feedbacks.push(fb);
+
+  // Auto-update charge if reps were achieved
+  const exos=(SEANCE_MAP[seance]||SEANCE_1).exercises;
+  const ex=exos.find(e=>e.id===exoId);
+  if(ex){
+    const prevCharge=ST.charges[exoId]?.charge||ex.initCharge;
+    if(reps>=ex.reps && charge>=prevCharge){
+      const newCharge=charge+ex.prog;
+      ST.charges[exoId]={charge:newCharge, date:today()};
+      toast(`✓ Enregistré — prochaine séance : ${newCharge}kg 🎯`);
+    } else if(reps<ex.reps-2){
+      const newCharge=Math.max(ex.initCharge, charge-ex.prog);
+      ST.charges[exoId]={charge:newCharge, date:today()};
+      toast(`Charge réduite à ${newCharge}kg pour la prochaine séance`);
+    } else {
+      toast('Retour enregistré ✓');
+    }
+  }
+
+  save();
+  ['fb-charge','fb-reps','fb-comment'].forEach(id=>document.getElementById(id).value='');
+  renderFeedbackHist();
+}
+
+function renderFeedbackHist(){
+  const wrap=document.getElementById('feedbackHist');
+  if(!ST.feedbacks.length){ wrap.innerHTML='<div style="text-align:center;padding:12px;color:var(--text3);font-size:13px">Aucun retour enregistré</div>'; return; }
+  wrap.innerHTML=[...ST.feedbacks].reverse().slice(0,10).map(f=>`
+    <div class="hist-item">
+      <div class="hist-date">${fmtDate(f.date)}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">Séance ${f.seance} — ${f.exoId}</div>
+        <div style="font-size:11px;color:var(--text2)">${f.charge}kg × ${f.reps} reps${f.comment?' — '+f.comment:''}</div>
+      </div>
+    </div>`).join('');
+}
+
+function downloadGarmin(type){
+  const seance=SEANCE_MAP[type]||SEANCE_1;
+  const content=generateWorkoutJSON(seance);
+  const filename='FitCoach_'+seance.label.replace(/\s+/g,'_')+'.json';
+  const blob=new Blob([JSON.stringify(content,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+  toast('Fichier téléchargé — importez dans Garmin Connect');
+}
+
+function generateWorkoutJSON(seance){
+  return {
+    workoutName: 'FitCoach — '+seance.label,
+    description: seance.sub,
+    sport: seance.id==='Z2'?'cycling':'strength_training',
+    estimatedDurationInSecs: seance.id==='Z2'?2700:3600,
+    workoutSteps: seance.exercises.map((ex,i)=>{
+      const charge=ST.charges[ex.id]?.charge||ex.initCharge;
+      return {
+        stepOrder: i+1,
+        stepType: ex.isTime?'interval':'strength',
+        exerciseName: ex.name,
+        numberOfSets: ex.sets,
+        repsPerSet: ex.reps||0,
+        weight: charge,
+        restDuration: ex.restSec,
+        muscles: ex.muscles,
+        notes: ex.tip.substring(0,100)
+      };
+    })
+  };
+}
+
+// =================================================================
+// WIZARD — flux de lancement (Bonjour Clément)
+// =================================================================
+const STRENGTH_ORDER=['S1','S2','S3'];
+const SESSION_DAY={S1:0,S2:2,S3:4};
+const SESSION_ROLE={
+  S1:{ title:'Force', desc:'Séance lourde sur les gros mouvements (squat, développé couché). Objectif : entretenir la force et protéger le muscle pendant la sèche.' },
+  S2:{ title:'Chaîne postérieure', desc:'Focus ischios, fessiers et tirage (soulevé de terre roumain, rowing). Équilibre le corps et renforce le dos.' },
+  S3:{ title:'Volume', desc:'Plus de répétitions, plus léger sur les articulations. On accumule du volume et on congestionne.' },
+};
+function lastKnownWeight(){
+  const dw=Object.keys(ST.dailyWeights).sort();
+  if(dw.length) return ST.dailyWeights[dw[dw.length-1]];
+  const bd=[...ST.balanceData].filter(b=>b.poids).sort((a,b)=>a.date<b.date?-1:1);
+  return bd.length?bd[bd.length-1].poids:null;
+}
+function nextStrength(){
+  const i=STRENGTH_ORDER.indexOf(ST.lastStrength);
+  return i<0?'S1':STRENGTH_ORDER[(i+1)%3];
+}
+function sessionMuscles(seance){
+  const set=[]; seance.exercises.forEach(e=>e.muscles.forEach(m=>{ if(!set.includes(m)) set.push(m); }));
+  return set;
+}
+
+let wzStep=0;
+function openWizard(){ buildWzWeight(); document.getElementById('wizard').classList.add('show'); wzGo(0); }
+function closeWizard(){ document.getElementById('wizard').classList.remove('show'); ST.lastWizard=today(); save(); }
+function wzGo(n){
+  wzStep=n;
+  document.querySelectorAll('.wz-step').forEach((s,i)=>s.classList.toggle('active',i===n));
+  const dots=document.getElementById('wz-dots');
+  dots.innerHTML=[0,1,2,3].map(i=>`<div class="wz-dot${i===n?' on':''}"></div>`).join('');
+  document.querySelector('.wizard').scrollTop=0;
+}
+function buildWzWeight(){
+  const last=lastKnownWeight();
+  const inp=document.getElementById('wz-weight'); inp.value='';
+  inp.placeholder=last?String(last):'—';
+  document.getElementById('wz-weight-sub').innerHTML = last
+    ? `Ton dernier poids : <strong style="color:var(--text)">${last} kg</strong>. Et aujourd'hui&nbsp;?`
+    : `Combien pèses-tu aujourd'hui&nbsp;?`;
+}
+function wzWeightNext(){
+  const raw=document.getElementById('wz-weight').value;
+  const v=parseFloat(raw)|| (raw===''?lastKnownWeight():NaN);
+  if(v && !isNaN(v)){
+    ST.dailyWeights[today()]=v;
+    const ex=ST.balanceData.find(b=>b.date===today());
+    if(!ex) ST.balanceData.push({date:today(),poids:v}); else ex.poids=v;
+    save(); renderWeightPrev();
+    const dw=document.getElementById('daily-weight'); if(dw) dw.value=v;
+  }
+  wzGo(1);
+}
+function wzMacrosNext(skip){
+  if(!skip){
+    const g=id=>parseFloat(document.getElementById(id).value)||0;
+    const kcal=g('wz-kcal'), prot=g('wz-prot'), gluc=g('wz-gluc'), lip=g('wz-lip'), fibre=g('wz-fibre');
+    if(kcal||prot||gluc||lip||fibre){
+      const y=yesterday();
+      const rec={date:y,kcal,prot,gluc,lip,fibre};
+      const i=ST.nutrition.findIndex(n=>n.date===y);
+      if(i>=0) ST.nutrition[i]=rec; else ST.nutrition.push(rec);
+      save();
+    }
+  }
+  buildWzOptions(); wzGo(2);
+}
+function buildWzOptions(){
+  const reco=nextStrength();
+  const ordered=[reco, ...STRENGTH_ORDER.filter(s=>s!==reco)];
+  const strengthHTML=ordered.map(id=>{
+    const s=SEANCE_MAP[id], isReco=id===reco;
+    const svg=ILLUSTRATIONS[s.exercises[0].svg]||'';
+    return `<button class="wz-opt${isReco?' reco':''}" onclick="wzChoose('${id}')">
+      <div class="wz-opt-ic">${svg}</div>
+      <div><div class="wz-opt-tt">${s.label} · ${SESSION_ROLE[id].title}</div><div class="wz-opt-ds">${s.exercises.length} exercices · full-body</div></div>
+      ${isReco?'<span class="wz-badge">conseillé</span>':''}
+    </button>`;
+  }).join('');
+  const acts=[
+    ['walk','🚶 Marche','30-45 min · récup active'],
+    ['cardio','🚴 Cardio libre','Zone 2 · vélo / tapis'],
+    ['rando','🥾 Randonnée','sortie longue en extérieur'],
+    ['other','➕ Autre activité','natation, sport co, etc.'],
+  ].map(([k,t,d])=>`<button class="wz-opt" onclick="wzChoose('${k}')">
+      <div class="wz-opt-ic" style="font-size:22px">${t.split(' ')[0]}</div>
+      <div><div class="wz-opt-tt">${t.replace(/^\S+\s/,'')}</div><div class="wz-opt-ds">${d}</div></div>
+    </button>`).join('');
+  document.getElementById('wz-options').innerHTML=
+    strengthHTML+`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Ou une autre activité</div>`+acts;
+}
+function wzChoose(kind){
+  if(STRENGTH_ORDER.includes(kind)){ buildWzIntro(kind); wzGo(3); return; }
+  const map={walk:'Marche',cardio:'Cardio libre',rando:'Randonnée',other:'Autre activité'};
+  ST.activities.push({date:today(), type:map[kind]||kind, dur:''});
+  save(); closeWizard(); toast((map[kind]||'Activité')+' enregistrée ✓');
+}
+function buildWzIntro(id){
+  const s=SEANCE_MAP[id], role=SESSION_ROLE[id];
+  const muscles=sessionMuscles(s);
+  const exos=s.exercises.map(e=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <span>${e.name}</span><span style="color:var(--text2)">${e.isTime?e.timeReps+'s':e.sets+'×'+e.reps}</span></div>`).join('');
+  document.getElementById('wz-intro').innerHTML=`
+    <div class="wz-hi">${s.label} — <span>${role.title}</span></div>
+    <div class="wz-sub">${role.desc}</div>
+    <div class="card"><div class="form-title">Groupes travaillés</div>
+      <div class="illus-muscles">${muscles.map(m=>`<span class="muscle-tag">${m}</span>`).join('')}</div>
+    </div>
+    <div class="card"><div class="form-title">Au programme · ${s.exercises.length} exercices</div>${exos}</div>
+    <div class="wz-nav">
+      <button class="btn btn-ghost" onclick="wzGo(2)">Retour</button>
+      <button class="btn btn-primary" onclick="startChosenSession('${id}')">Commencer la séance →</button>
+    </div>`;
+}
+function startChosenSession(id){
+  ST.lastStrength=id; save();
+  ST.currentWeekDay=SESSION_DAY[id];
+  closeWizard();
+  showPage('training', document.querySelector('.nav .nav-btn'));
+  renderWeekTabs(); renderSession();
+  window.scrollTo(0,0);
+}
+
+// =================================================================
+// TOAST
+// =================================================================
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); }
+
+// =================================================================
+// INIT
+// =================================================================
+initPreloaded();
+document.getElementById('b-date').value=today();
+document.getElementById('fb-date').value=today();
+const ws=new Date(ST.weekStart); const we=new Date(ws); we.setDate(we.getDate()+6);
+document.getElementById('weekBadge').textContent=(ws.getDate()+'/'+(ws.getMonth()+1))+' – '+(we.getDate()+'/'+(we.getMonth()+1));
+renderWeightPrev();
+renderWeekTabs();
+renderSession();
+renderLastMetrics();
+renderBalanceHist();
+populateFeedbackExo();
+document.getElementById('fb-seance').addEventListener('change',populateFeedbackExo);
+// Flux de lancement : s'ouvre automatiquement une fois par jour
+if(ST.lastWizard!==today()) openWizard();
+</script>
+</body>
+</html>
