@@ -182,6 +182,25 @@ select option{background:var(--bg3)}
 .wz-dot.on{background:var(--accent);width:20px;border-radius:4px}
 .wz-skip{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;padding:10px;width:100%;margin-top:4px}
 .day-btn{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;font-family:inherit}
+/* SÉRIES (bouton Valider + chrono) */
+.sets-wrap{padding:2px 0}
+.set-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.set-row:last-child{border-bottom:none}
+.set-lbl{font-size:13px;font-weight:600;min-width:66px}
+.set-lbl.done{color:var(--accent)}
+.set-lbl.pending{color:var(--text3)}
+.set-done-val{font-size:12px;color:var(--text2)}
+.stepper{display:flex;align-items:center;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;overflow:hidden}
+.stepper button{width:38px;height:38px;border:none;background:none;color:var(--text);font-size:20px;font-weight:600;cursor:pointer;line-height:1}
+.stepper button:active{background:var(--bg3)}
+.stepper .rv{min-width:42px;text-align:center;font-weight:700;font-size:16px}
+.set-validate{margin-left:auto;background:var(--accent);color:#0f0f0f;border:none;border-radius:9px;font-weight:700;font-size:14px;padding:11px 18px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.set-validate:active{background:var(--accent2)}
+.set-validate.rest{background:var(--amber)}
+.set-start{margin-left:auto;background:var(--blue);color:#0f0f0f;border:none;border-radius:9px;font-weight:700;font-size:14px;padding:11px 18px;cursor:pointer;font-family:inherit}
+.rest-row{display:flex;align-items:center;gap:10px;padding:11px 16px;background:rgba(245,166,35,.08);border-bottom:1px solid var(--border)}
+.rest-row .cd{font-weight:700;color:var(--amber);font-size:16px;min-width:44px}
+.variant-btn{background:var(--bg4);border:1px solid var(--border2);border-radius:20px;padding:6px 12px;font-size:12px;color:var(--accent);cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -267,6 +286,15 @@ select option{background:var(--bg3)}
   <div class="section-title">Balance<div class="section-sub">Mesures corporelles</div></div>
   <div class="metrics-grid" id="lastMetrics"></div>
   <div class="card">
+    <div class="form-title" style="margin-bottom:10px">Importer depuis Garmin (CSV)</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:10px">
+      Sur Garmin Connect (web), exporte en CSV : la liste d'<strong style="color:var(--text)">activités</strong> ou ton suivi de <strong style="color:var(--text)">poids/composition</strong>. Puis charge le fichier ici — je détecte le type et je fusionne (pas de doublon).
+    </div>
+    <input type="file" id="csv-file" accept=".csv,text/csv" style="display:none" onchange="importCSV(event)">
+    <button class="btn btn-primary" style="margin-top:0" onclick="document.getElementById('csv-file').click()">📥 Choisir un fichier CSV</button>
+    <div id="csv-result" style="font-size:12px;color:var(--accent);margin-top:10px"></div>
+  </div>
+  <div class="card">
     <div class="form-title">Nouvelle mesure</div>
     <div class="form-grid">
       <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
@@ -307,15 +335,18 @@ select option{background:var(--bg3)}
 
 <!-- PAGE GARMIN -->
 <div class="page" id="page-garmin">
-  <div class="section-title">Export Garmin<div class="section-sub">Vrais fichiers .FIT — importables dans Garmin Connect</div></div>
+  <div class="section-title">Export Garmin<div class="section-sub">Séance guidée sur la montre (fichier .FIT)</div></div>
   <div class="card">
-    <div class="form-title" style="margin-bottom:12px">Comment importer</div>
+    <div class="form-title" style="margin-bottom:12px">Comment charger sur la montre</div>
     <div style="font-size:13px;color:var(--text2);line-height:1.8">
-      1. Télécharge les fichiers ci-dessous<br>
-      2. Ouvre <strong style="color:var(--text)">connect.garmin.com</strong> sur ordinateur<br>
-      3. Menu <strong style="color:var(--text)">Entraînement → Entraînements</strong><br>
-      4. Clique <strong style="color:var(--text)">Importer</strong> et sélectionne le fichier .fit<br>
-      5. La séance apparaît sur ta montre à la prochaine synchro
+      1. Télécharge le fichier .fit ci-dessous<br>
+      2. Branche ta montre à l'ordinateur en <strong style="color:var(--text)">USB</strong> (elle apparaît comme une clé)<br>
+      3. Ouvre le dossier <strong style="color:var(--text)">GARMIN → NewFiles</strong><br>
+      4. Copie le fichier .fit dedans, puis éjecte la montre<br>
+      5. La séance apparaît dans <strong style="color:var(--text)">Entraînement → Entraînements</strong> sur la montre (redémarre-la si besoin)
+    </div>
+    <div style="font-size:12px;color:var(--amber);line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+      ⚠️ L'import par le site Garmin Connect ne marche PAS pour les entraînements (uniquement USB). Alternative sans fichier : lance l'activité <strong>Musculation</strong> directement sur ta montre — elle enregistre la séance et se synchronise avec Connect.
     </div>
   </div>
   <div class="card">
@@ -565,7 +596,7 @@ let ST = {
   currentWeekDay: new Date().getDay()===0?6:new Date().getDay()-1,
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
   dailyWeights:{}, charges:{}, feedbacks:[],
-  nutrition:[], lastStrength:null, lastWizard:null,
+  nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{},
   weekStart: weekStartDate(),
 };
 let restIntervals={};
@@ -593,6 +624,7 @@ function load(){
   ST.nutrition=p.nutrition||[];
   ST.lastStrength=p.lastStrength||null;
   ST.lastWizard=p.lastWizard||null;
+  ST.exoVariant=p.exoVariant||{};
 }
 function save(){
   localStorage.setItem('fc5',JSON.stringify({
@@ -600,7 +632,7 @@ function save(){
     doneExos:ST.doneExos, seriesState:ST.seriesState,
     dailyWeights:ST.dailyWeights, charges:ST.charges,
     feedbacks:ST.feedbacks, nutrition:ST.nutrition,
-    lastStrength:ST.lastStrength, lastWizard:ST.lastWizard,
+    lastStrength:ST.lastStrength, lastWizard:ST.lastWizard, exoVariant:ST.exoVariant,
   }));
 }
 
@@ -718,60 +750,50 @@ function renderSession(){
     <div class="exo-list">`;
 
   seance.exercises.forEach((ex,i)=>{
-    const exoKey=dayKey+'_'+i;
-    const allDone=!!ST.doneExos[exoKey];
     const tk='t_'+seance.id+'_'+ST.currentWeekDay+'_'+i;
-    const ts=ST.seriesState[tk]||{doneSets:0,phase:'idle',restRemaining:0,repsDone:{}};
-    const charge=getExoChargeDisplay(ex);
+    const ts=getTS(tk);
+    const vName=exVariantName(ex);
+    const chKey=exChargeKey(ex);
+    const charge=ST.charges[chKey]?.charge ?? ex.initCharge;
+    const doneCount=ts.done.length;
+    const allDone=doneCount>=ex.sets;
+    const unit=ex.isTime?'s':' reps';
 
-    // Charge history
-    const hist=ST.feedbacks.filter(f=>f.exoId===ex.id).slice(-3);
-    const histHTML=hist.length?hist.map(f=>`<div>${fmtDate(f.date)} — <span>${f.charge}kg × ${f.reps} reps${f.comment?' — '+f.comment:''}</span></div>`).join(''):'';
-
-    // Series rows
-    let seriesHTML='';
-    if(ex.isTime){
-      // Time-based (planche, Z2)
-      const isDone=!!ST.doneExos[exoKey];
-      seriesHTML+=`<div class="series-row">
-        <div class="series-label${isDone?' done':''}">${isDone?'✓ ':''}${ex.sets > 1 ? ex.sets+' fois' : ''}</div>
-        <div class="bubbles-wrap"><div class="bubble${isDone?' done':''}" onclick="markDone('${exoKey}',${i})">${isDone?'✓ Fait':(ex.timeReps>=60?Math.round(ex.timeReps/60)+' min':(ex.timeReps)+' sec')}</div></div>
-      </div>`;
-    } else {
-      for(let s=0;s<ex.sets;s++){
-        const setDone=ts.doneSets>s||allDone;
-        const setActive=ts.doneSets===s&&!allDone;
-        const isResting=setActive&&ts.phase==='resting';
-        let bubbles='';
-        for(let r=0;r<ex.reps;r++){
-          const rk='r_'+s+'_'+r;
-          const rDone=setDone||!!ts.repsDone[rk];
-          bubbles+=`<div class="bubble${rDone?' done':setActive?' partial':''}" onclick="clickBubble('${tk}',${s},${r},'${exoKey}',${i})">${rDone?'✓':r+1}</div>`;
+    // Lignes de séries — un bouton "Valider" par série, chrono auto
+    let seriesHTML='<div class="sets-wrap">';
+    for(let s=0;s<ex.sets;s++){
+      if(s<doneCount){
+        seriesHTML+=`<div class="set-row"><div class="set-lbl done">✓ Série ${s+1}</div><div class="set-done-val">${ts.done[s]}${unit}</div></div>`;
+      } else if(s===doneCount && ts.resting){
+        seriesHTML+=`<div class="rest-row"><div class="set-lbl" style="color:var(--amber)">⏱ Repos</div><div class="cd" id="cd-${tk}">${ts.restLeft}s</div><button class="set-validate rest" onclick="skipRest('${tk}',${i})">Passer ⏭</button></div>`;
+      } else if(s===doneCount){
+        if(ex.isTime){
+          seriesHTML+=`<div class="set-row"><div class="set-lbl">Série ${s+1}</div><div class="set-done-val">maintien ${ex.timeReps}s</div><button class="set-start" id="st-${tk}" onclick="startWork('${tk}',${i})"><span id="cd-${tk}">▶ ${ex.timeReps}s</span></button></div>`;
+        } else {
+          const pend=ts.pending ?? ex.reps;
+          seriesHTML+=`<div class="set-row"><div class="set-lbl">Série ${s+1}</div>
+            <div class="stepper"><button onclick="stepReps('${tk}',${i},-1)">−</button><span class="rv" id="rv-${tk}">${pend}</span><button onclick="stepReps('${tk}',${i},1)">+</button></div>
+            <button class="set-validate" onclick="validateSet('${tk}',${i})">Valider ✓</button></div>`;
         }
-        const restLabel=setDone?'':(isResting?`<span style="color:var(--amber);font-weight:700">${ts.restRemaining}s</span>`:'');
-        seriesHTML+=`<div class="series-row">
-          <div class="series-label${setDone?' done':setActive?' active':''}">${setDone?'✓ ':''}Série ${s+1}</div>
-          <div class="bubbles-wrap">${bubbles}</div>
-          <div class="rest-cd" id="rc-${tk}-${s}">${restLabel}</div>
-        </div>`;
+      } else {
+        seriesHTML+=`<div class="set-row"><div class="set-lbl pending">Série ${s+1}</div><div class="set-done-val" style="color:var(--text3)">${ex.isTime?ex.timeReps+'s':ex.reps+' reps'}</div></div>`;
       }
-      const btnLabel=allDone?'✓ Terminé':
-        ts.phase==='resting'?`⏭ Passer (${ts.restRemaining}s)`:
-        ts.doneSets>=ex.sets?'✓ Terminé':`▶ Top départ — série ${ts.doneSets+1}`;
-      seriesHTML+=`<div class="series-actions">
-        <button class="sbtn sbtn-go${ts.phase==='resting'?' resting':''}" id="sbtn-${i}" onclick="seriesAction('${tk}',${i},'${exoKey}',${ex.restSec})" ${allDone||ts.doneSets>=ex.sets?'disabled style="opacity:.5"':''}>
-          ${btnLabel}
-        </button>
-        <button class="sbtn sbtn-reset" onclick="seriesReset('${tk}',${i},'${exoKey}')">↺</button>
-      </div>`;
     }
+    seriesHTML+='</div>';
+
+    let progHint='';
+    if(allDone && !ex.isTime && ex.prog>0){
+      const minReps=Math.min(...ts.done);
+      if(minReps>=ex.reps) progHint=`<div style="padding:8px 16px;font-size:12px;color:var(--accent)">🎯 Objectifs atteints — vise ${(charge+ex.prog)} kg la prochaine fois.</div>`;
+    }
+    const hasVar=exAlts(ex).length>1;
 
     html+=`<div class="exo-item" id="ei-${i}">
       <div class="exo-header" onclick="toggleExpand(${i})">
         <div class="exo-num${allDone?' done':''}" id="en-${i}">${allDone?'✓':i+1}</div>
         <div style="flex:1">
-          <div class="exo-name">${ex.name}</div>
-          <div class="exo-sub">${ex.isTime?(ex.timeReps>=60?Math.round(ex.timeReps/60)+' min':ex.timeReps+'s'):(ex.sets+' × '+ex.reps+' reps')} · <span style="color:var(--accent);font-weight:600">${ex.initCharge>0?charge+' kg':'-'}</span></div>
+          <div class="exo-name">${vName}</div>
+          <div class="exo-sub">${ex.isTime?(ex.sets+' × '+ex.timeReps+'s'):(ex.sets+' × '+ex.reps+' reps')}${ex.initCharge>0?' · <span style="color:var(--accent);font-weight:600">'+charge+' kg</span>':''}${doneCount>0&&!allDone?' · <span style="color:var(--amber)">'+doneCount+'/'+ex.sets+'</span>':''}</div>
         </div>
         <span class="exo-chevron" id="ec-${i}">▾</span>
       </div>
@@ -783,19 +805,25 @@ function renderSession(){
             <div class="illus-muscles">${ex.muscles.map(m=>`<span class="muscle-tag">${m}</span>`).join('')}</div>
           </div>
         </div>
+        ${hasVar?`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--text2)">Machine</span>
+          <span style="font-size:13px;font-weight:600;flex:1">${vName}</span>
+          <button class="variant-btn" onclick="cycleVariant(${i})">⇄ Changer</button>
+        </div>`:''}
         ${ex.initCharge>0?`<div class="charge-block">
           <div class="charge-row">
             <div class="charge-label">Charge actuelle</div>
             <div class="charge-val">${charge}<span class="charge-unit">kg</span></div>
           </div>
-          ${hist.length?`<div class="perf-hist">${histHTML}</div>`:''}
           <div style="margin-top:10px;font-size:11px;color:var(--text2);margin-bottom:6px">Mettre à jour la charge :</div>
           <div class="charge-inputs">
             <input type="number" id="ci-${i}" value="${charge}" step="2.5" min="0">
-            <button class="charge-save-btn" onclick="saveCharge('${ex.id}',${i})">Enregistrer</button>
+            <button class="charge-save-btn" onclick="saveCharge(${i})">Enregistrer</button>
           </div>
         </div>`:''}
         ${seriesHTML}
+        ${progHint}
+        <div class="series-actions"><button class="sbtn sbtn-reset" style="flex:1;text-align:center" onclick="seriesReset('${tk}',${i})">↺ Réinitialiser l'exercice</button></div>
       </div>
     </div>`;
   });
@@ -804,14 +832,42 @@ function renderSession(){
   document.getElementById('sessionContent').innerHTML=html;
 }
 
-function saveCharge(exoId, exoI){
-  const val=parseFloat(document.getElementById('ci-'+exoI).value);
-  if(!val&&val!==0){ toast('Charge invalide'); return; }
-  ST.charges[exoId]={charge:val, date:today()};
-  save();
-  renderSession();
-  setTimeout(()=>toggleExpand(exoI),30);
-  toast('Charge mise à jour : '+val+' kg ✓');
+// ---- Variantes de machine (Basic-Fit) ----
+const ALTS = {
+  squat:['Squat barre','Hack squat','Squat guidé (Smith)','Presse à cuisses'],
+  presse:['Presse à cuisses','Hack squat','Presse horizontale'],
+  fentes:['Fentes haltères','Split squat bulgare','Fentes au Smith'],
+  bench:['Développé couché barre','Développé couché haltères','Chest press machine'],
+  incline:['Développé incliné haltères','Développé incliné barre','Incliné machine'],
+  lateral:['Élévations latérales','Élévations à la poulie','Machine deltoïdes'],
+  planche:['Gainage planche','Planche sur coudes','Gainage + relevé jambe'],
+  rdl:['Soulevé de terre roumain','SDT roumain haltères','Leg curl allongé'],
+  pulldown:['Tirage poulie haute','Tirage convergent machine','Tractions assistées'],
+  rowing:['Rowing barre','Rowing haltère','Rowing machine assise'],
+  facepull:['Tirage visage poulie','Reverse pec deck','Oiseau haltères'],
+  curl:['Curl biceps barre','Curl haltères','Curl à la poulie'],
+  triceps:['Extension triceps poulie','Barre au front','Extension à la corde'],
+  crunch:['Crunch câble','Crunch machine','Relevé de jambes'],
+};
+function exAlts(ex){ return ALTS[ex.id]||[ex.name]; }
+function exVariantIdx(ex){ return (ST.exoVariant&&ST.exoVariant[ex.id])||0; }
+function exVariantName(ex){ const a=exAlts(ex); return a[exVariantIdx(ex)]||ex.name; }
+function exChargeKey(ex){ const idx=exVariantIdx(ex); return idx>0? ex.id+'_'+idx : ex.id; }
+function cycleVariant(i){ const ex=curEx(i); if(!ex)return; const a=exAlts(ex); ST.exoVariant[ex.id]=((exVariantIdx(ex))+1)%a.length; save(); renderSession(); openExo(i); toast('Machine : '+exVariantName(ex)); }
+
+// ---- contexte séance courante ----
+function curSeance(){ return getSeanceForDay(ST.currentWeekDay); }
+function curEx(i){ return curSeance()?.exercises[i]; }
+function curExoKey(i){ const dn=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay]; return dn+'_'+ST.weekStart+'_'+i; }
+function openExo(i){ const ee=document.getElementById('ee-'+i),ec=document.getElementById('ec-'+i); if(ee)ee.classList.add('open'); if(ec)ec.classList.add('open'); }
+
+function saveCharge(i){
+  const ex=curEx(i); if(!ex)return;
+  const val=parseFloat(document.getElementById('ci-'+i).value);
+  if(isNaN(val)){ toast('Charge invalide'); return; }
+  ST.charges[exChargeKey(ex)]={charge:val, date:today()};
+  save(); renderSession(); openExo(i);
+  toast('Charge : '+val+' kg ✓');
 }
 
 function toggleExpand(i){
@@ -823,70 +879,60 @@ function toggleExpand(i){
   if(!open){ ee.classList.add('open'); ec.classList.add('open'); }
 }
 
-function markDone(exoKey,idx){
-  ST.doneExos[exoKey]=true; save();
-  const en=document.getElementById('en-'+idx);
-  if(en){ en.textContent='✓'; en.classList.add('done'); }
-  toast('Exercice terminé ✓');
-}
-
 // =================================================================
-// SERIES + BUBBLES
+// SÉRIES — bouton "Valider" par série + chrono (pas de bulles)
 // =================================================================
-function getTS(tk){ return ST.seriesState[tk]||(ST.seriesState[tk]={doneSets:0,phase:'idle',restRemaining:0,repsDone:{}}); }
-
-function clickBubble(tk,setIdx,repIdx,exoKey,exoI){
-  const ts=getTS(tk);
-  if(ts.doneSets!==setIdx)return;
-  const rk='r_'+setIdx+'_'+repIdx;
-  ts.repsDone[rk]=!ts.repsDone[rk];
-  const ex=getSeanceForDay(ST.currentWeekDay)?.exercises[exoI];
-  if(!ex)return;
-  let doneCount=0;
-  for(let r=0;r<ex.reps;r++){ if(ts.repsDone['r_'+setIdx+'_'+r]) doneCount++; }
-  if(doneCount>=ex.reps&&ts.phase!=='resting'){
-    ts.doneSets=setIdx+1;
-    ts.phase='idle';
-    beep(880,120); setTimeout(()=>beep(1100,180),150);
-    if(ts.doneSets>=ex.sets){ ST.doneExos[exoKey]=true; save(); toast('Exercice terminé ✓'); }
-    else { toast('Série '+(setIdx+1)+' ✓ — repos '+ex.restSec+'s'); startRest(tk,setIdx,ex.restSec,exoI,exoKey); return; }
-  }
-  save(); renderSession(); setTimeout(()=>toggleExpand(exoI),30);
+function getTS(tk){
+  let t=ST.seriesState[tk];
+  if(!t || !Array.isArray(t.done)){ t={done:[],resting:false,restLeft:0,pending:null}; ST.seriesState[tk]=t; }
+  return t;
 }
-
-function seriesAction(tk,exoI,exoKey,restSec){
-  const ts=getTS(tk);
-  if(ts.phase==='resting'){ if(restIntervals[tk])clearInterval(restIntervals[tk]); ts.phase='idle'; ts.restRemaining=0; save(); renderSession(); setTimeout(()=>toggleExpand(exoI),30); return; }
-  const ex=getSeanceForDay(ST.currentWeekDay)?.exercises[exoI];
-  if(!ex||ts.doneSets>=ex.sets){ toast('Toutes les séries terminées !'); return; }
-  beep(880,150); setTimeout(()=>beep(1100,200),180);
-  toast('Série '+(ts.doneSets+1)+' — partez !');
+function stepReps(tk,i,d){
+  const ex=curEx(i); const ts=getTS(tk);
+  const cur=ts.pending ?? ex.reps;
+  ts.pending=Math.max(0,cur+d);
+  const sp=document.getElementById('rv-'+tk); if(sp)sp.textContent=ts.pending;
+  save();
 }
-
-function startRest(tk,setIdx,restSec,exoI,exoKey){
-  if(restIntervals[tk])clearInterval(restIntervals[tk]);
-  const ts=getTS(tk);
-  ts.phase='resting'; ts.restRemaining=restSec; save();
-  renderSession(); setTimeout(()=>toggleExpand(exoI),30);
+function validateSet(tk,i){
+  const ex=curEx(i); if(!ex)return; const ts=getTS(tk);
+  const reps=ex.isTime?ex.timeReps:(ts.pending ?? ex.reps);
+  ts.done.push(reps); ts.pending=null;
+  beep(880,120); setTimeout(()=>beep(1100,160),140);
+  if(ts.done.length>=ex.sets){ ST.doneExos[curExoKey(i)]=true; save(); toast('Exercice terminé ✓'); renderSession(); openExo(i); }
+  else { startRest(tk,i,ex.restSec); }
+}
+function startWork(tk,i){
+  const ex=curEx(i); if(!ex)return;
+  const b=document.getElementById('st-'+tk); if(b)b.disabled=true;
+  runCountdown(tk,ex.timeReps,()=>validateSet(tk,i));
+}
+function startRest(tk,i,secs){
+  const ts=getTS(tk); ts.resting=true; ts.restLeft=secs; save();
+  renderSession(); openExo(i);
+  runCountdown(tk,secs,()=>{ const t=getTS(tk); t.resting=false; t.restLeft=0; save(); beep(880,150); renderSession(); openExo(i); });
+}
+function skipRest(tk,i){
+  if(restIntervals[tk]){ clearInterval(restIntervals[tk]); restIntervals[tk]=null; }
+  const ts=getTS(tk); ts.resting=false; ts.restLeft=0; save();
+  renderSession(); openExo(i);
+}
+function runCountdown(tk,secs,cb){
+  if(restIntervals[tk]) clearInterval(restIntervals[tk]);
+  const ts=getTS(tk); ts.restLeft=secs;
+  const sp0=document.getElementById('cd-'+tk); if(sp0)sp0.textContent=secs+'s';
   restIntervals[tk]=setInterval(()=>{
-    const t=getTS(tk);
-    if(t.phase!=='resting'){ clearInterval(restIntervals[tk]); return; }
-    t.restRemaining--;
-    const rc=document.getElementById('rc-'+tk+'-'+setIdx);
-    const sb=document.getElementById('sbtn-'+exoI);
-    if(rc)rc.innerHTML=`<span style="color:var(--amber);font-weight:700">${t.restRemaining}s</span>`;
-    if(sb)sb.textContent='⏭ Passer ('+t.restRemaining+'s)';
-    if(t.restRemaining<=3)beep(660,80);
-    if(t.restRemaining<=0){ clearInterval(restIntervals[tk]); t.phase='idle'; t.restRemaining=0; save(); beep(880,150); setTimeout(()=>beep(1100,200),180); renderSession(); setTimeout(()=>toggleExpand(exoI),30); }
-    save();
+    const t=getTS(tk); t.restLeft--;
+    const sp=document.getElementById('cd-'+tk); if(sp)sp.textContent=t.restLeft+'s';
+    if(t.restLeft<=3 && t.restLeft>0) beep(660,80);
+    if(t.restLeft<=0){ clearInterval(restIntervals[tk]); restIntervals[tk]=null; cb(); }
   },1000);
 }
-
-function seriesReset(tk,exoI,exoKey){
-  if(restIntervals[tk])clearInterval(restIntervals[tk]);
+function seriesReset(tk,i){
+  if(restIntervals[tk]){ clearInterval(restIntervals[tk]); restIntervals[tk]=null; }
   delete ST.seriesState[tk];
-  delete ST.doneExos[exoKey];
-  save(); renderSession(); setTimeout(()=>toggleExpand(exoI),30);
+  delete ST.doneExos[curExoKey(i)];
+  save(); renderSession(); openExo(i);
 }
 
 function beep(freq,dur){
@@ -1188,11 +1234,12 @@ function _fitMsg(rec,local,global,fields){
   for(const f of fields){ const sz=f.size||_FSZ[f.base]; _fitWrite(rec,f.base,sz,f.val); }
 }
 function _fitTime(){ return Math.floor(Date.now()/1000)-631065600; }
+function _ascii(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\x20-\x7E]/g,''); }
 const _FNAME=26;
 function encodeFIT(wk){
   const rec=[];
   _fitMsg(rec,0,0,[
-    {num:0,base:_FT.enum,val:5},{num:1,base:_FT.uint16,val:255},{num:2,base:_FT.uint16,val:0},
+    {num:0,base:_FT.enum,val:5},{num:1,base:_FT.uint16,val:1},{num:2,base:_FT.uint16,val:0},
     {num:3,base:_FT.uint32z,val:1701},{num:4,base:_FT.uint32,val:_fitTime()},
   ]);
   _fitMsg(rec,1,26,[
@@ -1227,12 +1274,12 @@ function buildFitWorkout(seance){
     const charge=ST.charges[ex.id]?.charge||ex.initCharge;
     const sets=ex.isTime?1:ex.sets;
     for(let s=0;s<sets;s++){
-      if(ex.isTime) steps.push({name:ex.name.substring(0,25), intensity:0, durType:0, durVal:(ex.timeReps||30)*1000, tgtType:2});
-      else steps.push({name:`${ex.name} ${charge}kg`.substring(0,25), intensity:0, durType:29, durVal:ex.reps, tgtType:2});
+      if(ex.isTime) steps.push({name:_ascii(ex.name).substring(0,25), intensity:0, durType:0, durVal:(ex.timeReps||30)*1000, tgtType:2});
+      else steps.push({name:_ascii(`${ex.name} ${charge}kg`).substring(0,25), intensity:0, durType:29, durVal:ex.reps, tgtType:2});
       if(ex.restSec>0) steps.push({name:'Repos', intensity:1, durType:0, durVal:ex.restSec*1000, tgtType:2});
     }
   });
-  return { name:('FitCoach '+seance.label).substring(0,25), sport:10, subSport:20, steps };
+  return { name:_ascii('FitCoach '+seance.label).substring(0,25), sport:10, subSport:20, steps };
 }
 function downloadGarmin(type){
   const seance=SEANCE_MAP[type]||SEANCE_1;
@@ -1243,7 +1290,65 @@ function downloadGarmin(type){
   a.href=URL.createObjectURL(blob);
   a.download=filename; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  toast('.FIT téléchargé — importe-le dans Garmin Connect');
+  toast('.FIT téléchargé — copie-le dans GARMIN/NewFiles sur ta montre');
+}
+
+// =================================================================
+// IMPORT CSV GARMIN (activités + composition corporelle)
+// =================================================================
+function _norm(s){ return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim(); }
+function _splitCSV(line,delim){
+  const out=[]; let cur='',q=false;
+  for(let i=0;i<line.length;i++){ const c=line[i];
+    if(c==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
+    else if(c===delim && !q){ out.push(cur); cur=''; }
+    else cur+=c;
+  }
+  out.push(cur); return out.map(x=>x.trim());
+}
+function _num(v,dc){ if(v==null)return null; let s=String(v).replace(/["\s]/g,''); if(s===''||s==='--')return null; if(dc) s=s.replace(/\./g,'').replace(',','.'); s=s.replace(/[^0-9.\-]/g,''); const n=parseFloat(s); return isNaN(n)?null:n; }
+function _dur(v){ if(!v)return ''; const p=String(v).trim().split(':').map(x=>parseInt(x,10)); if(p.some(isNaN))return ''; if(p.length===3)return p[0]*3600+p[1]*60+p[2]; if(p.length===2)return p[0]*60+p[1]; if(p.length===1)return p[0]; return ''; }
+function _pdate(v){ if(!v)return null; let m=String(v).match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/); if(m)return m[1]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[3]).padStart(2,'0'); m=String(v).match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/); if(m)return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0'); return null; }
+
+function importCSV(ev){
+  const file=ev.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{ try{ ingestCSV(e.target.result); }catch(err){ const el=document.getElementById('csv-result'); el.style.color='var(--red)'; el.textContent='Erreur : '+err.message; } };
+  reader.readAsText(file);
+  ev.target.value='';
+}
+function ingestCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length) throw new Error('fichier vide');
+  const delim=(lines[0].split(';').length>lines[0].split(',').length)?';':',';
+  const dc=(delim===';');
+  const headers=_splitCSV(lines[0],delim).map(_norm);
+  const idx=names=>headers.findIndex(h=>names.some(n=>h.includes(n)));
+  const rows=lines.slice(1).map(l=>_splitCSV(l,delim));
+  const iType=idx(["type d'activite",'type dactivite','activity type']);
+  const iPoids=idx(['poids','weight']);
+  let added=0,res='';
+  if(iType>=0){
+    const iDate=idx(['date','heure']), iDur=idx(['temps','duree','duration','moving']), iKcal=idx(['calories','calorie']), iHr=idx(['frequence cardiaque moyenne','fc moy','avg hr']);
+    const seen=new Set(ST.activities.map(a=>a.date+'|'+(a.type||'')));
+    rows.forEach(r=>{ const date=_pdate(r[iDate]); if(!date)return; const type=(r[iType]||'Activité').trim();
+      const k=date+'|'+type; if(seen.has(k))return; seen.add(k);
+      ST.activities.push({date,type,dur:iDur>=0?_dur(r[iDur]):'',kcal:iKcal>=0?_num(r[iKcal],dc):null,hr:iHr>=0?_num(r[iHr],dc):null,src:'garmin'}); added++;
+    });
+    res=added+' activité(s) importée(s)';
+  } else if(iPoids>=0){
+    const iDate=idx(['date','heure']), iImg=idx(['pourcentage de graisse','% graisse','graisse corp','body fat','fat']), iEau=idx(['eau','water','hydrat']);
+    rows.forEach(r=>{ const date=_pdate(r[iDate]); if(!date)return; const poids=_num(r[iPoids],dc); if(poids==null)return;
+      const img=iImg>=0?_num(r[iImg],dc):null, hydra=iEau>=0?_num(r[iEau],dc):null;
+      const ex=ST.balanceData.find(b=>b.date===date);
+      if(ex){ ex.poids=poids; if(img!=null)ex.img=img; if(hydra!=null)ex.hydra=hydra; } else { ST.balanceData.push({date,poids,img,hydra}); added++; }
+      ST.dailyWeights[date]=poids;
+    });
+    res=added+' mesure(s) importée(s)';
+  } else throw new Error('colonnes non reconnues (ni activité, ni poids)');
+  save(); renderLastMetrics(); renderBalanceHist(); renderWeightPrev();
+  const el=document.getElementById('csv-result'); el.style.color='var(--accent)'; el.textContent='✓ '+res;
+  toast('✓ '+res);
 }
 
 // =================================================================
