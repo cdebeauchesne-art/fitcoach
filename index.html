@@ -672,6 +672,7 @@ let ST = {
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
   dailyWeights:{}, charges:{}, feedbacks:[],
   nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{}, mealLog:{},
+  sessionLog:[], pickedSeance:null,
   weekStart: weekStartDate(),
 };
 let restIntervals={};
@@ -716,6 +717,8 @@ function applyPayload(p){
   ST.lastWizard=p.lastWizard||null;
   ST.exoVariant=p.exoVariant||{};
   ST.mealLog=p.mealLog||{};
+  ST.sessionLog=p.sessionLog||[];
+  ST.pickedSeance=p.pickedSeance||null;
 }
 function load(){
   const s=localStorage.getItem(DKEY);
@@ -725,7 +728,7 @@ function load(){
 }
 function payload(){
   return {
-    v:18, savedAt:new Date().toISOString(),
+    v:19, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance,
     balanceData:ST.balanceData, activities:ST.activities,
     doneExos:ST.doneExos, seriesState:ST.seriesState,
     dailyWeights:ST.dailyWeights, charges:ST.charges,
@@ -778,6 +781,9 @@ function mergePayload(p){
   (p.balanceData||[]).forEach(b=>{ if(!dB.has(b.date)) ST.balanceData.push(b); });
   const dA=new Set(ST.activities.map(a=>a.date+'|'+(a.type||'')+'|'+(a.kcal||'')+'|'+(a.dur||'')));
   (p.activities||[]).forEach(a=>{ if(!dA.has(a.date+'|'+(a.type||'')+'|'+(a.kcal||'')+'|'+(a.dur||''))) ST.activities.push(a); });
+  ST.sessionLog=ST.sessionLog||[];
+  const dS=new Set(ST.sessionLog.map(l=>l.date+'|'+l.seanceId));
+  (p.sessionLog||[]).forEach(l=>{ if(!dS.has(l.date+'|'+l.seanceId)) ST.sessionLog.push(l); });
   const dN=new Set(ST.nutrition.map(n=>n.date));
   (p.nutrition||[]).forEach(n=>{ if(!dN.has(n.date)) ST.nutrition.push(n); });
   const dF=new Set(ST.feedbacks.map(f=>f.date+'|'+(f.seance||'')));
@@ -850,37 +856,59 @@ function showPage(id,btn){
   if(id==='training'){ renderSeanceChoice(); renderWeekTabs(); renderSession(); }
 }
 function goHome(){ showPage('home'); }
-function openSeance(){ ST.currentWeekDay=new Date().getDay()===0?6:new Date().getDay()-1; showPage('training'); }
+function openSeance(){ ST.currentWeekDay=new Date().getDay()===0?6:new Date().getDay()-1; if(ST.pickedDate!==today()) ST.pickedSeance=null; showPage('training'); }
 
 // Choix de la séance (bloc 1/2/3 + autres activités) sur la page Séance de sport
 function renderSeanceChoice(){
   const el=document.getElementById('seanceChoice'); if(!el)return;
   const reco=nextStrength(); const ordered=[reco,...STRENGTH_ORDER.filter(s=>s!==reco)];
   const blocs=ordered.map(id=>{ const s=SEANCE_MAP[id],isReco=id===reco; const svg=ILLUSTRATIONS[s.exercises[0].svg]||'';
-    const active=(SESSION_DAY[id]===ST.currentWeekDay);
-    return `<button class="wz-opt${isReco?' reco':''}" style="${active?'border-color:var(--accent)':''}" onclick="pickSeance('${id}')">
+    const active=(id===ST.pickedSeance);
+    const doneToday=weekSessions().some(l=>l.seanceId===id);
+    return `<button class="wz-opt${isReco&&!doneToday?' reco':''}" style="${active?'border-color:var(--accent)':''}" onclick="pickSeance('${id}')">
       <div class="wz-opt-ic">${svg}</div>
       <div><div class="wz-opt-tt">${s.label} · ${SESSION_ROLE[id].title}</div><div class="wz-opt-ds">${s.exercises.length} exercices · full-body</div></div>
-      ${isReco?'<span class="wz-badge">conseillé</span>':''}</button>`;
+      ${doneToday?'<span class="wz-badge" style="background:var(--accent);color:#111">faite ✓</span>':(isReco?'<span class="wz-badge">conseillé</span>':'')}</button>`;
   }).join('');
-  const acts=[['walk','🚶 Marche'],['cardio','🚴 Cardio libre'],['rando','🥾 Randonnée'],['other','➕ Autre']]
-    .map(([k,t])=>`<button class="act-chip" onclick="wzChoose('${k}')">${t}</button>`).join('');
-  el.innerHTML=`<div class="form-title" style="margin:14px 0 8px">Choisis ta séance</div>${blocs}
-    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Ou une autre activité</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">${acts}</div>`;
+  el.innerHTML=`<div class="form-title" style="margin:14px 0 8px">Choisis ta séance</div>${blocs}`;
 }
-function pickSeance(id){ ST.currentWeekDay=SESSION_DAY[id]; ST.lastStrength=id; save(); renderSeanceChoice(); renderWeekTabs(); renderSession(); }
+function pickSeance(id){ ST.pickedSeance=id; ST.pickedDate=today(); ST.lastStrength=id; ST.currentWeekDay=todayIdx(); save(); renderSeanceChoice(); renderWeekTabs(); renderSession(); }
+
+// ---------- JOURNAL DES SÉANCES (par date réelle) ----------
+function todayIdx(){ return new Date().getDay()===0?6:new Date().getDay()-1; }
+function dayIdxOfDate(d){ const x=new Date(d+'T12:00:00'); return x.getDay()===0?6:x.getDay()-1; }
+function weekSessions(){ return (ST.sessionLog||[]).filter(l=>l.date>=ST.weekStart); }
+function sessionsOnDay(i){ return weekSessions().filter(l=>dayIdxOfDate(l.date)===i); }
+
+function saveSessionDone(){
+  const seance=curSeance(); if(!seance)return;
+  const d=today();
+  const exos=seance.exercises.map((ex,i)=>{
+    const tk='t_'+seance.id+'_'+ST.currentWeekDay+'_'+i;
+    const ts=ST.seriesState[tk]||{done:[]};
+    const charge=ST.charges[exChargeKey(ex)]?.charge ?? ex.initCharge;
+    return {name:exVariantName(ex), sets:(ts.done||[]).slice(), charge, isTime:!!ex.isTime};
+  }).filter(e=>e.sets.length>0);
+  if(!exos.length){ toast('Aucune série validée'); return; }
+  const volume=exos.reduce((t,e)=>t+(e.isTime?0:e.sets.reduce((a,r)=>a+r*(e.charge||0),0)),0);
+  ST.sessionLog=(ST.sessionLog||[]).filter(l=>!(l.date===d&&l.seanceId===seance.id));
+  ST.sessionLog.push({date:d, seanceId:seance.id, label:seance.label, role:SESSION_ROLE[seance.id]?.title||'', exos, volume:Math.round(volume), nbExos:exos.length, totalExos:seance.exercises.length, savedAt:new Date().toISOString()});
+  ST.lastStrength=seance.id;
+  save();
+  toast('Séance enregistrée le '+fmtDate(d)+' ✓');
+  renderWeekTabs(); renderSeanceChoice(); renderSession();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteLoggedSession(date,id){
+  ST.sessionLog=(ST.sessionLog||[]).filter(l=>!(l.date===date&&l.seanceId===id));
+  save(); renderWeekTabs(); renderSeanceChoice(); renderSession(); toast('Séance supprimée');
+}
 
 // Objectif de la semaine : % de séances restantes (lun→dim)
-const PRESCRIBED=[[0,'S1'],[2,'S2'],[4,'S3']];
 function weekObjective(){
-  const days=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  let done=0;
-  PRESCRIBED.forEach(([di,id])=>{ const s=SEANCE_MAP[id]; const dn=days[di];
-    if(s.exercises.every((ex,i)=>!!ST.doneExos[dn+'_'+ST.weekStart+'_'+i])) done++;
-  });
-  const total=PRESCRIBED.length;
-  return {done,total,pctRemaining:Math.round((total-done)/total*100)};
+  const done=weekSessions().length;
+  const total=3;
+  return {done:Math.min(done,total), total, pctRemaining:Math.max(0,Math.round((total-done)/total*100))};
 }
 function renderWeekObjective(){
   const el=document.getElementById('weekObjective'); if(!el)return;
@@ -1013,20 +1041,35 @@ function renderWeekTabs(){
   const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   document.getElementById('weekTabs').innerHTML=days.map((d,i)=>{
     const s=WEEK_SCHEDULE[i];
-    const label=s.seance==='rest'?'Repos':(SEANCE_MAP[s.seance]?.label||s.seance);
-    return `<div class="week-tab${i===ST.currentWeekDay?' active':''}" onclick="selectDay(${i})">${d}<br><span style="font-size:9px;opacity:.7">${label}</span></div>`;
+    const logs=sessionsOnDay(i);
+    const label=logs.length?logs.map(l=>l.label).join(' + ')
+      :(s.seance==='rest'?'Repos':(SEANCE_MAP[s.seance]?.label||s.seance));
+    return `<div class="week-tab${i===ST.currentWeekDay?' active':''}" onclick="selectDay(${i})">${d}<br><span style="font-size:9px;opacity:.7">${logs.length?'✓ ':''}${label}</span></div>`;
   }).join('');
 }
 
-function selectDay(i){ ST.currentWeekDay=i; renderWeekTabs(); renderSession(); }
+function selectDay(i){ ST.currentWeekDay=i; ST.pickedSeance=null; save(); renderWeekTabs(); renderSeanceChoice(); renderSession(); }
 
+function loggedHTML(){
+  const logs=sessionsOnDay(ST.currentWeekDay);
+  if(!logs.length) return '';
+  return logs.map(l=>`<div class="card" style="margin-bottom:10px;border-color:var(--accent)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:20px">✅</div>
+      <div style="flex:1"><div style="font-weight:700">${l.label} · ${l.role}</div>
+        <div style="font-size:12px;color:var(--text2)">Enregistrée le ${fmtDate(l.date)} · ${l.nbExos}/${l.totalExos} exercices${l.volume?' · '+l.volume.toLocaleString('fr-FR')+' kg soulevés':''}</div></div>
+      <button class="variant-btn" onclick="deleteLoggedSession('${l.date}','${l.seanceId}')">✕</button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.7">${l.exos.map(e=>`${e.name} — ${e.sets.join(' / ')}${e.isTime?'s':' reps'}${e.charge?' @ '+e.charge+' kg':''}`).join('<br>')}</div>
+  </div>`).join('');
+}
 function renderSession(){
   renderWeekObjective();
-  const seance=getSeanceForDay(ST.currentWeekDay);
+  const seance=curSeance();
   const dayName=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay];
 
   if(!seance){
-    document.getElementById('sessionContent').innerHTML=`
+    document.getElementById('sessionContent').innerHTML=loggedHTML()+`
       <div class="session-card">
         <div class="session-header">
           <div class="session-icon si-rest">😴</div>
@@ -1042,7 +1085,7 @@ function renderSession(){
   }
 
   const dayKey=dayName+'_'+ST.weekStart;
-  let html=`<div class="session-card">
+  let html=loggedHTML()+`<div class="session-card">
     <div class="session-header">
       <div class="session-icon ${seance.si}">${seance.icon}</div>
       <div><div class="session-title">${seance.label}</div><div class="session-meta">${dayName} · ${seance.sub}</div></div>
@@ -1129,7 +1172,22 @@ function renderSession(){
     </div>`;
   });
 
-  html+=`</div></div>`;
+  // ---- Bouton de fin de séance ----
+  let nbDone=0, nbSets=0;
+  seance.exercises.forEach((ex,i)=>{
+    const ts=ST.seriesState['t_'+seance.id+'_'+ST.currentWeekDay+'_'+i];
+    if(ts&&ts.done&&ts.done.length){ nbDone++; nbSets+=ts.done.length; }
+  });
+  const all=nbDone>=seance.exercises.length;
+  html+=`</div>
+    <div style="padding:14px 16px;border-top:1px solid var(--border)">
+      <button class="btn ${nbDone?'btn-primary':''}" style="margin-top:0;width:100%${nbDone?'':';opacity:.5'}" onclick="saveSessionDone()">💾 Sauvegarder la séance</button>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px">
+        ${nbDone?`${nbDone}/${seance.exercises.length} exercices · ${nbSets} séries — enregistrée au ${fmtDate(today())}${all?'':' (séance partielle)'}`
+                :'Valide au moins une série pour pouvoir enregistrer'}
+      </div>
+    </div>
+  </div>`;
   document.getElementById('sessionContent').innerHTML=html;
 }
 
@@ -1157,9 +1215,9 @@ function exChargeKey(ex){ const idx=exVariantIdx(ex); return idx>0? ex.id+'_'+id
 function cycleVariant(i){ const ex=curEx(i); if(!ex)return; const a=exAlts(ex); ST.exoVariant[ex.id]=((exVariantIdx(ex))+1)%a.length; save(); renderSession(); openExo(i); toast('Machine : '+exVariantName(ex)); }
 
 // ---- contexte séance courante ----
-function curSeance(){ return getSeanceForDay(ST.currentWeekDay); }
+function curSeance(){ return (ST.pickedSeance&&SEANCE_MAP[ST.pickedSeance]) || getSeanceForDay(ST.currentWeekDay); }
 function curEx(i){ return curSeance()?.exercises[i]; }
-function curExoKey(i){ const dn=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay]; return dn+'_'+ST.weekStart+'_'+i; }
+function curExoKey(i){ const dn=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay]; return dn+'_'+ST.weekStart+'_'+(curSeance()?.id||'')+'_'+i; }
 function openExo(i){ const ee=document.getElementById('ee-'+i),ec=document.getElementById('ec-'+i); if(ee)ee.classList.add('open'); if(ec)ec.classList.add('open'); }
 
 function saveCharge(i){
