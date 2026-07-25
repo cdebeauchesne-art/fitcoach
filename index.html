@@ -213,6 +213,21 @@ select option{background:var(--bg3)}
 .menu-opt.sel .menu-check{background:var(--accent);color:#0f0f0f}
 .b-kcal{background:rgba(245,166,35,.15);color:var(--amber)}
 .b-prot{background:rgba(200,240,96,.15);color:var(--accent)}
+/* HOME LAUNCHER */
+.home-hi{font-family:'DM Serif Display',serif;font-size:28px;letter-spacing:-.4px;padding:8px 20px 0}
+.home-hi span{color:var(--accent)}
+.home-sub{font-size:14px;color:var(--text2);padding:4px 20px 18px}
+.home-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px}
+.tile{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;transition:transform .12s,border-color .15s}
+.tile:active{transform:scale(.97)}
+.tile:hover{border-color:var(--border2)}
+.tile.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:16px;padding:18px}
+.tile-ic{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.tile.wide .tile-ic{width:52px;height:52px;font-size:26px}
+.tile-lbl{font-weight:600;font-size:15px;text-align:center}
+.backbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border)}
+.backbar button{background:none;border:none;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;padding:0}
+.backbar span{font-size:14px;color:var(--text2);font-weight:500}
 </style>
 </head>
 <body>
@@ -279,16 +294,25 @@ select option{background:var(--bg3)}
   <div class="weight-bar-prev" id="weight-prev"></div>
 </div>
 
-<nav class="nav">
-  <button class="nav-btn active" onclick="showPage('training',this)">Programme</button>
-  <button class="nav-btn" onclick="showPage('balance',this)">Balance</button>
-  <button class="nav-btn" onclick="showPage('progress',this)">Suivi</button>
-  <button class="nav-btn" onclick="showPage('menus',this)">Menus</button>
-  <button class="nav-btn" onclick="showPage('garmin',this)">Garmin</button>
-</nav>
+<div class="backbar" id="backbar" style="display:none">
+  <button onclick="goHome()">← Accueil</button><span id="backtitle"></span>
+</div>
+
+<!-- PAGE ACCUEIL -->
+<div class="page active" id="page-home">
+  <div class="home-hi">Bonjour <span>Clément</span></div>
+  <div class="home-sub">Que veux-tu faire aujourd'hui ?</div>
+  <div class="home-grid">
+    <div class="tile" onclick="showChoose()"><div class="tile-ic" style="background:rgba(200,240,96,.15)">🏋️</div><div class="tile-lbl">Séance de sport</div></div>
+    <div class="tile" onclick="showPage('menus')"><div class="tile-ic" style="background:rgba(62,207,176,.15)">🍽️</div><div class="tile-lbl">Menu</div></div>
+    <div class="tile" onclick="showPage('poids')"><div class="tile-ic" style="background:rgba(91,156,246,.15)">⚖️</div><div class="tile-lbl">Poids</div></div>
+    <div class="tile" onclick="showPage('progress')"><div class="tile-ic" style="background:rgba(245,166,35,.15)">🔥</div><div class="tile-lbl">Calorie</div></div>
+    <div class="tile wide" onclick="showPage('data')"><div class="tile-ic" style="background:rgba(167,139,250,.15)">📊</div><div class="tile-lbl">DATA</div></div>
+  </div>
+</div>
 
 <!-- PAGE PROGRAMME -->
-<div class="page active" id="page-training">
+<div class="page" id="page-training">
   <div class="section-title">Programme<div class="section-sub">3× full-body / semaine — illustrations + charges</div></div>
   <div class="week-tabs" id="weekTabs"></div>
   <div id="sessionContent"></div>
@@ -414,6 +438,33 @@ select option{background:var(--bg3)}
     <button class="day-btn" id="btn-alcool" style="flex:1;text-align:center" onclick="toggleDayFlag('alcool')">🍷 Soirée alcool</button>
   </div>
   <div id="menuSlots"></div>
+</div>
+
+<!-- PAGE CHOIX SÉANCE -->
+<div class="page" id="page-choose">
+  <div class="section-title">Séance de sport<div class="section-sub">Choisis ton bloc du jour, ou une autre activité</div></div>
+  <div id="chooseList"></div>
+</div>
+
+<!-- PAGE POIDS -->
+<div class="page" id="page-poids">
+  <div class="section-title">Poids<div class="section-sub">Ta courbe, relevé par relevé</div></div>
+  <div class="card" id="poidsHead"></div>
+  <div class="card" style="margin-top:10px"><div class="form-title" style="margin-bottom:10px">Évolution du poids</div><div id="poidsChart"></div></div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:10px">Ajouter une pesée</div>
+    <div style="display:flex;gap:8px">
+      <input type="number" id="poids-add" placeholder="107.5" step="0.1" style="flex:1">
+      <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 20px" onclick="addPoids()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE DATA -->
+<div class="page" id="page-data">
+  <div class="section-title">Data<div class="section-sub">Poids &amp; masse musculaire</div></div>
+  <div class="card"><div class="form-title" style="margin-bottom:10px">📉 Poids (kg)</div><div id="dataPoids"></div></div>
+  <div class="card" style="margin-top:10px"><div class="form-title" style="margin-bottom:10px">💪 Masse musculaire (%)</div><div id="dataMuscle"></div></div>
 </div>
 
 </div>
@@ -681,14 +732,86 @@ function initPreloaded(){
 // =================================================================
 // NAV
 // =================================================================
+const PAGE_TITLES={training:'Séance de sport',choose:'Séance de sport',menus:'Menu',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data'};
 function showPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  if(btn)btn.classList.add('active');
+  const pg=document.getElementById('page-'+id); if(pg)pg.classList.add('active');
+  const home=(id==='home');
+  const bb=document.getElementById('backbar'); if(bb) bb.style.display=home?'none':'flex';
+  const wb=document.querySelector('.weight-bar'); if(wb) wb.style.display=home?'none':'flex';
+  if(!home){ const bt=document.getElementById('backtitle'); if(bt) bt.textContent=PAGE_TITLES[id]||''; }
+  window.scrollTo(0,0);
   if(id==='progress')renderProgress();
   if(id==='garmin')renderFeedbackHist();
   if(id==='menus')renderMenus();
+  if(id==='poids')renderPoids();
+  if(id==='data')renderData();
+}
+function goHome(){ showPage('home'); }
+
+// ---- Graphe en ligne réutilisable ----
+function lineChart(points, opts){
+  opts=opts||{}; const w=320,h=140,pad=8;
+  if(!points.length) return '<div style="color:var(--text3);font-size:13px;text-align:center;padding:24px">Aucune donnée — importe ta balance dans DATA / Poids</div>';
+  const vals=points.map(p=>p.val); let mn=Math.min(...vals),mx=Math.max(...vals);
+  if(opts.target!=null){ mn=Math.min(mn,opts.target); mx=Math.max(mx,opts.target); }
+  const pr=((mx-mn)||1)*0.12; mn-=pr; mx+=pr;
+  const X=i=>pad+(i/((points.length-1)||1))*(w-2*pad);
+  const Y=v=>h-pad-((v-mn)/((mx-mn)||1))*(h-2*pad);
+  const d=points.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p.val).toFixed(1)).join(' ');
+  const color=opts.color||'var(--accent)'; const last=points[points.length-1],first=points[0];
+  let tgt=''; if(opts.target!=null){ const ty=Y(opts.target); tgt=`<line x1="${pad}" y1="${ty}" x2="${w-pad}" y2="${ty}" stroke="var(--text3)" stroke-width="1" stroke-dasharray="4 3"/><text x="${pad}" y="${ty-3}" font-size="9" fill="var(--text3)">obj ${opts.target}${opts.unit||''}</text>`; }
+  return `<svg width="100%" viewBox="0 0 ${w} ${h+16}" style="display:block">
+    ${tgt}
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${X(points.length-1).toFixed(1)}" cy="${Y(last.val).toFixed(1)}" r="3.5" fill="${color}"/>
+    <text x="${X(points.length-1).toFixed(1)}" y="${(Y(last.val)-7).toFixed(1)}" text-anchor="end" font-size="11" fill="${color}" font-weight="700">${last.val}${opts.unit||''}</text>
+    <text x="${pad}" y="${h+12}" font-size="9" fill="var(--text3)">${fmtDate(first.date)}</text>
+    <text x="${w-pad}" y="${h+12}" text-anchor="end" font-size="9" fill="var(--text3)">${fmtDate(last.date)}</text>
+  </svg>`;
+}
+function weightSeries(){ return ST.balanceData.filter(b=>b.poids).slice().sort((a,b)=>a.date<b.date?-1:1).map(b=>({date:b.date,val:b.poids})); }
+function muscleSeries(){ return ST.balanceData.filter(b=>b.muscle!=null).slice().sort((a,b)=>a.date<b.date?-1:1).map(b=>({date:b.date,val:b.muscle})); }
+
+function renderPoids(){
+  const s=weightSeries(); const last=s[s.length-1];
+  const head=document.getElementById('poidsHead');
+  if(last){ const diff=s.length>1?(last.val-s[s.length-2].val):0;
+    head.innerHTML=`<div style="display:flex;align-items:baseline;gap:8px">
+      <div style="font-family:'DM Serif Display',serif;font-size:36px">${last.val}<span style="font-size:16px;color:var(--text2)">kg</span></div>
+      <div style="font-size:13px;color:${diff>0?'var(--red)':diff<0?'var(--accent)':'var(--text3)'}">${diff>0?'▲ +':diff<0?'▼ ':''}${diff!==0?Math.abs(diff).toFixed(1)+' kg':'—'}</div>
+      <div style="margin-left:auto;font-size:12px;color:var(--text2)">objectif 95 kg · ${(last.val-95).toFixed(1)} kg à perdre</div>
+    </div>`;
+  } else head.innerHTML='<div style="color:var(--text3);font-size:13px">Aucune pesée</div>';
+  document.getElementById('poidsChart').innerHTML=lineChart(s,{color:'var(--blue)',unit:'',target:95});
+}
+function addPoids(){
+  const v=parseFloat(document.getElementById('poids-add').value);
+  if(isNaN(v)){ toast('Poids invalide'); return; }
+  ST.dailyWeights[today()]=v;
+  const ex=ST.balanceData.find(b=>b.date===today());
+  if(ex) ex.poids=v; else ST.balanceData.push({date:today(),poids:v});
+  save(); document.getElementById('poids-add').value=''; renderPoids(); renderWeightPrev();
+  toast('Pesée enregistrée : '+v+' kg ✓');
+}
+function renderData(){
+  document.getElementById('dataPoids').innerHTML=lineChart(weightSeries(),{color:'var(--blue)',target:95});
+  const ms=muscleSeries();
+  document.getElementById('dataMuscle').innerHTML = ms.length?lineChart(ms,{color:'var(--accent)',unit:'%'})
+    : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Pas encore de donnée « masse musculaire ».<br>Importe ta balance (CSV) via l\'écran Poids ou Data pour l\'afficher.</div>';
+}
+function showChoose(){ renderChoose(); showPage('choose'); }
+function renderChoose(){
+  const reco=nextStrength(); const ordered=[reco,...STRENGTH_ORDER.filter(s=>s!==reco)];
+  const strengthHTML=ordered.map(id=>{ const s=SEANCE_MAP[id], isReco=id===reco; const svg=ILLUSTRATIONS[s.exercises[0].svg]||'';
+    return `<button class="wz-opt${isReco?' reco':''}" onclick="startChosenSession('${id}')">
+      <div class="wz-opt-ic">${svg}</div>
+      <div><div class="wz-opt-tt">${s.label} · ${SESSION_ROLE[id].title}</div><div class="wz-opt-ds">${s.exercises.length} exercices · full-body</div></div>
+      ${isReco?'<span class="wz-badge">conseillé</span>':''}</button>`;
+  }).join('');
+  const acts=[['walk','🚶 Marche','30-45 min · récup active'],['cardio','🚴 Cardio libre','Zone 2 · vélo / tapis'],['rando','🥾 Randonnée','sortie longue'],['other','➕ Autre activité','natation, sport co…']]
+    .map(([k,t,d])=>`<button class="wz-opt" onclick="wzChoose('${k}')"><div class="wz-opt-ic" style="font-size:22px">${t.split(' ')[0]}</div><div><div class="wz-opt-tt">${t.replace(/^\S+\s/,'')}</div><div class="wz-opt-ds">${d}</div></div></button>`).join('');
+  document.getElementById('chooseList').innerHTML=strengthHTML+`<div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">Autres activités</div>`+acts;
 }
 
 // =================================================================
@@ -1370,12 +1493,13 @@ function ingestCSV(text){
     const iGv=idx(['graisse visc','visceral']);
     const iProt=idx(['proteine','protein']);
     const iEau=idx(['hydrat','% eau','eau dans','water']);
+    const iMus=idx(['masse musculaire','muscle']);
     const gv2=(r,j)=> j>=0?_num(r[j],dc):null;
     rows.forEach(r=>{ const date=_pdate(r[iDate]); if(!date)return; const poids=_num(r[iPoids],dc); if(poids==null)return;
-      const img=gv2(r,iImg),hydra=gv2(r,iEau),gsc=gv2(r,iGsc),gvv=gv2(r,iGv),prot=gv2(r,iProt);
+      const img=gv2(r,iImg),hydra=gv2(r,iEau),gsc=gv2(r,iGsc),gvv=gv2(r,iGv),prot=gv2(r,iProt),mus=gv2(r,iMus);
       const ex=ST.balanceData.find(b=>b.date===date);
-      if(ex){ ex.poids=poids; if(img!=null)ex.img=img; if(hydra!=null)ex.hydra=hydra; if(gsc!=null)ex.gsc=gsc; if(gvv!=null)ex.gv=gvv; if(prot!=null)ex.prot=prot; }
-      else { ST.balanceData.push({date,poids,img,hydra,gsc,gv:gvv,prot}); added++; }
+      if(ex){ ex.poids=poids; if(img!=null)ex.img=img; if(hydra!=null)ex.hydra=hydra; if(gsc!=null)ex.gsc=gsc; if(gvv!=null)ex.gv=gvv; if(prot!=null)ex.prot=prot; if(mus!=null)ex.muscle=mus; }
+      else { ST.balanceData.push({date,poids,img,hydra,gsc,gv:gvv,prot,muscle:mus}); added++; }
       ST.dailyWeights[date]=poids;
     });
     res=added+' mesure(s) importée(s)';
@@ -1566,7 +1690,7 @@ function wzChoose(kind){
   if(STRENGTH_ORDER.includes(kind)){ buildWzIntro(kind); wzGo(3); return; }
   const map={walk:'Marche',cardio:'Cardio libre',rando:'Randonnée',other:'Autre activité'};
   ST.activities.push({date:today(), type:map[kind]||kind, dur:''});
-  save(); closeWizard(); toast((map[kind]||'Activité')+' enregistrée ✓');
+  save(); closeWizard(); goHome(); toast((map[kind]||'Activité')+' enregistrée ✓');
 }
 function buildWzIntro(id){
   const s=SEANCE_MAP[id], role=SESSION_ROLE[id];
@@ -1614,6 +1738,7 @@ renderLastMetrics();
 renderBalanceHist();
 populateFeedbackExo();
 document.getElementById('fb-seance').addEventListener('change',populateFeedbackExo);
+showPage('home');
 // Flux de lancement : s'ouvre automatiquement une fois par jour
 if(ST.lastWizard!==today()) openWizard();
 </script>
