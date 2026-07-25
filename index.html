@@ -228,6 +228,8 @@ select option{background:var(--bg3)}
 .backbar{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border)}
 .backbar button{background:none;border:none;color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;padding:0}
 .backbar span{font-size:14px;color:var(--text2);font-weight:500}
+.act-chip{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:9px 14px;font-size:13px;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500}
+.act-chip:active{background:var(--bg4)}
 </style>
 </head>
 <body>
@@ -280,18 +282,6 @@ select option{background:var(--bg3)}
 
 <div class="header">
   <div class="logo" style="cursor:pointer" onclick="goHome()" title="Accueil">Fit<span>Coach</span></div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <button class="day-btn" onclick="openWizard()">☀ Ma journée</button>
-    <div class="week-badge" id="weekBadge">—</div>
-  </div>
-</div>
-
-<div class="weight-bar">
-  <div class="weight-bar-label">⚖️ Poids</div>
-  <input type="number" id="daily-weight" placeholder="—" step="0.1" min="50" max="200">
-  <div class="weight-bar-unit">kg</div>
-  <button class="weight-bar-btn" onclick="saveDailyWeight()">OK</button>
-  <div class="weight-bar-prev" id="weight-prev"></div>
 </div>
 
 <div class="backbar" id="backbar" style="display:none">
@@ -300,21 +290,19 @@ select option{background:var(--bg3)}
 
 <!-- PAGE ACCUEIL -->
 <div class="page active" id="page-home">
-  <div class="home-hi">Bonjour <span>Clément</span></div>
-  <div class="home-sub">Que veux-tu faire aujourd'hui ?</div>
-  <div class="home-grid">
-    <div class="tile" onclick="showChoose()"><div class="tile-ic" style="background:rgba(200,240,96,.15)">🏋️</div><div class="tile-lbl">Séance de sport</div></div>
+  <div class="home-grid" style="padding-top:16px">
+    <div class="tile" onclick="openSeance()"><div class="tile-ic" style="background:rgba(200,240,96,.15)">🏋️</div><div class="tile-lbl">Séance de sport</div></div>
     <div class="tile" onclick="showPage('menus')"><div class="tile-ic" style="background:rgba(62,207,176,.15)">🍽️</div><div class="tile-lbl">Menu</div></div>
     <div class="tile" onclick="showPage('poids')"><div class="tile-ic" style="background:rgba(91,156,246,.15)">⚖️</div><div class="tile-lbl">Poids</div></div>
-    <div class="tile" onclick="showPage('progress')"><div class="tile-ic" style="background:rgba(245,166,35,.15)">🔥</div><div class="tile-lbl">Calorie</div></div>
-    <div class="tile wide" onclick="showPage('data')"><div class="tile-ic" style="background:rgba(167,139,250,.15)">📊</div><div class="tile-lbl">DATA</div></div>
+    <div class="tile" onclick="showPage('data')"><div class="tile-ic" style="background:rgba(167,139,250,.15)">📊</div><div class="tile-lbl">Data</div></div>
   </div>
 </div>
 
 <!-- PAGE PROGRAMME -->
 <div class="page" id="page-training">
-  <div class="section-title">Programme<div class="section-sub">3× full-body / semaine — illustrations + charges</div></div>
+  <div class="card" id="weekObjective"></div>
   <div class="week-tabs" id="weekTabs"></div>
+  <div id="seanceChoice"></div>
   <div id="sessionContent"></div>
 </div>
 
@@ -465,6 +453,18 @@ select option{background:var(--bg3)}
   <div class="section-title">Data<div class="section-sub">Poids &amp; masse musculaire</div></div>
   <div class="card"><div class="form-title" style="margin-bottom:10px">📉 Poids (kg)</div><div id="dataPoids"></div></div>
   <div class="card" style="margin-top:10px"><div class="form-title" style="margin-bottom:10px">💪 Masse musculaire (%)</div><div id="dataMuscle"></div></div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:6px">💾 Sauvegarde</div>
+    <div id="backupInfo" style="font-size:12px;color:var(--text3);margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 16px" onclick="exportData()">⬇️ Exporter</button>
+      <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
+      <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="scanBackups()">🔎 Récupérer</button>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
+    <div id="scanResult" style="margin-top:10px"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Exporte une fois par semaine. Le fichier .json contient tout : séances, charges, pesées, menus, activités. Il se réimporte dans n'importe quelle version de l'app.</div>
+  </div>
 </div>
 
 </div>
@@ -685,10 +685,25 @@ function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toI
 function fmtDate(d){ if(!d)return''; const p=d.split('-'); return p[2]+'/'+p[1]; }
 function fmtSec(s){ return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); }
 
-function load(){
-  const s=localStorage.getItem('fc5');
-  if(!s)return;
-  const p=JSON.parse(s);
+const DKEY='fc5', MKEY='fitcoach_mirror';
+// Cherche la sauvegarde la plus riche parmi toutes les clés fitcoach du navigateur
+function bestStored(){
+  let best=null,bestScore=-1;
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!/^(fc\d*|fitcoach)/i.test(k)) continue;
+    try{
+      const p=JSON.parse(localStorage.getItem(k));
+      if(!p||typeof p!=='object') continue;
+      const sc=Object.keys(p.doneExos||{}).length*10+Object.keys(p.charges||{}).length*5
+        +Object.keys(p.dailyWeights||{}).length+(p.nutrition||[]).length+Object.keys(p.mealLog||{}).length;
+      if(sc>bestScore){ bestScore=sc; best={key:k,data:p,score:sc}; }
+    }catch(e){}
+  }
+  return best;
+}
+function applyPayload(p){
+  if(!p)return;
   ST.balanceData=p.balanceData||[];
   ST.activities=p.activities||[];
   ST.doneExos=p.doneExos||{};
@@ -702,18 +717,104 @@ function load(){
   ST.exoVariant=p.exoVariant||{};
   ST.mealLog=p.mealLog||{};
 }
-function save(){
-  localStorage.setItem('fc5',JSON.stringify({
+function load(){
+  const s=localStorage.getItem(DKEY);
+  if(s){ try{ applyPayload(JSON.parse(s)); return; }catch(e){} }
+  // fallback : ancienne version / clé miroir
+  const b=bestStored(); if(b){ applyPayload(b.data); save(); }
+}
+function payload(){
+  return {
+    v:18, savedAt:new Date().toISOString(),
     balanceData:ST.balanceData, activities:ST.activities,
     doneExos:ST.doneExos, seriesState:ST.seriesState,
     dailyWeights:ST.dailyWeights, charges:ST.charges,
     feedbacks:ST.feedbacks, nutrition:ST.nutrition,
     lastStrength:ST.lastStrength, lastWizard:ST.lastWizard, exoVariant:ST.exoVariant, mealLog:ST.mealLog,
-  }));
+  };
+}
+function save(){
+  const j=JSON.stringify(payload());
+  try{ localStorage.setItem(DKEY,j); localStorage.setItem(MKEY,j); }
+  catch(e){ toast('Stockage plein — exporte ta sauvegarde'); }
+}
+
+// ---------- SAUVEGARDE / RESTAURATION ----------
+function exportData(){
+  const j=JSON.stringify(payload(),null,1);
+  const blob=new Blob([j],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fitcoach_'+today()+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  localStorage.setItem('fc_lastExport',new Date().toISOString());
+  renderBackupInfo(); toast('Sauvegarde exportée ✓');
+}
+function importData(ev){
+  const f=ev.target.files&&ev.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const p=JSON.parse(r.result);
+      if(!p||typeof p!=='object') throw new Error('format');
+      mergePayload(p); save();
+      toast('Sauvegarde importée ✓');
+      renderData(); renderWeekTabs&&renderWeekTabs();
+    }catch(e){ toast('Fichier illisible'); }
+    ev.target.value='';
+  };
+  r.readAsText(f);
+}
+// fusion non destructive : on garde le plus complet des deux côtés
+function mergePayload(p){
+  Object.assign(ST.doneExos, p.doneExos||{});
+  Object.assign(ST.charges, p.charges||{});
+  Object.assign(ST.dailyWeights, p.dailyWeights||{});
+  Object.assign(ST.exoVariant, p.exoVariant||{});
+  Object.assign(ST.mealLog, p.mealLog||{});
+  Object.assign(ST.seriesState, p.seriesState||{});
+  const dB=new Set(ST.balanceData.map(b=>b.date));
+  (p.balanceData||[]).forEach(b=>{ if(!dB.has(b.date)) ST.balanceData.push(b); });
+  const dA=new Set(ST.activities.map(a=>a.date+'|'+(a.type||'')+'|'+(a.kcal||'')+'|'+(a.dur||'')));
+  (p.activities||[]).forEach(a=>{ if(!dA.has(a.date+'|'+(a.type||'')+'|'+(a.kcal||'')+'|'+(a.dur||''))) ST.activities.push(a); });
+  const dN=new Set(ST.nutrition.map(n=>n.date));
+  (p.nutrition||[]).forEach(n=>{ if(!dN.has(n.date)) ST.nutrition.push(n); });
+  const dF=new Set(ST.feedbacks.map(f=>f.date+'|'+(f.seance||'')));
+  (p.feedbacks||[]).forEach(f=>{ if(!dF.has(f.date+'|'+(f.seance||''))) ST.feedbacks.push(f); });
+}
+function scanBackups(){
+  const el=document.getElementById('scanResult'); if(!el)return;
+  const found=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!/^(fc\d*|fitcoach)/i.test(k)) continue;
+    try{
+      const p=JSON.parse(localStorage.getItem(k)); if(!p||typeof p!=='object')continue;
+      found.push({k, ex:Object.keys(p.doneExos||{}).length, ch:Object.keys(p.charges||{}).length, at:p.savedAt||''});
+    }catch(e){}
+  }
+  if(!found.length){ el.innerHTML='<div style="font-size:12px;color:var(--text3)">Aucune autre sauvegarde trouvée dans ce navigateur.</div>'; return; }
+  el.innerHTML=found.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:8px 0;border-top:1px solid var(--line)">
+    <span><b>${f.k}</b> · ${f.ex} exos · ${f.ch} charges${f.at?' · '+f.at.slice(0,10):''}</span>
+    <button class="btn" style="margin-top:0;width:auto;padding:0 12px;height:30px;font-size:12px" onclick="restoreKey('${f.k}')">Fusionner</button></div>`).join('');
+}
+function restoreKey(k){
+  try{ mergePayload(JSON.parse(localStorage.getItem(k))); save(); toast('Données fusionnées ✓'); renderData(); }
+  catch(e){ toast('Illisible'); }
+}
+function renderBackupInfo(){
+  const el=document.getElementById('backupInfo'); if(!el)return;
+  const last=localStorage.getItem('fc_lastExport');
+  const n=Object.keys(ST.doneExos).length;
+  const days=last?Math.floor((Date.now()-new Date(last))/86400000):null;
+  el.innerHTML=`${n} exercices validés · ${ST.balanceData.length} pesées en mémoire<br>`+
+    (last?`Dernier export : ${last.slice(0,10)}${days>=7?' <span style="color:var(--red,#e0435a)">— à refaire</span>':''}`
+        :`<span style="color:var(--red,#e0435a)">Jamais exporté</span> — fais-le maintenant.`);
 }
 
 function initPreloaded(){
-  if(!localStorage.getItem('fc5')){
+  if(!localStorage.getItem(DKEY) && !bestStored()){
     ST.balanceData=PRELOADED.balanceData;
     ST.dailyWeights=PRELOADED.dailyWeights;
     ST.activities=PRELOADED.activities;
@@ -746,8 +847,56 @@ function showPage(id,btn){
   if(id==='menus')renderMenus();
   if(id==='poids')renderPoids();
   if(id==='data')renderData();
+  if(id==='training'){ renderSeanceChoice(); renderWeekTabs(); renderSession(); }
 }
 function goHome(){ showPage('home'); }
+function openSeance(){ ST.currentWeekDay=new Date().getDay()===0?6:new Date().getDay()-1; showPage('training'); }
+
+// Choix de la séance (bloc 1/2/3 + autres activités) sur la page Séance de sport
+function renderSeanceChoice(){
+  const el=document.getElementById('seanceChoice'); if(!el)return;
+  const reco=nextStrength(); const ordered=[reco,...STRENGTH_ORDER.filter(s=>s!==reco)];
+  const blocs=ordered.map(id=>{ const s=SEANCE_MAP[id],isReco=id===reco; const svg=ILLUSTRATIONS[s.exercises[0].svg]||'';
+    const active=(SESSION_DAY[id]===ST.currentWeekDay);
+    return `<button class="wz-opt${isReco?' reco':''}" style="${active?'border-color:var(--accent)':''}" onclick="pickSeance('${id}')">
+      <div class="wz-opt-ic">${svg}</div>
+      <div><div class="wz-opt-tt">${s.label} · ${SESSION_ROLE[id].title}</div><div class="wz-opt-ds">${s.exercises.length} exercices · full-body</div></div>
+      ${isReco?'<span class="wz-badge">conseillé</span>':''}</button>`;
+  }).join('');
+  const acts=[['walk','🚶 Marche'],['cardio','🚴 Cardio libre'],['rando','🥾 Randonnée'],['other','➕ Autre']]
+    .map(([k,t])=>`<button class="act-chip" onclick="wzChoose('${k}')">${t}</button>`).join('');
+  el.innerHTML=`<div class="form-title" style="margin:14px 0 8px">Choisis ta séance</div>${blocs}
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px">Ou une autre activité</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">${acts}</div>`;
+}
+function pickSeance(id){ ST.currentWeekDay=SESSION_DAY[id]; ST.lastStrength=id; save(); renderSeanceChoice(); renderWeekTabs(); renderSession(); }
+
+// Objectif de la semaine : % de séances restantes (lun→dim)
+const PRESCRIBED=[[0,'S1'],[2,'S2'],[4,'S3']];
+function weekObjective(){
+  const days=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  let done=0;
+  PRESCRIBED.forEach(([di,id])=>{ const s=SEANCE_MAP[id]; const dn=days[di];
+    if(s.exercises.every((ex,i)=>!!ST.doneExos[dn+'_'+ST.weekStart+'_'+i])) done++;
+  });
+  const total=PRESCRIBED.length;
+  return {done,total,pctRemaining:Math.round((total-done)/total*100)};
+}
+function renderWeekObjective(){
+  const el=document.getElementById('weekObjective'); if(!el)return;
+  const o=weekObjective(); const pctDone=100-o.pctRemaining;
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+      <div class="form-title" style="margin:0">Objectif de la semaine</div>
+      <div style="font-size:12px;color:var(--text2)">lun → dim</div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+      <div style="font-family:'DM Serif Display',serif;font-size:36px;color:${o.pctRemaining===0?'var(--accent)':'var(--text)'}">${o.pctRemaining}%</div>
+      <div style="color:var(--text2)">à faire</div>
+      <div style="margin-left:auto;font-size:13px;color:var(--text2)">${o.done}/${o.total} séances faites</div>
+    </div>
+    <div style="height:8px;background:var(--bg4);border-radius:4px;overflow:hidden"><div style="height:8px;border-radius:4px;background:var(--accent);width:${pctDone}%"></div></div>`;
+}
 
 // ---- Graphe en ligne réutilisable ----
 function lineChart(points, opts){
@@ -799,6 +948,7 @@ function renderData(){
   const ms=muscleSeries();
   document.getElementById('dataMuscle').innerHTML = ms.length?lineChart(ms,{color:'var(--accent)',unit:'%'})
     : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Pas encore de donnée « masse musculaire ».<br>Importe ta balance (CSV) via l\'écran Poids ou Data pour l\'afficher.</div>';
+  renderBackupInfo();
 }
 function showChoose(){ renderChoose(); showPage('choose'); }
 function renderChoose(){
@@ -829,6 +979,7 @@ function saveDailyWeight(){
 function renderWeightPrev(){
   const inp=document.getElementById('daily-weight');
   const el=document.getElementById('weight-prev');
+  if(!inp||!el) return;
   const tw=ST.dailyWeights[today()];
   if(tw) inp.value=tw;
   const yd=new Date(); yd.setDate(yd.getDate()-1);
@@ -870,6 +1021,7 @@ function renderWeekTabs(){
 function selectDay(i){ ST.currentWeekDay=i; renderWeekTabs(); renderSession(); }
 
 function renderSession(){
+  renderWeekObjective();
   const seance=getSeanceForDay(ST.currentWeekDay);
   const dayName=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay];
 
@@ -1729,8 +1881,6 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 initPreloaded();
 document.getElementById('b-date').value=today();
 document.getElementById('fb-date').value=today();
-const ws=new Date(ST.weekStart); const we=new Date(ws); we.setDate(we.getDate()+6);
-document.getElementById('weekBadge').textContent=(ws.getDate()+'/'+(ws.getMonth()+1))+' – '+(we.getDate()+'/'+(we.getMonth()+1));
 renderWeightPrev();
 renderWeekTabs();
 renderSession();
@@ -1739,8 +1889,6 @@ renderBalanceHist();
 populateFeedbackExo();
 document.getElementById('fb-seance').addEventListener('change',populateFeedbackExo);
 showPage('home');
-// Flux de lancement : s'ouvre automatiquement une fois par jour
-if(ST.lastWizard!==today()) openWizard();
 </script>
 </body>
 </html>
