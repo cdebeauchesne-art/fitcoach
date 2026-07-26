@@ -419,12 +419,29 @@ select option{background:var(--bg3)}
 
 <!-- PAGE MENUS -->
 <div class="page" id="page-menus">
-  <div class="section-title">Menus<div class="section-sub">Choisis, tape « J'ai mangé ça » — le suivi se remplit tout seul</div></div>
+  <div id="kcalTarget" style="text-align:center;padding:18px 0 14px"></div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="form-title" style="margin-bottom:10px">✍️ Saisie manuelle des calories</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Date</div>
+        <input type="date" id="mk-date" style="width:100%" onchange="renderManualKcal()"></div>
+      <div style="width:110px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Total kcal</div>
+        <input type="number" id="mk-kcal" placeholder="2100" step="10" style="width:100%"></div>
+      <div style="width:100px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">Protéines (g)</div>
+        <input type="number" id="mk-prot" placeholder="160" step="5" style="width:100%"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="margin-top:0;flex:1" onclick="saveManualKcal()">Enregistrer</button>
+      <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="clearManualKcal()">Effacer</button>
+    </div>
+    <div id="manualInfo" style="font-size:12px;color:var(--text3);margin-top:10px;line-height:1.6"></div>
+  </div>
   <div class="card" id="dayTracker"></div>
   <div style="display:flex;gap:8px;margin-bottom:12px">
     <button class="day-btn" id="btn-sport" style="flex:1;text-align:center" onclick="toggleDayFlag('sport')">⚡ Jour de séance</button>
     <button class="day-btn" id="btn-alcool" style="flex:1;text-align:center" onclick="toggleDayFlag('alcool')">🍷 Soirée alcool</button>
   </div>
+  <div class="section-title">Menus<div class="section-sub">Choisis, tape « J'ai mangé ça » — le suivi se remplit tout seul</div></div>
   <div id="menuSlots"></div>
 </div>
 
@@ -1750,7 +1767,8 @@ const ALCOOL_ITEM={kcal:270,prot:0,gluc:10,lip:0};
 
 function getMealLog(date){ if(!ST.mealLog[date]) ST.mealLog[date]={}; return ST.mealLog[date]; }
 function dayTotals(date){
-  const log=ST.mealLog[date]||{}; let t={kcal:0,prot:0,gluc:0,lip:0};
+  const log=ST.mealLog[date]||{}; let t={kcal:0,prot:0,gluc:0,lip:0,manual:false};
+  if(log.manual&&log.manual.kcal>0){ t.kcal=log.manual.kcal; t.prot=log.manual.prot||0; t.manual=true; return t; }
   SLOT_ORDER.forEach(s=>{ const it=(log[s]!=null)&&MENUS[s].items[log[s]]; if(it){ t.kcal+=it.kcal;t.prot+=it.prot;t.gluc+=it.gluc;t.lip+=it.lip; } });
   if(log.sport){ for(const k in SPORT_BONUS) t[k]+=SPORT_BONUS[k]; }
   if(log.alcool){ for(const k in ALCOOL_ITEM) t[k]+=ALCOOL_ITEM[k]; }
@@ -1759,9 +1777,36 @@ function dayTotals(date){
 function syncNutrition(date){
   const t=dayTotals(date);
   const i=ST.nutrition.findIndex(n=>n.date===date);
-  if(t.kcal===0){ if(i>=0 && ST.nutrition[i].src==='menus') ST.nutrition.splice(i,1); }
-  else { const rec={date,kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fibre:null,src:'menus'};
+  if(t.kcal===0){ if(i>=0 && (ST.nutrition[i].src==='menus'||ST.nutrition[i].src==='manuel')) ST.nutrition.splice(i,1); }
+  else { const rec={date,kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fibre:null,src:t.manual?'manuel':'menus'};
     if(i>=0) ST.nutrition[i]=rec; else ST.nutrition.push(rec); }
+}
+
+// ---- Saisie manuelle des calories ----
+function saveManualKcal(){
+  const d=document.getElementById('mk-date').value||today();
+  const k=parseInt(document.getElementById('mk-kcal').value,10);
+  const p=parseInt(document.getElementById('mk-prot').value,10);
+  if(isNaN(k)||k<=0){ toast('Entre un total de calories'); return; }
+  const log=getMealLog(d); log.manual={kcal:k, prot:isNaN(p)?null:p};
+  syncNutrition(d); save(); renderMenus();
+  toast(k+' kcal enregistrées le '+fmtDate(d)+' ✓');
+}
+function clearManualKcal(){
+  const d=document.getElementById('mk-date').value||today();
+  const log=getMealLog(d); delete log.manual;
+  syncNutrition(d); save(); renderMenus(); toast('Saisie manuelle effacée');
+}
+function renderManualKcal(){
+  const di=document.getElementById('mk-date'); if(!di)return;
+  if(!di.value) di.value=today();
+  const d=di.value; const log=ST.mealLog[d]||{};
+  document.getElementById('mk-kcal').value = log.manual?log.manual.kcal:'';
+  document.getElementById('mk-prot').value = (log.manual&&log.manual.prot!=null)?log.manual.prot:'';
+  const hist=[...ST.nutrition].filter(n=>n.kcal).sort((a,b)=>a.date<b.date?1:-1).slice(0,5);
+  document.getElementById('manualInfo').innerHTML =
+    (log.manual? `<span style="color:var(--amber)">Saisie manuelle active sur le ${fmtDate(d)} — elle remplace les menus cochés ce jour-là.</span><br>`:'')
+    + (hist.length? '5 derniers jours : '+hist.map(n=>`${fmtDate(n.date)} <b style="color:var(--text)">${n.kcal}</b>`).join(' · ') : 'Aucune journée enregistrée.');
 }
 function logMeal(slot,idx){ const log=getMealLog(today()); log[slot]=(log[slot]===idx?null:idx); syncNutrition(today()); save(); renderMenus(); }
 function toggleDayFlag(flag){ const log=getMealLog(today()); log[flag]=!log[flag]; syncNutrition(today()); save(); renderMenus(); }
@@ -1772,11 +1817,17 @@ function renderMenus(){
   const targetK = log.sport ? (cut?2400:2750) : (cut?2050:2450);
   const targetP = cut?160:150;
   const pct=Math.min(100,Math.round(t.kcal/targetK*100)); const rem=targetK-t.kcal;
+  document.getElementById('kcalTarget').innerHTML=`
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Objectif du jour</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:44px;line-height:1.2;color:var(--accent)">${targetK}</div>
+    <div style="font-size:13px;color:var(--text2)">kcal · ${targetP} g de protéines</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">${log.sport?'Jour de séance (+300 kcal)':'Jour sans séance'}</div>`;
   document.getElementById('dayTracker').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
       <div class="form-title" style="margin:0">Aujourd'hui</div>
       <div style="font-size:12px;color:var(--text2)">cible ${targetK} kcal</div>
     </div>
+    ${t.manual?'<div style="font-size:11px;color:var(--amber);margin-bottom:8px">✍️ Total saisi manuellement — les menus cochés ne sont pas comptés aujourd\'hui.</div>':''}
     <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
       <div style="font-family:'DM Serif Display',serif;font-size:34px">${t.kcal}</div><div style="color:var(--text2)">kcal</div>
       <div style="margin-left:auto;font-size:13px;color:${rem<0?'var(--red)':'var(--accent)'}">${rem>=0?rem+' kcal restantes':Math.abs(rem)+' au-dessus'}</div>
@@ -1785,7 +1836,7 @@ function renderMenus(){
     <div style="display:flex;gap:8px">
       ${[['Protéines',t.prot,targetP],['Glucides',t.gluc,null],['Lipides',t.lip,null]].map(([l,v,tg])=>`
         <div style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px;text-align:center">
-          <div style="font-size:16px;font-weight:600;color:${tg?(v>=tg?'var(--accent)':'var(--amber)'):'var(--text)'}">${v}g</div>
+          <div style="font-size:16px;font-weight:600;color:${tg?(v>=tg?'var(--accent)':'var(--amber)'):'var(--text)'}">${(t.manual&&!v)?'—':v+'g'}</div>
           <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px">${l}${tg?' /'+tg:''}</div>
         </div>`).join('')}
     </div>`;
@@ -1801,6 +1852,7 @@ function renderMenus(){
           <div class="menu-check">${sel?'✓':'+'}</div>
         </div>`; }).join('')}</div>`;
   }).join('');
+  renderManualKcal();
 }
 
 // =================================================================
