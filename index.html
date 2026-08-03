@@ -104,6 +104,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .last-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .last-chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;background:var(--bg4);border:1px solid var(--border);color:var(--text2)}
 .last-empty{font-size:13px;color:var(--text2);line-height:1.5}
+.pend{display:flex;align-items:center;gap:10px;margin-top:11px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.32);border-radius:10px;padding:10px 11px;font-size:12.5px;line-height:1.4}
+.pend-d{font-size:11.5px;color:var(--text2);margin-top:2px}
+.pend-b{flex:0 0 auto;background:var(--amber);color:#111;border:none;border-radius:8px;padding:8px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .chg-grid{display:flex;gap:8px;margin-bottom:10px}
 .chg-box{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:9px 10px}
 .chg-box.goal{border-color:var(--accent)}
@@ -538,6 +541,18 @@ select option{background:var(--bg3)}
     <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importData(event)">
     <div id="scanResult" style="margin-top:10px"></div>
     <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Exporte une fois par semaine. Le fichier .json contient tout : séances, charges, pesées, menus, activités. Il se réimporte dans n'importe quelle version de l'app.</div>
+  </div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:6px">☁️ Synchronisation Google Sheets</div>
+    <div id="syncInfo" style="font-size:12px;color:var(--text3);margin-bottom:10px"></div>
+    <input type="url" id="sync-url" placeholder="URL du script (…/exec)" autocomplete="off" style="width:100%;margin-bottom:7px">
+    <input type="password" id="sync-pass" placeholder="Phrase de passe" autocomplete="off" style="width:100%;margin-bottom:9px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 16px" onclick="saveSyncCfg()">Enregistrer</button>
+      <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="syncNow(true)">↻ Synchroniser</button>
+      <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="clearSyncCfg()">Désactiver</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">L'app reste la source de vérité et fonctionne hors ligne : la synchro part en arrière-plan et son échec est sans conséquence. Cette URL vaut mot de passe — elle reste sur cet appareil, elle n'est jamais incluse dans l'export .json.</div>
   </div>
 </div>
 
@@ -1113,7 +1128,7 @@ let ST = {
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
   dailyWeights:{}, charges:{}, feedbacks:[],
   nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{}, mealLog:{},
-  sessionLog:[], pickedSeance:null, warmup:{}, visOpen:{},
+  sessionLog:[], pickedSeance:null, pickedDate:null, warmup:{}, visOpen:{},
   weekStart: weekStartDate(),
 };
 let restIntervals={};
@@ -1160,6 +1175,7 @@ function applyPayload(p){
   ST.mealLog=p.mealLog||{};
   ST.sessionLog=p.sessionLog||[];
   ST.pickedSeance=p.pickedSeance||null;
+  ST.pickedDate=p.pickedDate||null;
   ST.warmup=p.warmup||{};
   ST.visOpen=p.visOpen||{};
 }
@@ -1171,7 +1187,7 @@ function load(){
 }
 function payload(){
   return {
-    v:23, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance, warmup:ST.warmup, visOpen:ST.visOpen,
+    v:24, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance, pickedDate:ST.pickedDate, warmup:ST.warmup, visOpen:ST.visOpen,
     balanceData:ST.balanceData, activities:ST.activities,
     doneExos:ST.doneExos, seriesState:ST.seriesState,
     dailyWeights:ST.dailyWeights, charges:ST.charges,
@@ -1183,6 +1199,84 @@ function save(){
   const j=JSON.stringify(payload());
   try{ localStorage.setItem(DKEY,j); localStorage.setItem(MKEY,j); }
   catch(e){ toast('Stockage plein — exporte ta sauvegarde'); }
+  if(typeof scheduleSync==='function') scheduleSync();
+}
+
+// ---------- SYNCHRO GOOGLE SHEETS (Apps Script) ----------
+// Sens unique : l'app pousse, la feuille reçoit. localStorage reste la source
+// de vérité, la synchro est opportuniste et son échec est silencieux.
+// Config gardée hors de payload() : ni exportée, ni partagée par erreur.
+const SKEY='fc_syncUrl', SPKEY='fc_syncPass', SLKEY='fc_lastSync';
+let syncTimer=null, syncFP='', syncBusy=false;
+
+function syncCfg(){
+  const u=localStorage.getItem(SKEY)||'', p=localStorage.getItem(SPKEY)||'';
+  return (u&&p)?{url:u,pass:p}:null;
+}
+function saveSyncCfg(){
+  const u=(document.getElementById('sync-url').value||'').trim();
+  const p=(document.getElementById('sync-pass').value||'').trim();
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(u)){
+    toast('URL invalide — elle doit finir par /exec'); return; }
+  if(!p){ toast('Entre la phrase de passe'); return; }
+  localStorage.setItem(SKEY,u); localStorage.setItem(SPKEY,p);
+  toast('Configuration enregistrée'); renderSyncInfo(); syncNow(true);
+}
+function clearSyncCfg(){
+  localStorage.removeItem(SKEY); localStorage.removeItem(SPKEY); localStorage.removeItem(SLKEY);
+  toast('Synchro désactivée'); renderSyncInfo();
+}
+function scheduleSync(){
+  if(!syncCfg())return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(function(){ syncNow(false); },8000);
+}
+function setSyncStatus(ok,msg){
+  localStorage.setItem(SLKEY,JSON.stringify({ok:ok,msg:msg,at:new Date().toISOString()}));
+  renderSyncInfo();
+}
+async function syncNow(manual){
+  const cfg=syncCfg();
+  if(!cfg){ if(manual)toast('Configure d\u2019abord l\u2019URL et la phrase de passe'); return; }
+  if(syncBusy)return;
+  if(!navigator.onLine){ if(manual)toast('Hors ligne \u2014 la synchro repartira plus tard'); return; }
+  const body=JSON.stringify({pass:cfg.pass, data:payload()});
+  const fp=body.length+'|'+(ST.sessionLog||[]).length+'|'+(ST.balanceData||[]).length+'|'+(ST.nutrition||[]).length;
+  if(!manual && fp===syncFP)return;
+  syncBusy=true; if(manual)toast('Synchronisation\u2026');
+  try{
+    // Content-Type text/plain : requête « simple », pas de pré-vol CORS.
+    const r=await fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:body,redirect:'follow'});
+    const j=await r.json();
+    if(j&&j.ok){ syncFP=fp; setSyncStatus(true,j.seances+' s\u00e9ances, '+j.pesees+' pes\u00e9es');
+      if(manual)toast('Synchronis\u00e9 \u2713'); }
+    else { setSyncStatus(false,(j&&j.err==='passphrase')?'phrase de passe refus\u00e9e':'refus\u00e9 par le script');
+      if(manual)toast('Refus\u00e9 : '+((j&&j.err)||'erreur')); }
+  }catch(e){
+    // Certains navigateurs bloquent la lecture de la réponse (redirection Google).
+    // On renvoie alors sans lire le retour : l'écriture a lieu, sans confirmation.
+    try{
+      await fetch(cfg.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:body});
+      syncFP=fp; setSyncStatus(true,'envoy\u00e9 sans confirmation');
+      if(manual)toast('Envoy\u00e9 (r\u00e9ponse illisible) \u2014 v\u00e9rifie la feuille');
+    }catch(e2){ setSyncStatus(false,'r\u00e9seau injoignable'); if(manual)toast('\u00c9chec r\u00e9seau'); }
+  }
+  syncBusy=false;
+}
+function renderSyncInfo(){
+  const el=document.getElementById('syncInfo'); if(!el)return;
+  const cfg=syncCfg();
+  const u=document.getElementById('sync-url'), p=document.getElementById('sync-pass');
+  if(u&&!u.value)u.value=localStorage.getItem(SKEY)||'';
+  if(p&&!p.value)p.value=localStorage.getItem(SPKEY)||'';
+  if(!cfg){ el.innerHTML='<span style="color:var(--text3)">Non configur\u00e9e</span> \u2014 les donn\u00e9es restent uniquement sur cet appareil.'; return; }
+  let st=null; try{ st=JSON.parse(localStorage.getItem(SLKEY)); }catch(e){}
+  if(!st){ el.innerHTML='Configur\u00e9e \u2014 aucune synchro effectu\u00e9e pour l\u2019instant.'; return; }
+  const d=new Date(st.at), hh=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  el.innerHTML=st.ok
+    ? '<span style="color:var(--accent)">\u2713 Derni\u00e8re synchro '+fmtDate(st.at.slice(0,10))+' \u00e0 '+hh+'</span> \u2014 '+st.msg
+    : '<span style="color:var(--red,#e0435a)">\u2717 \u00c9chec le '+fmtDate(st.at.slice(0,10))+' \u00e0 '+hh+'</span> \u2014 '+st.msg;
 }
 
 // ---------- SAUVEGARDE / RESTAURATION ----------
@@ -1254,6 +1348,7 @@ function restoreKey(k){
   catch(e){ toast('Illisible'); }
 }
 function renderBackupInfo(){
+  renderSyncInfo();
   const el=document.getElementById('backupInfo'); if(!el)return;
   const last=localStorage.getItem('fc_lastExport');
   const n=Object.keys(ST.doneExos).length;
@@ -1394,6 +1489,39 @@ function renderPick(){
   }).join('');
   c.innerHTML=`<div class="form-title" style="margin:16px 0 10px">Quelle séance veux-tu faire aujourd'hui ?</div>${blocs}`;
 }
+function dateAddDays(d,n){
+  const t=new Date(d+'T00:00:00'); t.setDate(t.getDate()+n);
+  return t.toISOString().split('T')[0];
+}
+// Séries saisies dans l'app mais absentes du journal : anciennes clés (jour de la semaine)
+// comme nouvelles clés (date). Permet de récupérer une séance faite mais non enregistrée.
+function pendingSessions(){
+  const groups={};
+  Object.keys(ST.seriesState||{}).forEach(function(k){
+    const m=/^t_(S\d+)_(.+)_(\d+)$/.exec(k); if(!m)return;
+    const ts=ST.seriesState[k]; if(!ts||!ts.done||!ts.done.length)return;
+    const g=m[1]+'|'+m[2]; (groups[g]=groups[g]||{})[+m[3]]=k;
+  });
+  const out=[];
+  Object.keys(groups).forEach(function(g){
+    const parts=g.split('|'), id=parts[0], tag=parts[1];
+    let date=/^[0-6]$/.test(tag)?dateAddDays(ST.weekStart,+tag):tag;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+    if(date>today())return;
+    if(!SEANCE_MAP[id])return;
+    if((ST.sessionLog||[]).some(function(l){return l.date===date&&l.seanceId===id;}))return;
+    const map=groups[g];
+    out.push({seanceId:id, date:date, n:Object.keys(map).length, keyFn:function(i){return map[i]||'';}});
+  });
+  return out.sort(function(a,b){return a.date<b.date?1:-1;});
+}
+function recoverSession(id,date){
+  const it=pendingSessions().filter(function(x){return x.seanceId===id&&x.date===date;})[0];
+  if(!it){ toast('Séance introuvable'); return; }
+  if(pushLogEntry(buildLogEntry(id,date,it.keyFn))){
+    toast('Séance récupérée ✓'); renderPick(); renderWeekTabs(); renderSeanceChoice();
+  } else toast('Aucune série à récupérer');
+}
 // Dernière séance réellement enregistrée dans le journal (toutes semaines confondues).
 function lastLoggedSession(){
   const logs=(ST.sessionLog||[]).slice().sort(function(a,b){
@@ -1411,7 +1539,8 @@ function renderPickLast(){
   const L=lastLoggedSession();
   if(!L){
     el.innerHTML='<div class="form-title" style="margin:0 0 6px">Derni\u00e8re s\u00e9ance r\u00e9alis\u00e9e</div>'
-      +'<div class="last-empty">Aucune s\u00e9ance enregistr\u00e9e pour l\u2019instant. Choisis-en une ci-dessous \u2014 elle appara\u00eetra ici une fois termin\u00e9e.</div>';
+      +'<div class="last-empty">Aucune s\u00e9ance enregistr\u00e9e pour l\u2019instant. Choisis-en une ci-dessous \u2014 elle appara\u00eetra ici une fois termin\u00e9e.</div>'
+      +pendingHTML();
     return;
   }
   const s=SEANCE_MAP[L.seanceId];
@@ -1426,7 +1555,19 @@ function renderPickLast(){
     +'<div class="last-row"><div class="last-ic">'+svg+'</div><div style="flex:1;min-width:0">'
     +'<div class="last-nm">'+(L.label||L.seanceId)+(L.role?' \u00b7 '+L.role:'')+'</div>'
     +'<div class="last-dt">'+fmtDate(L.date)+' \u2014 '+quand+'</div></div></div>'
-    +(chips.length?'<div class="last-chips">'+chips.map(function(c){return '<span class="last-chip">'+c+'</span>';}).join('')+'</div>':'');
+    +(chips.length?'<div class="last-chips">'+chips.map(function(c){return '<span class="last-chip">'+c+'</span>';}).join('')+'</div>':'')
+    +pendingHTML();
+}
+function pendingHTML(){
+  const ps=pendingSessions(); if(!ps.length)return '';
+  return ps.slice(0,3).map(function(x){
+    const s=SEANCE_MAP[x.seanceId];
+    const n=daysAgo(x.date);
+    const quand=n===0?"aujourd\u2019hui":(n===1?'hier':'le '+fmtDate(x.date));
+    return '<div class="pend"><div style="flex:1;min-width:0"><b>'+s.label+'</b> \u2014 '+quand
+      +'<div class="pend-d">'+x.n+' exercice'+(x.n>1?'s':'')+' rempli'+(x.n>1?'s':'')+', pas encore enregistr\u00e9'+(x.n>1?'s':'')+' au journal</div></div>'
+      +'<button class="pend-b" onclick="recoverSession(\''+x.seanceId+'\',\''+x.date+'\')">Enregistrer</button></div>';
+  }).join('');
 }
 function startSeance(id){
   ST.pickedSeance=id; ST.pickedDate=today(); ST.currentWeekDay=todayIdx();
@@ -1461,21 +1602,44 @@ function dayIdxOfDate(d){ const x=new Date(d+'T12:00:00'); return x.getDay()===0
 function weekSessions(){ return (ST.sessionLog||[]).filter(l=>l.date>=ST.weekStart); }
 function sessionsOnDay(i){ return weekSessions().filter(l=>dayIdxOfDate(l.date)===i); }
 
+// Construit une entrée de journal à partir des séries stockées, quelle que soit la clé utilisée.
+function buildLogEntry(seanceId,dateStr,keyFn){
+  const seance=SEANCE_MAP[seanceId]; if(!seance)return null;
+  const exos=seance.exercises.map(function(ex,i){
+    const ts=ST.seriesState[keyFn(i)]||{done:[]};
+    const charge=(ST.charges[exChargeKey(ex)]||{}).charge ?? ex.initCharge;
+    return {name:exVariantName(ex), sets:(ts.done||[]).slice(), charge:charge, isTime:!!ex.isTime};
+  }).filter(function(e){return e.sets.length>0;});
+  if(!exos.length) return null;
+  const volume=exos.reduce(function(t,e){ return t+(e.isTime?0:e.sets.reduce(function(a,r){return a+r*(e.charge||0);},0)); },0);
+  return {date:dateStr, seanceId:seanceId, label:seance.label, role:(SESSION_ROLE[seanceId]||{}).title||'',
+    exos:exos, volume:Math.round(volume), nbExos:exos.length, totalExos:seance.exercises.length,
+    warmup:warmupDone(seance), savedAt:new Date().toISOString()};
+}
+function pushLogEntry(e){
+  if(!e)return false;
+  ST.sessionLog=(ST.sessionLog||[]).filter(function(l){return !(l.date===e.date&&l.seanceId===e.seanceId);});
+  ST.sessionLog.push(e); ST.lastStrength=e.seanceId; save(); return true;
+}
+// Enregistrement automatique dès que toutes les séries de la séance sont validées.
+function autoLogIfComplete(){
+  const seance=curSeance(); if(!seance)return;
+  const all=seance.exercises.every(function(ex,i){
+    const ts=ST.seriesState[seriesKey(seance,i)]||{done:[]};
+    return (ts.done||[]).length>=exSets(ex,ts);
+  });
+  if(!all)return;
+  const d=ST.pickedDate||today();
+  if((ST.sessionLog||[]).some(function(l){return l.date===d&&l.seanceId===seance.id;}))return;
+  if(pushLogEntry(buildLogEntry(seance.id,d,function(i){return seriesKey(seance,i);})))
+    toast('Séance enregistrée automatiquement ✓');
+}
 function saveSessionDone(){
   const seance=curSeance(); if(!seance)return;
-  const d=today();
-  const exos=seance.exercises.map((ex,i)=>{
-    const tk=seriesKey(seance,i);
-    const ts=ST.seriesState[tk]||{done:[]};
-    const charge=ST.charges[exChargeKey(ex)]?.charge ?? ex.initCharge;
-    return {name:exVariantName(ex), sets:(ts.done||[]).slice(), charge, isTime:!!ex.isTime};
-  }).filter(e=>e.sets.length>0);
-  if(!exos.length){ toast('Aucune série validée'); return; }
-  const volume=exos.reduce((t,e)=>t+(e.isTime?0:e.sets.reduce((a,r)=>a+r*(e.charge||0),0)),0);
-  ST.sessionLog=(ST.sessionLog||[]).filter(l=>!(l.date===d&&l.seanceId===seance.id));
-  ST.sessionLog.push({date:d, seanceId:seance.id, label:seance.label, role:SESSION_ROLE[seance.id]?.title||'', exos, volume:Math.round(volume), nbExos:exos.length, totalExos:seance.exercises.length, warmup:warmupDone(seance), savedAt:new Date().toISOString()});
-  ST.lastStrength=seance.id;
-  save();
+  const d=ST.pickedDate||today();
+  const e=buildLogEntry(seance.id,d,function(i){return seriesKey(seance,i);});
+  if(!e){ toast('Aucune série validée'); return; }
+  pushLogEntry(e);
   toast('Séance enregistrée le '+fmtDate(d)+' ✓');
   renderWeekTabs(); renderSeanceChoice(); renderSession(); renderPickLast();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1621,7 +1785,8 @@ function renderData(){
   renderBackupInfo();
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
-const APP_BUILD='v32 · 03/08/2026';
+window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
+const APP_BUILD='v34 · 03/08/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 function renderHomeBuild(){
@@ -2321,7 +2486,7 @@ function validateSet(tk,i){
   const reps=ex.isTime?ex.timeReps:(ts.pending ?? ex.reps);
   ts.done.push(reps); ts.pending=null;
   beep(880,120); setTimeout(()=>beep(1100,160),140);
-  if(ts.done.length>=exSets(ex,ts)){ ST.doneExos[curExoKey(i)]=true; save(); toast('Exercice terminé ✓'); renderSession(); openExo(i); }
+  if(ts.done.length>=exSets(ex,ts)){ ST.doneExos[curExoKey(i)]=true; save(); toast('Exercice terminé ✓'); autoLogIfComplete(); renderSession(); openExo(i); }
   else { startRest(tk,i,ex.restSec); }
 }
 function startWork(tk,i){
