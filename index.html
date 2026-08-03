@@ -96,6 +96,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .vis-link{flex:1;text-align:center;text-decoration:none;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg4)}
 .vis-link.tt{color:var(--text)}
 .vis-link.yt{color:var(--red)}
+.last-row{display:flex;align-items:center;gap:11px}
+.last-ic{flex:0 0 42px;height:42px;border-radius:11px;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
+.last-ic svg{width:26px;height:26px}
+.last-nm{font-size:15px;font-weight:700;line-height:1.25}
+.last-dt{font-size:12px;color:var(--text2);margin-top:2px}
+.last-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.last-chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;background:var(--bg4);border:1px solid var(--border);color:var(--text2)}
+.last-empty{font-size:13px;color:var(--text2);line-height:1.5}
 .chg-grid{display:flex;gap:8px;margin-bottom:10px}
 .chg-box{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:9px 10px}
 .chg-box.goal{border-color:var(--accent)}
@@ -332,6 +340,7 @@ select option{background:var(--bg3)}
 <!-- PAGE CHOIX DE SEANCE -->
 <div class="page" id="page-pick">
   <div class="card" id="pickProgress"></div>
+  <div class="card" id="pickLast"></div>
   <div id="pickChoice"></div>
 </div>
 
@@ -1367,6 +1376,7 @@ function renderPick(){
         <span style="color:var(--text2)">${o.done>=o.total?'Objectif atteint 💪':(o.total-o.done)+' restante'+((o.total-o.done)>1?'s':'')}</span>
       </div>`;
   }
+  renderPickLast();
   const c=document.getElementById('pickChoice'); if(!c)return;
   const reco=nextStrength();
   const blocs=STRENGTH_ORDER.map(id=>{
@@ -1383,6 +1393,40 @@ function renderPick(){
             :(isReco?'<span class="wz-badge">conseillé</span>':'')}</button>`;
   }).join('');
   c.innerHTML=`<div class="form-title" style="margin:16px 0 10px">Quelle séance veux-tu faire aujourd'hui ?</div>${blocs}`;
+}
+// Dernière séance réellement enregistrée dans le journal (toutes semaines confondues).
+function lastLoggedSession(){
+  const logs=(ST.sessionLog||[]).slice().sort(function(a,b){
+    if(a.date!==b.date) return a.date<b.date?1:-1;
+    return (a.savedAt||'')<(b.savedAt||'')?1:-1; });
+  return logs[0]||null;
+}
+function daysAgo(d){
+  if(!d)return null;
+  const a=new Date(d+'T00:00:00'), b=new Date(today()+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+function renderPickLast(){
+  const el=document.getElementById('pickLast'); if(!el)return;
+  const L=lastLoggedSession();
+  if(!L){
+    el.innerHTML='<div class="form-title" style="margin:0 0 6px">Derni\u00e8re s\u00e9ance r\u00e9alis\u00e9e</div>'
+      +'<div class="last-empty">Aucune s\u00e9ance enregistr\u00e9e pour l\u2019instant. Choisis-en une ci-dessous \u2014 elle appara\u00eetra ici une fois termin\u00e9e.</div>';
+    return;
+  }
+  const s=SEANCE_MAP[L.seanceId];
+  const svg=(s&&ILLUSTRATIONS[s.exercises[0].svg])||'';
+  const n=daysAgo(L.date);
+  const quand=n===0?"aujourd\u2019hui":(n===1?'hier':'il y a '+n+' jours');
+  const chips=[];
+  if(L.nbExos) chips.push(L.nbExos+(L.totalExos?'/'+L.totalExos:'')+' exercices');
+  if(L.volume) chips.push(Math.round(L.volume).toLocaleString('fr-FR')+' kg soulev\u00e9s');
+  if(L.warmup) chips.push('\u00e9chauffement \u2713');
+  el.innerHTML='<div class="form-title" style="margin:0 0 10px">Derni\u00e8re s\u00e9ance r\u00e9alis\u00e9e</div>'
+    +'<div class="last-row"><div class="last-ic">'+svg+'</div><div style="flex:1;min-width:0">'
+    +'<div class="last-nm">'+(L.label||L.seanceId)+(L.role?' \u00b7 '+L.role:'')+'</div>'
+    +'<div class="last-dt">'+fmtDate(L.date)+' \u2014 '+quand+'</div></div></div>'
+    +(chips.length?'<div class="last-chips">'+chips.map(function(c){return '<span class="last-chip">'+c+'</span>';}).join('')+'</div>':'');
 }
 function startSeance(id){
   ST.pickedSeance=id; ST.pickedDate=today(); ST.currentWeekDay=todayIdx();
@@ -1433,12 +1477,12 @@ function saveSessionDone(){
   ST.lastStrength=seance.id;
   save();
   toast('Séance enregistrée le '+fmtDate(d)+' ✓');
-  renderWeekTabs(); renderSeanceChoice(); renderSession();
+  renderWeekTabs(); renderSeanceChoice(); renderSession(); renderPickLast();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function deleteLoggedSession(date,id){
   ST.sessionLog=(ST.sessionLog||[]).filter(l=>!(l.date===date&&l.seanceId===id));
-  save(); renderWeekTabs(); renderSeanceChoice(); renderSession(); toast('Séance supprimée');
+  save(); renderWeekTabs(); renderSeanceChoice(); renderSession(); renderPickLast(); toast('Séance supprimée');
 }
 
 // Objectif de la semaine : % de séances restantes (lun→dim)
@@ -1577,7 +1621,7 @@ function renderData(){
   renderBackupInfo();
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
-const APP_BUILD='v31 · 03/08/2026';
+const APP_BUILD='v32 · 03/08/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 function renderHomeBuild(){
