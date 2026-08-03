@@ -1327,13 +1327,38 @@ function lineChart(points, opts){
   const color=opts.color||'var(--accent)'; const last=points[points.length-1],first=points[0];
   let tgt=''; if(opts.target!=null){ const ty=Y(opts.target); const tc=opts.targetColor||'var(--amber)';
     tgt=`<line x1="${pad}" y1="${ty}" x2="${w-pad}" y2="${ty}" stroke="${tc}" stroke-width="1.5" opacity=".85"/><text x="${pad}" y="${ty-4}" font-size="9.5" font-weight="700" fill="${tc}">${opts.targetLabel||('objectif '+opts.target+(opts.unit||''))}</text>`; }
-  return `<svg width="100%" viewBox="0 0 ${w} ${h+16}" style="display:block">
+  // Un point visible par relevé (tant que ça reste lisible) : on doit pouvoir les COMPTER.
+  let dots='';
+  if(points.length<=45){
+    dots=points.map((p,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(p.val).toFixed(1)}" r="${points.length<=20?2.8:2}" fill="${color}" opacity=".95"/>`).join('');
+  }
+  // Axe des abscisses : jusqu'à 5 dates réparties + un trait de repère sous chaque point
+  let ax='';
+  // Série de plus d'un an : mois/année, sinon les jours se répètent et l'axe devient illisible
+  const spanD=(new Date(last.date)-new Date(first.date))/864e5;
+  const lab=dt=>{ const q=String(dt).split('-'); return spanD>300 ? q[1]+'/'+q[0].slice(2) : q[2]+'/'+q[1]; };
+  if(points.length>1){
+    const nT=Math.min(5,points.length);
+    const idx=[...new Set(Array.from({length:nT},(_,k)=>Math.round(k*(points.length-1)/(nT-1))))];
+    ax=idx.map((i,k)=>{
+      const x=X(i), an=k===0?'start':(k===idx.length-1?'end':'middle');
+      return `<line x1="${x.toFixed(1)}" y1="${h-pad+2}" x2="${x.toFixed(1)}" y2="${h-pad+6}" stroke="var(--line)" stroke-width="1"/>`
+           + `<text x="${x.toFixed(1)}" y="${h+13}" text-anchor="${an}" font-size="9" fill="var(--text3)">${lab(points[i].date)}</text>`;
+    }).join('');
+    if(points.length<=45){
+      ax+=points.map((p,i)=>`<line x1="${X(i).toFixed(1)}" y1="${h-pad+2}" x2="${X(i).toFixed(1)}" y2="${h-pad+4}" stroke="var(--line)" stroke-width="1" opacity=".6"/>`).join('');
+    }
+  } else {
+    ax=`<text x="${pad}" y="${h+13}" font-size="9" fill="var(--text3)">${fmtDate(first.date)}</text>`;
+  }
+  return `<svg width="100%" viewBox="0 0 ${w} ${h+18}" style="display:block">
     ${tgt}
+    <line x1="${pad}" y1="${h-pad+2}" x2="${w-pad}" y2="${h-pad+2}" stroke="var(--line)" stroke-width="1"/>
     <path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+    ${dots}
     <circle cx="${X(points.length-1).toFixed(1)}" cy="${Y(last.val).toFixed(1)}" r="3.5" fill="${color}"/>
     <text x="${X(points.length-1).toFixed(1)}" y="${(Y(last.val)-7).toFixed(1)}" text-anchor="end" font-size="11" fill="${color}" font-weight="700">${last.val}${opts.unit||''}</text>
-    <text x="${pad}" y="${h+12}" font-size="9" fill="var(--text3)">${fmtDate(first.date)}</text>
-    <text x="${w-pad}" y="${h+12}" text-anchor="end" font-size="9" fill="var(--text3)">${fmtDate(last.date)}</text>
+    ${ax}
   </svg>`;
 }
 function weightSeries(){ return ST.balanceData.filter(b=>b.poids).slice().sort((a,b)=>a.date<b.date?-1:1).map(b=>({date:b.date,val:b.poids})); }
@@ -1401,7 +1426,7 @@ function renderData(){
   renderBuildInfo();
   renderBackupInfo();
 }
-const APP_BUILD='v27 · 01/08/2026';
+const APP_BUILD='v28 · 03/08/2026';
 function renderBuildInfo(){
   const el=document.getElementById('buildInfo'); if(!el)return;
   const nbMeal=Object.keys(ST.mealLog||{}).filter(d=>{try{return dayTotals(d).kcal>0}catch(e){return false}}).length;
@@ -1426,11 +1451,33 @@ function renderKcalChart(){
   }
   const view=s.slice(-30);
   const inside=view.filter(p=>p.val<=t.sport).length;
+  const hidden=s.length-view.length;
   el.innerHTML=lineChart(view,{color:'var(--amber)',unit:' kcal',target:t.moy,targetLabel:'objectif moyen '+t.moy+' kcal',targetColor:'var(--accent)'})
     +`<div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
         Cible : <strong style="color:var(--text2)">${t.repos} kcal</strong> les jours sans séance · <strong style="color:var(--text2)">${t.sport} kcal</strong> les jours de séance.<br>
-        ${view.length} jour${view.length>1?'s':''} enregistré${view.length>1?'s':''} · ${inside} sous le plafond.
-      </div>`;
+        <strong style="color:var(--amber)">${view.length}</strong> jour${view.length>1?'s':''} affiché${view.length>1?'s':''} · ${inside} sous le plafond${hidden>0?' · '+hidden+' plus ancien'+(hidden>1?'s':'')+' hors graphique':''}.
+      </div>
+      <button class="btn" style="margin-top:10px;width:auto;padding:0 14px;font-size:12px" onclick="toggleKcalList()">📋 Voir le détail jour par jour</button>
+      <div id="kcalList" style="display:none;margin-top:10px"></div>`;
+}
+// Liste brute de ce qui est RÉELLEMENT stocké — pour vérifier qu'aucune saisie ne manque.
+function toggleKcalList(){
+  const box=document.getElementById('kcalList'); if(!box)return;
+  if(box.style.display!=='none'){ box.style.display='none'; return; }
+  const s=kcalSeries(), t=kcalTarget();
+  const src=d=>{
+    const inMeal=ST.mealLog&&ST.mealLog[d];
+    const inNut=(ST.nutrition||[]).some(n=>n&&n.date===d);
+    return inMeal&&inNut?'menus+nutri':inMeal?'menus':'nutrition';
+  };
+  box.style.display='block';
+  box.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+      ${s.length} journée${s.length>1?'s':''} en mémoire. Si une date manque ici, la saisie n'a pas été enregistrée.</div>`
+    + s.slice().reverse().map(p=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border)">
+        <span style="color:var(--text2)">${fmtDate(p.date)}</span>
+        <span style="color:${p.val<=t.sport?'var(--accent)':'var(--red)'};font-weight:700">${p.val} kcal</span>
+        <span style="color:var(--text3);font-size:10.5px">${src(p.date)}</span>
+      </div>`).join('');
 }
 function showChoose(){ renderChoose(); showPage('choose'); }
 function renderChoose(){
