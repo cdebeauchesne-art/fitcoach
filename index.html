@@ -546,13 +546,18 @@ select option{background:var(--bg3)}
     <div class="form-title" style="margin-bottom:6px">☁️ Synchronisation Google Sheets</div>
     <div id="syncInfo" style="font-size:12px;color:var(--text3);margin-bottom:10px"></div>
     <input type="url" id="sync-url" placeholder="URL du script (…/exec)" autocomplete="off" style="width:100%;margin-bottom:7px">
-    <input type="password" id="sync-pass" placeholder="Phrase de passe" autocomplete="off" style="width:100%;margin-bottom:9px">
+    <input type="password" id="sync-pass" placeholder="Phrase de passe" autocomplete="off" style="width:100%;margin-bottom:7px">
+    <input type="text" id="sync-dev" placeholder="Nom de cet appareil (ex : tel-clement)" autocomplete="off" style="width:100%;margin-bottom:9px">
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 16px" onclick="saveSyncCfg()">Enregistrer</button>
       <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="syncNow(true)">↻ Synchroniser</button>
       <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="clearSyncCfg()">Désactiver</button>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">L'app reste la source de vérité et fonctionne hors ligne : la synchro part en arrière-plan et son échec est sans conséquence. Cette URL vaut mot de passe — elle reste sur cet appareil, elle n'est jamais incluse dans l'export .json.</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5">Chaque appareil porte un nom :
+      la feuille fusionne les lignes sans jamais en effacer, donc le téléphone de Clément et ce navigateur peuvent
+      pousser tous les deux. L'app reste la source de vérité et fonctionne hors ligne : la synchro part en
+      arrière-plan et son échec est sans conséquence. Cette URL vaut mot de passe — elle reste sur cet appareil,
+      elle n'est jamais incluse dans l'export .json.</div>
   </div>
 </div>
 
@@ -1152,7 +1157,8 @@ function bestStored(){
     try{
       const p=JSON.parse(localStorage.getItem(k));
       if(!p||typeof p!=='object') continue;
-      const sc=Object.keys(p.doneExos||{}).length*10+Object.keys(p.charges||{}).length*5
+      const sc=(p.sessionLog||[]).length*20+Object.keys(p.seriesState||{}).length*10
+        +Object.keys(p.doneExos||{}).length*10+Object.keys(p.charges||{}).length*5
         +Object.keys(p.dailyWeights||{}).length+(p.nutrition||[]).length+Object.keys(p.mealLog||{}).length;
       if(sc>bestScore){ bestScore=sc; best={key:k,data:p,score:sc}; }
     }catch(e){}
@@ -1206,12 +1212,17 @@ function save(){
 // Sens unique : l'app pousse, la feuille reçoit. localStorage reste la source
 // de vérité, la synchro est opportuniste et son échec est silencieux.
 // Config gardée hors de payload() : ni exportée, ni partagée par erreur.
-const SKEY='fc_syncUrl', SPKEY='fc_syncPass', SLKEY='fc_lastSync';
+const SKEY='fc_syncUrl', SPKEY='fc_syncPass', SLKEY='fc_lastSync', SDKEY='fc_device';
 let syncTimer=null, syncFP='', syncBusy=false;
 
+function deviceName(){
+  let d=localStorage.getItem(SDKEY);
+  if(!d){ d='appareil-'+Math.random().toString(36).slice(2,7); localStorage.setItem(SDKEY,d); }
+  return d;
+}
 function syncCfg(){
   const u=localStorage.getItem(SKEY)||'', p=localStorage.getItem(SPKEY)||'';
-  return (u&&p)?{url:u,pass:p}:null;
+  return (u&&p)?{url:u,pass:p,dev:deviceName()}:null;
 }
 function saveSyncCfg(){
   const u=(document.getElementById('sync-url').value||'').trim();
@@ -1219,11 +1230,14 @@ function saveSyncCfg(){
   if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(u)){
     toast('URL invalide — elle doit finir par /exec'); return; }
   if(!p){ toast('Entre la phrase de passe'); return; }
+  const dv=((document.getElementById('sync-dev')||{}).value||'').trim().slice(0,40);
   localStorage.setItem(SKEY,u); localStorage.setItem(SPKEY,p);
+  if(dv)localStorage.setItem(SDKEY,dv); else deviceName();
   toast('Configuration enregistrée'); renderSyncInfo(); syncNow(true);
 }
 function clearSyncCfg(){
   localStorage.removeItem(SKEY); localStorage.removeItem(SPKEY); localStorage.removeItem(SLKEY);
+  // SDKEY conserv\u00e9 : le nom de l'appareil ne change pas si on r\u00e9active la synchro
   toast('Synchro désactivée'); renderSyncInfo();
 }
 function scheduleSync(){
@@ -1240,7 +1254,7 @@ async function syncNow(manual){
   if(!cfg){ if(manual)toast('Configure d\u2019abord l\u2019URL et la phrase de passe'); return; }
   if(syncBusy)return;
   if(!navigator.onLine){ if(manual)toast('Hors ligne \u2014 la synchro repartira plus tard'); return; }
-  const body=JSON.stringify({pass:cfg.pass, data:payload()});
+  const body=JSON.stringify({pass:cfg.pass, device:cfg.dev, data:payload()});
   const fp=body.length+'|'+(ST.sessionLog||[]).length+'|'+(ST.balanceData||[]).length+'|'+(ST.nutrition||[]).length;
   if(!manual && fp===syncFP)return;
   syncBusy=true; if(manual)toast('Synchronisation\u2026');
@@ -1249,7 +1263,7 @@ async function syncNow(manual){
     const r=await fetch(cfg.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:body,redirect:'follow'});
     const j=await r.json();
-    if(j&&j.ok){ syncFP=fp; setSyncStatus(true,j.seances+' s\u00e9ances, '+j.pesees+' pes\u00e9es');
+    if(j&&j.ok){ syncFP=fp; setSyncStatus(true,syncCounts(j));
       if(manual)toast('Synchronis\u00e9 \u2713'); }
     else { setSyncStatus(false,(j&&j.err==='passphrase')?'phrase de passe refus\u00e9e':'refus\u00e9 par le script');
       if(manual)toast('Refus\u00e9 : '+((j&&j.err)||'erreur')); }
@@ -1264,19 +1278,29 @@ async function syncNow(manual){
   }
   syncBusy=false;
 }
+function syncCounts(j){
+  const parts=[];
+  if(j.seances!==undefined)parts.push(j.seances+' s\u00e9ance(s)');
+  if(j.series!==undefined)parts.push(j.series+' s\u00e9rie(s)');
+  if(j.pesees!==undefined)parts.push(j.pesees+' pes\u00e9e(s)');
+  if(j.activites!==undefined)parts.push(j.activites+' activit\u00e9(s)');
+  return (parts.join(', ')||'\u00e9crit')+' dans la feuille';
+}
 function renderSyncInfo(){
   const el=document.getElementById('syncInfo'); if(!el)return;
   const cfg=syncCfg();
-  const u=document.getElementById('sync-url'), p=document.getElementById('sync-pass');
+  const u=document.getElementById('sync-url'), p=document.getElementById('sync-pass'), dv=document.getElementById('sync-dev');
   if(u&&!u.value)u.value=localStorage.getItem(SKEY)||'';
   if(p&&!p.value)p.value=localStorage.getItem(SPKEY)||'';
+  if(dv&&!dv.value)dv.value=localStorage.getItem(SDKEY)||'';
   if(!cfg){ el.innerHTML='<span style="color:var(--text3)">Non configur\u00e9e</span> \u2014 les donn\u00e9es restent uniquement sur cet appareil.'; return; }
   let st=null; try{ st=JSON.parse(localStorage.getItem(SLKEY)); }catch(e){}
-  if(!st){ el.innerHTML='Configur\u00e9e \u2014 aucune synchro effectu\u00e9e pour l\u2019instant.'; return; }
+  const who=' <span style="color:var(--text3)">(appareil \u00ab '+deviceName()+' \u00bb)</span>';
+  if(!st){ el.innerHTML='Configur\u00e9e \u2014 aucune synchro effectu\u00e9e pour l\u2019instant.'+who; return; }
   const d=new Date(st.at), hh=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   el.innerHTML=st.ok
-    ? '<span style="color:var(--accent)">\u2713 Derni\u00e8re synchro '+fmtDate(st.at.slice(0,10))+' \u00e0 '+hh+'</span> \u2014 '+st.msg
-    : '<span style="color:var(--red,#e0435a)">\u2717 \u00c9chec le '+fmtDate(st.at.slice(0,10))+' \u00e0 '+hh+'</span> \u2014 '+st.msg;
+    ? '<span style="color:var(--accent)">\u2713 Derni\u00e8re synchro '+fmtDate(st.at.slice(0,10))+' \u00e0 '+hh+'</span> \u2014 '+st.msg+who
+    : '<span style="color:var(--red,#e0435a)">\u2717 \u00c9chec le '+fmtDate(st.at.slice(0,10))+' \u00e0 '+hh+'</span> \u2014 '+st.msg+who;
 }
 
 // ---------- SAUVEGARDE / RESTAURATION ----------
@@ -1786,7 +1810,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v34 · 03/08/2026';
+const APP_BUILD='v35 · 03/08/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 function renderHomeBuild(){
