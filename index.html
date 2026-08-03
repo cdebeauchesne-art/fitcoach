@@ -73,6 +73,36 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .exo-sub{font-size:11px;color:var(--text2);margin-top:1px}
 .exo-chevron{color:var(--text3);font-size:14px;transition:transform .22s;flex-shrink:0;margin-left:auto}
 .exo-chevron.open{transform:rotate(180deg)}
+.vis-wrap{border-bottom:1px solid var(--border)}
+.vis-toggle{width:100%;background:var(--bg3);border:none;color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:600;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.vis-chev{transition:transform .18s;font-size:12px}
+.vis-chev.open{transform:rotate(180deg)}
+.vis-body{display:none;padding:4px 16px 14px}
+.vis-body.open{display:block}
+.vis-split{display:flex;gap:10px;align-items:flex-start}
+.vis-pane{flex:1;min-width:0;text-align:center}
+.vis-lbl{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-weight:700;margin-bottom:6px}
+.vis-legend{display:flex;gap:16px;justify-content:center;font-size:10.5px;color:var(--text3);margin-top:8px}
+.vis-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.vis-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:10px}
+.vis-tag{font-size:10.5px;padding:3px 8px;border-radius:6px;font-weight:600}
+.vis-tag.p{background:rgba(248,113,113,.16);color:var(--red)}
+.vis-tag.s{background:rgba(251,191,36,.14);color:var(--amber)}
+.vis-cues{margin-top:12px;display:flex;flex-direction:column;gap:7px}
+.vis-cue{display:flex;gap:8px;font-size:12.5px;line-height:1.5;color:var(--text2)}
+.vis-n{flex:0 0 17px;height:17px;border-radius:50%;background:var(--bg4);color:var(--accent);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.vis-warn{margin-top:11px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);border-radius:9px;padding:9px 11px;font-size:12px;line-height:1.5;color:var(--text2)}
+.vis-links{display:flex;gap:8px;margin-top:11px}
+.vis-link{flex:1;text-align:center;text-decoration:none;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg4)}
+.vis-link.tt{color:var(--text)}
+.vis-link.yt{color:var(--red)}
+.chg-grid{display:flex;gap:8px;margin-bottom:10px}
+.chg-box{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:9px 10px}
+.chg-box.goal{border-color:var(--accent)}
+.chg-k{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);font-weight:700}
+.chg-v{font-size:19px;font-weight:700;margin-top:2px}
+.chg-d{font-size:10.5px;color:var(--text3);margin-top:1px}
+.sbtn-add{background:rgba(163,230,53,.12);color:var(--accent);border:1px solid rgba(163,230,53,.35)}
 .exo-expand{display:none;background:var(--bg3)}
 .exo-expand.open{display:block}
 /* ILLUSTRATION */
@@ -285,7 +315,7 @@ select option{background:var(--bg3)}
 </div>
 
 <div class="backbar" id="backbar" style="display:none">
-  <button onclick="goHome()">← Accueil</button><span id="backtitle"></span>
+  <button id="backbtn" onclick="goHome()">← Accueil</button><span id="backtitle"></span>
 </div>
 
 <!-- PAGE ACCUEIL -->
@@ -299,11 +329,14 @@ select option{background:var(--bg3)}
   <div id="homeBuild" style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;letter-spacing:.03em;line-height:1.6"></div>
 </div>
 
+<!-- PAGE CHOIX DE SEANCE -->
+<div class="page" id="page-pick">
+  <div class="card" id="pickProgress"></div>
+  <div id="pickChoice"></div>
+</div>
+
 <!-- PAGE PROGRAMME -->
 <div class="page" id="page-training">
-  <div class="card" id="weekObjective"></div>
-  <div class="week-tabs" id="weekTabs"></div>
-  <div id="seanceChoice"></div>
   <div id="sessionContent"></div>
 </div>
 
@@ -1071,7 +1104,7 @@ let ST = {
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
   dailyWeights:{}, charges:{}, feedbacks:[],
   nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{}, mealLog:{},
-  sessionLog:[], pickedSeance:null, warmup:{},
+  sessionLog:[], pickedSeance:null, warmup:{}, visOpen:{},
   weekStart: weekStartDate(),
 };
 let restIntervals={};
@@ -1119,6 +1152,7 @@ function applyPayload(p){
   ST.sessionLog=p.sessionLog||[];
   ST.pickedSeance=p.pickedSeance||null;
   ST.warmup=p.warmup||{};
+  ST.visOpen=p.visOpen||{};
 }
 function load(){
   const s=localStorage.getItem(DKEY);
@@ -1128,7 +1162,7 @@ function load(){
 }
 function payload(){
   return {
-    v:23, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance, warmup:ST.warmup,
+    v:23, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance, warmup:ST.warmup, visOpen:ST.visOpen,
     balanceData:ST.balanceData, activities:ST.activities,
     doneExos:ST.doneExos, seriesState:ST.seriesState,
     dailyWeights:ST.dailyWeights, charges:ST.charges,
@@ -1289,7 +1323,7 @@ function initPreloaded(){
 // =================================================================
 // NAV
 // =================================================================
-const PAGE_TITLES={training:'Séance de sport',choose:'Séance de sport',menus:'Menu',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data'};
+const PAGE_TITLES={pick:'Séance de sport',training:'Séance de sport',choose:'Séance de sport',menus:'Menu',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data'};
 function showPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+id); if(pg)pg.classList.add('active');
@@ -1297,16 +1331,63 @@ function showPage(id,btn){
   const bb=document.getElementById('backbar'); if(bb) bb.style.display=home?'none':'flex';
   const wb=document.querySelector('.weight-bar'); if(wb) wb.style.display=home?'none':'flex';
   if(!home){ const bt=document.getElementById('backtitle'); if(bt) bt.textContent=PAGE_TITLES[id]||''; }
+  // Depuis le détail d'une séance, le retour ramène au choix de séance, pas à l'accueil
+  const bbt=document.getElementById('backbtn');
+  if(bbt){ const par=BACK_PARENT[id];
+    bbt.textContent=par?'← Retour':'← Accueil';
+    bbt.onclick=par?function(){showPage(par);}:goHome; }
   window.scrollTo(0,0);
   if(id==='progress')renderProgress();
   if(id==='garmin')renderFeedbackHist();
   if(id==='menus')renderMenus();
   if(id==='poids')renderPoids();
   if(id==='data')renderData();
-  if(id==='training'){ renderSeanceChoice(); renderWeekTabs(); renderSession(); }
+  if(id==='pick') renderPick();
+  if(id==='training'){ renderSession(); }
 }
 function goHome(){ showPage('home'); }
-function openSeance(){ ST.currentWeekDay=new Date().getDay()===0?6:new Date().getDay()-1; if(ST.pickedDate!==today()) ST.pickedSeance=null; showPage('training'); }
+const BACK_PARENT={training:'pick'};
+function openSeance(){ ST.currentWeekDay=todayIdx(); showPage('pick'); }
+
+// ---------- PAGE INTERMÉDIAIRE : objectif de la semaine + choix de la séance ----------
+function renderPick(){
+  const p=document.getElementById('pickProgress');
+  if(p){
+    const o=weekObjective(); const pct=Math.round(o.done/o.total*100);
+    p.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px">
+        <div class="form-title" style="margin:0">Objectif de la semaine</div>
+        <div style="font-size:12px;color:var(--text2)">lun → dim</div>
+      </div>
+      <div style="height:14px;background:var(--bg4);border-radius:7px;overflow:hidden">
+        <div style="height:14px;border-radius:7px;background:var(--accent);width:${pct}%;transition:width .4s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:9px;font-size:13px">
+        <span style="color:${o.done>=o.total?'var(--accent)':'var(--text)'};font-weight:700">${o.done}/${o.total} séances</span>
+        <span style="color:var(--text2)">${o.done>=o.total?'Objectif atteint 💪':(o.total-o.done)+' restante'+((o.total-o.done)>1?'s':'')}</span>
+      </div>`;
+  }
+  const c=document.getElementById('pickChoice'); if(!c)return;
+  const reco=nextStrength();
+  const blocs=STRENGTH_ORDER.map(id=>{
+    const s=SEANCE_MAP[id], isReco=(id===reco);
+    const done=weekSessions().some(l=>l.seanceId===id);
+    const svg=ILLUSTRATIONS[s.exercises[0].svg]||'';
+    return `<button class="wz-opt${isReco&&!done?' reco':''}" onclick="startSeance('${id}')">
+      <div class="wz-opt-ic">${svg}</div>
+      <div style="flex:1;min-width:0">
+        <div class="wz-opt-tt">${s.label} · ${SESSION_ROLE[id].title}</div>
+        <div class="wz-opt-ds">${s.exercises.length} exercices · full-body</div>
+      </div>
+      ${done?'<span class="wz-badge" style="background:var(--accent);color:#111">faite ✓</span>'
+            :(isReco?'<span class="wz-badge">conseillé</span>':'')}</button>`;
+  }).join('');
+  c.innerHTML=`<div class="form-title" style="margin:16px 0 10px">Quelle séance veux-tu faire aujourd'hui ?</div>${blocs}`;
+}
+function startSeance(id){
+  ST.pickedSeance=id; ST.pickedDate=today(); ST.currentWeekDay=todayIdx();
+  save(); showPage('training');
+}
 
 // Choix de la séance (bloc 1/2/3 + autres activités) sur la page Séance de sport
 function renderSeanceChoice(){
@@ -1324,6 +1405,12 @@ function renderSeanceChoice(){
 }
 function pickSeance(id){ ST.pickedSeance=id; ST.pickedDate=today(); ST.lastStrength=id; ST.currentWeekDay=todayIdx(); save(); renderSeanceChoice(); renderWeekTabs(); renderSession(); }
 
+// Clé des séries : basée sur la DATE RÉELLE, pas sur le jour de la semaine.
+// Sinon refaire la S1 un lundi ré-affichait les séries du lundi précédent :
+// c'est exactement ce que Clément décrivait comme « séance pas vierge ».
+function seriesKey(seance,i){ return 't_'+seance.id+'_'+(ST.pickedDate||today())+'_'+i; }
+function exSets(ex,ts){ return ex.sets+((ts&&ts.extra)||0); }
+
 // ---------- JOURNAL DES SÉANCES (par date réelle) ----------
 function todayIdx(){ return new Date().getDay()===0?6:new Date().getDay()-1; }
 function dayIdxOfDate(d){ const x=new Date(d+'T12:00:00'); return x.getDay()===0?6:x.getDay()-1; }
@@ -1334,7 +1421,7 @@ function saveSessionDone(){
   const seance=curSeance(); if(!seance)return;
   const d=today();
   const exos=seance.exercises.map((ex,i)=>{
-    const tk='t_'+seance.id+'_'+ST.currentWeekDay+'_'+i;
+    const tk=seriesKey(seance,i);
     const ts=ST.seriesState[tk]||{done:[]};
     const charge=ST.charges[exChargeKey(ex)]?.charge ?? ex.initCharge;
     return {name:exVariantName(ex), sets:(ts.done||[]).slice(), charge, isTime:!!ex.isTime};
@@ -1490,7 +1577,7 @@ function renderData(){
   renderBackupInfo();
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
-const APP_BUILD='v29 · 03/08/2026';
+const APP_BUILD='v31 · 03/08/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 function renderHomeBuild(){
@@ -1531,28 +1618,7 @@ function renderKcalChart(){
     +`<div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6">
         Cible : <strong style="color:var(--text2)">${t.repos} kcal</strong> les jours sans séance · <strong style="color:var(--text2)">${t.sport} kcal</strong> les jours de séance.<br>
         <strong style="color:var(--amber)">${view.length}</strong> jour${view.length>1?'s':''} affiché${view.length>1?'s':''} · ${inside} sous le plafond${hidden>0?' · '+hidden+' plus ancien'+(hidden>1?'s':'')+' hors graphique':''}.
-      </div>
-      <button class="btn" style="margin-top:10px;width:auto;padding:0 14px;font-size:12px" onclick="toggleKcalList()">📋 Voir le détail jour par jour</button>
-      <div id="kcalList" style="display:none;margin-top:10px"></div>`;
-}
-// Liste brute de ce qui est RÉELLEMENT stocké — pour vérifier qu'aucune saisie ne manque.
-function toggleKcalList(){
-  const box=document.getElementById('kcalList'); if(!box)return;
-  if(box.style.display!=='none'){ box.style.display='none'; return; }
-  const s=kcalSeries(), t=kcalTarget();
-  const src=d=>{
-    const inMeal=ST.mealLog&&ST.mealLog[d];
-    const inNut=(ST.nutrition||[]).some(n=>n&&n.date===d);
-    return inMeal&&inNut?'menus+nutri':inMeal?'menus':'nutrition';
-  };
-  box.style.display='block';
-  box.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px">
-      ${s.length} journée${s.length>1?'s':''} en mémoire. Si une date manque ici, la saisie n'a pas été enregistrée.</div>`
-    + s.slice().reverse().map(p=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--border)">
-        <span style="color:var(--text2)">${fmtDate(p.date)}</span>
-        <span style="color:${p.val<=t.sport?'var(--accent)':'var(--red)'};font-weight:700">${p.val} kcal</span>
-        <span style="color:var(--text3);font-size:10.5px">${src(p.date)}</span>
-      </div>`).join('');
+      </div>`;
 }
 function showChoose(){ renderChoose(); showPage('choose'); }
 function renderChoose(){
@@ -1614,8 +1680,9 @@ function getExoChargeDisplay(exo){
 }
 
 function renderWeekTabs(){
+  const wt=document.getElementById('weekTabs'); if(!wt)return;
   const days=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-  document.getElementById('weekTabs').innerHTML=days.map((d,i)=>{
+  wt.innerHTML=days.map((d,i)=>{
     const s=WEEK_SCHEDULE[i];
     const logs=sessionsOnDay(i);
     const label=logs.length?logs.map(l=>l.label).join(' + ')
@@ -1701,6 +1768,285 @@ function warmupHTML(seance){
   </div>`;
 }
 
+// =================================================================
+// VISUELS EXERCICE — 100 % SVG, aucune dépendance externe
+// Silhouette face/dos avec muscles colorés + squelette animé du mouvement.
+// =================================================================
+const SIL_BODY=`
+<ellipse cx="50" cy="15" rx="8.5" ry="10.5"/>
+<rect x="45.5" y="23" width="9" height="8" rx="3"/>
+<path d="M31,32 C24,34 21.5,42 22.5,50 L25.5,70 C26.5,84 29,94 31,104 L69,104 C71,94 73.5,84 74.5,70 L77.5,50 C78.5,42 76,34 69,32 Z"/>
+<ellipse cx="22.5" cy="50" rx="6.4" ry="16" transform="rotate(-6 22.5 50)"/>
+<ellipse cx="77.5" cy="50" rx="6.4" ry="16" transform="rotate(6 77.5 50)"/>
+<ellipse cx="17.5" cy="80" rx="5.4" ry="15" transform="rotate(-5 17.5 80)"/>
+<ellipse cx="82.5" cy="80" rx="5.4" ry="15" transform="rotate(5 82.5 80)"/>
+<circle cx="15.5" cy="97" r="4.4"/><circle cx="84.5" cy="97" r="4.4"/>
+<path d="M31,104 L69,104 L65,122 L52,129 L48,129 L35,122 Z"/>
+<ellipse cx="40.5" cy="146" rx="9.5" ry="25"/><ellipse cx="59.5" cy="146" rx="9.5" ry="25"/>
+<ellipse cx="40" cy="186" rx="7" ry="19"/><ellipse cx="60" cy="186" rx="7" ry="19"/>
+<path d="M33,204 L47,204 L47,210 L31,210 Z"/><path d="M67,204 L53,204 L53,210 L69,210 Z"/>`;
+const M_FRONT={
+  traps:'<path d="M38,31 L50,26 L62,31 L58,40 L50,37 L42,40 Z"/>',
+  delts:'<ellipse cx="26" cy="40" rx="7.5" ry="7"/><ellipse cx="74" cy="40" rx="7.5" ry="7"/>',
+  pecs:'<path d="M32,40 C40,37.5 47,39.5 48.5,43.5 L48.5,57 C41,59 33.5,56 30.5,49 Z"/><path d="M68,40 C60,37.5 53,39.5 51.5,43.5 L51.5,57 C59,59 66.5,56 69.5,49 Z"/>',
+  biceps:'<ellipse cx="22.5" cy="56" rx="5.5" ry="12"/><ellipse cx="77.5" cy="56" rx="5.5" ry="12"/>',
+  forearms:'<ellipse cx="17.5" cy="80" rx="4.9" ry="14"/><ellipse cx="82.5" cy="80" rx="4.9" ry="14"/>',
+  abs:'<rect x="42.5" y="61" width="15" height="42" rx="4.5"/>',
+  obliques:'<path d="M33,62 C36,74 38,88 39.5,102 L41.5,102 L41.5,62 Z"/><path d="M67,62 C64,74 62,88 60.5,102 L58.5,102 L58.5,62 Z"/>',
+  quads:'<ellipse cx="40.5" cy="144" rx="9" ry="23"/><ellipse cx="59.5" cy="144" rx="9" ry="23"/>',
+  calves:'<ellipse cx="40" cy="184" rx="6.4" ry="17"/><ellipse cx="60" cy="184" rx="6.4" ry="17"/>'
+};
+const M_BACK={
+  traps:'<path d="M36,31 L50,26 L64,31 L60,52 L50,62 L40,52 Z"/>',
+  deltsRear:'<ellipse cx="26" cy="40" rx="7.5" ry="7"/><ellipse cx="74" cy="40" rx="7.5" ry="7"/>',
+  lats:'<path d="M39,50 C33,54 29,64 28,76 C33,86 40,90 47,90 L47,54 Z"/><path d="M61,50 C67,54 71,64 72,76 C67,86 60,90 53,90 L53,54 Z"/>',
+  triceps:'<ellipse cx="22.5" cy="56" rx="5.5" ry="12"/><ellipse cx="77.5" cy="56" rx="5.5" ry="12"/>',
+  forearms:'<ellipse cx="17.5" cy="80" rx="4.9" ry="14"/><ellipse cx="82.5" cy="80" rx="4.9" ry="14"/>',
+  lowerback:'<path d="M42,84 L58,84 L59,103 L41,103 Z"/>',
+  glutes:'<ellipse cx="41.5" cy="115" rx="10" ry="11"/><ellipse cx="58.5" cy="115" rx="10" ry="11"/>',
+  hams:'<ellipse cx="40.5" cy="150" rx="9" ry="21"/><ellipse cx="59.5" cy="150" rx="9" ry="21"/>',
+  calves:'<ellipse cx="40" cy="184" rx="6.6" ry="17.5"/><ellipse cx="60" cy="184" rx="6.6" ry="17.5"/>'
+};
+const MLABEL={traps:'Trapèzes',delts:'Deltoïdes',deltsRear:'Deltoïdes arrière',pecs:'Pectoraux',
+ biceps:'Biceps',triceps:'Triceps',forearms:'Avant-bras',abs:'Abdominaux',obliques:'Obliques',
+ lats:'Dorsaux',lowerback:'Lombaires',glutes:'Fessiers',quads:'Quadriceps',hams:'Ischio-jambiers',calves:'Mollets'};
+
+function bodySVG(prim,sec){
+  const paint=map=>Object.keys(map).map(k=>{
+    const p=prim.indexOf(k)>=0, s=sec.indexOf(k)>=0;
+    if(!p&&!s) return '';
+    return `<g fill="${p?'#f87171':'#fbbf24'}" opacity="${p?.92:.6}">${map[k]}</g>`;
+  }).join('');
+  const one=(map,label)=>`<svg viewBox="0 0 100 218" width="100%" style="max-width:96px">
+      <g fill="#26313f" stroke="#26313f" stroke-width="2.4" stroke-linejoin="round">${SIL_BODY}</g>
+      ${paint(map)}
+      <text x="50" y="216" font-size="9" font-weight="700" fill="#63768a" text-anchor="middle">${label}</text>
+    </svg>`;
+  return `<div style="display:flex;gap:2px;justify-content:center">${one(M_FRONT,'FACE')}${one(M_BACK,'DOS')}</div>`;
+}
+
+const LINKS=[['neck','chest'],['chest','pelvis'],['pelvis','knee'],['knee','ankle'],
+             ['chest','elbow'],['elbow','wrist']];
+function motionSVG(pose,dur){
+  if(!pose) return '<div style="color:var(--text3);font-size:11.5px;padding:34px 0;text-align:center">—</div>';
+  const A=pose.a,B=pose.b, vals=(p,q,k,i)=>`${p[k][i]};${q[k][i]};${p[k][i]}`;
+  const an=(attr,v)=>`<animate attributeName="${attr}" values="${v}" dur="${dur}s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.3 1;0.4 0 0.3 1" keyTimes="0;0.5;1"/>`;
+  let s=LINKS.map(([u,v])=>`<line x1="${A[u][0]}" y1="${A[u][1]}" x2="${A[v][0]}" y2="${A[v][1]}"
+      stroke="#a3e635" stroke-width="3.4" stroke-linecap="round">
+      ${an('x1',vals(A,B,u,0))}${an('y1',vals(A,B,u,1))}${an('x2',vals(A,B,v,0))}${an('y2',vals(A,B,v,1))}</line>`).join('');
+  s+=`<circle cx="${A.head[0]}" cy="${A.head[1]}" r="6.5" fill="#a3e635">
+      ${an('cx',vals(A,B,'head',0))}${an('cy',vals(A,B,'head',1))}</circle>`;
+  if(pose.load){
+    const k=pose.load.at, w=pose.load.w||13, vert=pose.load.vert;
+    const x1=v=>vert? v[0] : v[0]-w/2, x2=v=>vert? v[0] : v[0]+w/2;
+    const y1=v=>vert? v[1]-w/2 : v[1], y2=v=>vert? v[1]+w/2 : v[1];
+    s+=`<line x1="${x1(A[k])}" y1="${y1(A[k])}" x2="${x2(A[k])}" y2="${y2(A[k])}"
+      stroke="#60a5fa" stroke-width="4.4" stroke-linecap="round">
+      ${an('x1',`${x1(A[k])};${x1(B[k])};${x1(A[k])}`)}${an('y1',`${y1(A[k])};${y1(B[k])};${y1(A[k])}`)}
+      ${an('x2',`${x2(A[k])};${x2(B[k])};${x2(A[k])}`)}${an('y2',`${y2(A[k])};${y2(B[k])};${y2(A[k])}`)}</line>`;
+  }
+  const g = pose.ground===false?'':`<line x1="6" y1="97" x2="94" y2="97" stroke="#2b3b4d" stroke-width="1.5"/>`;
+  const bench = pose.bench?`<rect x="20" y="60" width="58" height="4" rx="2" fill="#2b3b4d"/>
+      <rect x="30" y="64" width="4" height="33" fill="#2b3b4d"/><rect x="64" y="64" width="4" height="33" fill="#2b3b4d"/>`:'';
+  const seat = pose.seat?`<rect x="42" y="70" width="30" height="4" rx="2" fill="#2b3b4d"/>
+      <rect x="10" y="4" width="46" height="3" rx="1.5" fill="#2b3b4d"/>`:'';
+  const sled = pose.sled?`<rect x="14" y="46" width="4" height="34" rx="2" fill="#2b3b4d"/>
+      <rect x="14" y="76" width="42" height="4" rx="2" fill="#2b3b4d"/>`:'';
+  return `<svg viewBox="0 0 100 100" width="100%" style="max-width:132px">${g}${bench}${seat}${sled}${s}</svg>`;
+}
+
+// Poses : coordonnées des articulations, vue de profil sur une grille 0-100.
+// a = position basse/départ, b = position haute/arrivée. L'animation fait l'aller-retour.
+const POSES={
+ squat:{load:{at:'chest',w:22},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[42,40],wrist:[40,30]},
+  b:{head:[41,32],neck:[42,40],chest:[43,47],pelvis:[47,70],knee:[62,74],ankle:[50,94],elbow:[35,57],wrist:[33,47]}},
+ presse:{sled:true,ground:false,load:{at:'ankle',w:20,vert:true},
+  a:{head:[22,50],neck:[29,52],chest:[38,55],pelvis:[54,60],knee:[70,52],ankle:[86,44],elbow:[40,66],wrist:[50,70]},
+  b:{head:[22,50],neck:[29,52],chest:[38,55],pelvis:[54,60],knee:[64,38],ankle:[74,54],elbow:[40,66],wrist:[50,70]}},
+ fentes:{load:{at:'wrist',w:9,vert:true},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[44,41],wrist:[43,55]},
+  b:{head:[47,28],neck:[47,37],chest:[47,45],pelvis:[47,69],knee:[66,79],ankle:[71,94],elbow:[41,56],wrist:[40,70]}},
+ bench:{bench:true,load:{at:'wrist',w:20,vert:true},
+  a:{head:[26,52],neck:[33,54],chest:[42,56],pelvis:[60,58],knee:[72,62],ankle:[74,88],elbow:[43,42],wrist:[44,28]},
+  b:{head:[26,52],neck:[33,54],chest:[42,56],pelvis:[60,58],knee:[72,62],ankle:[74,88],elbow:[53,48],wrist:[44,44]}},
+ rdl:{load:{at:'wrist',w:22},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[50,42],wrist:[50,56]},
+  b:{head:[31,42],neck:[36,42],chest:[42,44],pelvis:[59,53],knee:[54,74],ankle:[50,94],elbow:[42,58],wrist:[42,72]}},
+ pulldown:{seat:true,ground:false,load:{at:'wrist',w:22},
+  a:{head:[53,32],neck:[51,40],chest:[50,48],pelvis:[50,68],knee:[66,70],ankle:[68,90],elbow:[40,28],wrist:[38,13]},
+  b:{head:[53,32],neck:[51,40],chest:[50,48],pelvis:[50,68],knee:[66,70],ankle:[68,90],elbow:[33,45],wrist:[45,52]}},
+ rowing:{load:{at:'wrist',w:22},
+  a:{head:[26,40],neck:[33,42],chest:[42,46],pelvis:[62,54],knee:[62,74],ankle:[60,94],elbow:[42,64],wrist:[42,78]},
+  b:{head:[26,40],neck:[33,42],chest:[42,46],pelvis:[62,54],knee:[62,74],ankle:[60,94],elbow:[54,58],wrist:[44,58]}},
+ lateral:{load:{at:'wrist',w:9,vert:true},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[41,44],wrist:[38,58]},
+  b:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[30,32],wrist:[16,30]}},
+ facepull:{load:{at:'wrist',w:9,vert:true},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[38,34],wrist:[22,30]},
+  b:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[26,26],wrist:[38,25]}},
+ curl:{load:{at:'wrist',w:16},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[48,44],wrist:[46,60]},
+  b:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[48,44],wrist:[42,32]}},
+ triceps:{load:{at:'wrist',w:16},
+  a:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[48,44],wrist:[43,34]},
+  b:{head:[50,13],neck:[50,22],chest:[50,30],pelvis:[50,54],knee:[50,74],ankle:[50,94],elbow:[48,44],wrist:[47,60]}},
+ crunch:{
+  a:{head:[16,90],neck:[22,90],chest:[31,90],pelvis:[48,90],knee:[64,73],ankle:[75,91],elbow:[26,83],wrist:[19,79]},
+  b:{head:[25,71],neck:[29,76],chest:[35,82],pelvis:[48,90],knee:[64,73],ankle:[75,91],elbow:[32,74],wrist:[26,69]}},
+ planche:{
+  a:{head:[22,58],neck:[30,60],chest:[42,64],pelvis:[62,70],knee:[76,80],ankle:[88,92],elbow:[38,78],wrist:[36,93]},
+  b:{head:[22,57],neck:[30,59],chest:[42,63],pelvis:[62,68],knee:[76,79],ankle:[88,92],elbow:[38,78],wrist:[36,93]}}
+};
+
+// Fiche visuelle par exercice : muscles, consignes d'exécution, erreur classique, recherches vidéo.
+const EXVIS={
+ squat:{pose:'squat',prim:['quads','glutes'],sec:['hams','abs','lowerback'],
+  cues:['Pieds <b>largeur épaules</b>, pointes légèrement en V.',
+        'Descends jusqu\'à ce que les <b>cuisses soient parallèles</b> au sol.',
+        'Dos droit, genoux alignés sur les orteils.',
+        'Pousse dans les <b>talons</b> pour remonter.'],
+  err:'Genoux qui rentrent vers l\'intérieur et dos qui s\'arrondit en bas. Si ça arrive, allège.',
+  q:'squat barre technique'},
+ presse:{pose:'presse',prim:['quads','glutes'],sec:['hams'],
+  cues:['Pieds à <b>largeur de bassin</b> au milieu de la plateforme.',
+        'Descends lentement jusqu\'à <b>90° au genou</b>.',
+        'Bas du dos plaqué au dossier — ne décolle jamais le bassin.',
+        'Pousse sans <b>verrouiller</b> les genoux en haut.'],
+  err:'Descendre trop bas jusqu\'à décoller les fesses du siège. C\'est là que le bas du dos prend.',
+  q:'presse à cuisses technique'},
+ fentes:{pose:'fentes',prim:['quads','glutes'],sec:['hams','abs'],
+  cues:['Un <b>grand pas</b> en avant, buste droit.',
+        'Genou arrière à <b>2 cm du sol</b>, sans le taper.',
+        'Le genou avant ne dépasse pas la pointe du pied.',
+        'Pousse sur le <b>talon avant</b> pour revenir.'],
+  err:'Pas trop court : tout part dans le genou au lieu de la fesse.',
+  q:'fentes haltères technique'},
+ bench:{pose:'bench',prim:['pecs','triceps'],sec:['delts'],
+  cues:['Coudes à <b>45°</b> du corps, jamais écartés à 90°.',
+        'Descente <b>2 secondes</b> jusqu\'à effleurer la poitrine.',
+        'Omoplates serrées, pieds ancrés au sol.',
+        'Pousse en expirant, sans verrouiller brutalement.'],
+  err:'Faire rebondir la barre sur la poitrine. Tu perds la tension et tu risques le sternum.',
+  q:'développé couché technique'},
+ incline:{pose:'bench',prim:['pecs','delts'],sec:['triceps'],
+  cues:['Banc à <b>30-45°</b>, pas plus — au-delà ce sont les épaules qui travaillent.',
+        'Haltères à hauteur du <b>haut des pectoraux</b>.',
+        'Descente contrôlée, coudes sous les poignets.',
+        'Ne cogne pas les haltères en haut.'],
+  err:'Banc trop incliné : l\'exercice devient un développé épaules.',
+  q:'développé incliné haltères technique'},
+ lateral:{pose:'lateral',prim:['delts'],sec:['traps'],
+  cues:['Bras <b>légèrement fléchis</b>, figés.',
+        'Monte jusqu\'à <b>hauteur d\'épaules</b>, pas plus.',
+        'Épaules basses — ne hausse pas.',
+        'Descente lente, 2 secondes.'],
+  err:'Balancer le buste pour lancer les haltères. Si tu balances, c\'est trop lourd.',
+  q:'élévations latérales technique'},
+ planche:{pose:'planche',prim:['abs'],sec:['obliques','glutes'],
+  cues:['Corps en <b>ligne droite</b> tête-talons.',
+        'Contracte fessiers <b>et</b> abdos ensemble.',
+        'Coudes à l\'aplomb des épaules.',
+        'Respire normalement — ne bloque pas.'],
+  err:'Fesses en l\'air ou bassin qui s\'affaisse. Mieux vaut 20 s propres que 60 s cassées.',
+  q:'gainage planche technique'},
+ rdl:{pose:'rdl',prim:['hams','glutes','lowerback'],sec:['traps','forearms'],
+  cues:['<b>Dos plat impératif</b> — c\'est non négociable.',
+        'Pousse les <b>hanches vers l\'arrière</b>, ce n\'est pas un squat.',
+        'Descends jusqu\'à <b>mi-tibia</b>, barre collée aux jambes.',
+        'Remonte en contractant les fessiers.'],
+  err:'Arrondir le bas du dos pour aller chercher plus bas. Arrête-toi où ton dos reste plat.',
+  q:'soulevé de terre roumain technique'},
+ pulldown:{pose:'pulldown',prim:['lats'],sec:['biceps','deltsRear'],
+  cues:['Prise large, tire vers le <b>haut de la poitrine</b>.',
+        'Le mouvement part des <b>dorsaux</b>, pas des bras.',
+        'Descends les épaules avant de tirer.',
+        'Remontée contrôlée, ne relâche pas d\'un coup.'],
+  err:'Tirer derrière la nuque. Inutile et mauvais pour les épaules.',
+  q:'tirage poulie haute technique'},
+ rowing:{pose:'rowing',prim:['lats','traps'],sec:['biceps','deltsRear','lowerback'],
+  cues:['Buste penché à <b>45°</b>, dos plat.',
+        'Tire la barre vers le <b>nombril</b>, pas vers la poitrine.',
+        'Serre les <b>omoplates</b> en fin de tirage.',
+        'Descente contrôlée, bras complètement tendus.'],
+  err:'Se redresser à chaque répétition pour aider. Le buste reste figé.',
+  q:'rowing barre technique'},
+ facepull:{pose:'facepull',prim:['deltsRear'],sec:['traps'],
+  cues:['Corde réglée à <b>hauteur de visage</b>.',
+        'Tire vers le <b>front</b> en écartant les mains.',
+        'Maintiens <b>1 seconde</b> en position haute.',
+        'Coudes au-dessus des poignets tout du long.'],
+  err:'Tirer avec le dos en reculant. Ce sont les deltoïdes arrière qui doivent bosser.',
+  q:'face pull technique'},
+ curl:{pose:'curl',prim:['biceps'],sec:['forearms'],
+  cues:['Coudes <b>fixes contre le corps</b>.',
+        'Fléchis en supinant, poignets dans l\'axe.',
+        'Ne balance pas le buste.',
+        'Descente <b>2 secondes</b>, bras presque tendus.'],
+  err:'Balancer le dos pour monter la barre. Tu travailles les lombaires, pas les biceps.',
+  q:'curl biceps barre technique'},
+ triceps:{pose:'triceps',prim:['triceps'],sec:['forearms'],
+  cues:['Coudes <b>collés au corps</b>, fixes.',
+        'Pousse vers le bas jusqu\'à <b>extension complète</b>.',
+        'Buste légèrement penché, gainé.',
+        'Remontée contrôlée jusqu\'à 90°.'],
+  err:'Écarter les coudes et pousser avec les épaules. Les coudes ne bougent pas.',
+  q:'extension triceps poulie technique'},
+ crunch:{pose:'crunch',prim:['abs'],sec:['obliques'],
+  cues:['Bas du dos <b>plaqué</b>, hanches figées.',
+        'Enroule le <b>buste</b> vertèbre par vertèbre.',
+        'Ne tire ni avec les bras ni avec la nuque.',
+        'Expire à fond en position haute pour contracter.'],
+  err:'Plier les hanches au lieu du dos. C\'est le buste qui s\'enroule, pas le bassin qui descend.',
+  q:'crunch câble technique'},
+ z2:{pose:null,prim:['quads','calves'],sec:['hams','glutes'],
+  cues:['Maintiens <b>120-135 bpm</b> pendant toute la durée.',
+        'Tu dois pouvoir <b>parler en continu</b>.',
+        'Si tu montes au-dessus, ralentis.',
+        'Régularité > intensité : c\'est la zone qui brûle le gras.'],
+  err:'Partir trop vite et finir en zone 3. Tu fatigues les jambes pour la muscu sans brûler plus.',
+  q:'cardio zone 2 endurance fondamentale'}
+};
+
+function ttURL(q){ return 'https://www.tiktok.com/search?q='+encodeURIComponent(q); }
+function ytURL(q){ return 'https://www.youtube.com/results?search_query='+encodeURIComponent(q); }
+
+// Bloc replié par défaut : muscles + mouvement + consignes + liens vidéo
+function exoVisualHTML(ex,i){
+  const v=EXVIS[ex.id]; if(!v) return '';
+  const open=!!ST.visOpen[ex.id];
+  const q=exVariantName(ex)+' technique';
+  return `<div class="vis-wrap">
+    <button class="vis-toggle" onclick="toggleVis('${ex.id}')">
+      <span>🎯 Muscles &amp; exécution</span><span class="vis-chev${open?' open':''}">▾</span>
+    </button>
+    <div class="vis-body${open?' open':''}" id="vis-${ex.id}">
+      <div class="vis-split">
+        <div class="vis-pane"><div class="vis-lbl">Muscles sollicités</div>${bodySVG(v.prim,v.sec)}</div>
+        <div class="vis-pane"><div class="vis-lbl">Mouvement</div>${motionSVG(POSES[v.pose],4)}</div>
+      </div>
+      <div class="vis-legend">
+        <span><i class="vis-dot" style="background:var(--red)"></i>principal</span>
+        <span><i class="vis-dot" style="background:var(--amber)"></i>secondaire</span>
+      </div>
+      <div class="vis-tags">${v.prim.map(m=>`<span class="vis-tag p">${MLABEL[m]||m}</span>`).join('')}${v.sec.map(m=>`<span class="vis-tag s">${MLABEL[m]||m}</span>`).join('')}</div>
+      <div class="vis-cues">${v.cues.map((c,k)=>`<div class="vis-cue"><span class="vis-n">${k+1}</span><span>${c}</span></div>`).join('')}</div>
+      <div class="vis-warn"><b>Erreur classique —</b> ${v.err}</div>
+      <div class="vis-links">
+        <a class="vis-link tt" target="_blank" rel="noopener" href="${ttURL(q)}">♪ Voir sur TikTok</a>
+        <a class="vis-link yt" target="_blank" rel="noopener" href="${ytURL(q)}">▶ Voir sur YouTube</a>
+      </div>
+    </div>
+  </div>`;
+}
+function toggleVis(id){
+  ST.visOpen[id]=!ST.visOpen[id];
+  const b=document.getElementById('vis-'+id); if(!b)return;
+  b.classList.toggle('open',!!ST.visOpen[id]);
+  const c=b.parentNode.querySelector('.vis-chev'); if(c)c.classList.toggle('open',!!ST.visOpen[id]);
+}
+
+
 function renderSession(){
   renderWeekObjective();
   const seance=curSeance();
@@ -1733,18 +2079,20 @@ function renderSession(){
     <div class="exo-list">`;
 
   seance.exercises.forEach((ex,i)=>{
-    const tk='t_'+seance.id+'_'+ST.currentWeekDay+'_'+i;
+    const tk=seriesKey(seance,i);
     const ts=getTS(tk);
     const vName=exVariantName(ex);
     const chKey=exChargeKey(ex);
     const charge=ST.charges[chKey]?.charge ?? ex.initCharge;
+    const goal=goalCharge(ex,charge);
+    const nSets=exSets(ex,ts);
     const doneCount=ts.done.length;
-    const allDone=doneCount>=ex.sets;
+    const allDone=doneCount>=nSets;
     const unit=ex.isTime?'s':' reps';
 
     // Lignes de séries — un bouton "Valider" par série, chrono auto
     let seriesHTML='<div class="sets-wrap">';
-    for(let s=0;s<ex.sets;s++){
+    for(let s=0;s<nSets;s++){
       if(s<doneCount){
         seriesHTML+=`<div class="set-row"><div class="set-lbl done">✓ Série ${s+1}</div><div class="set-done-val">${ts.done[s]}${unit}</div></div>`;
       } else if(s===doneCount && ts.resting){
@@ -1776,37 +2124,43 @@ function renderSession(){
         <div class="exo-num${allDone?' done':''}" id="en-${i}">${allDone?'✓':i+1}</div>
         <div style="flex:1">
           <div class="exo-name">${vName}</div>
-          <div class="exo-sub">${ex.isTime?(ex.sets+' × '+ex.timeReps+'s'):(ex.sets+' × '+ex.reps+' reps')}${ex.initCharge>0?' · <span style="color:var(--accent);font-weight:600">'+charge+' kg</span>':''}${doneCount>0&&!allDone?' · <span style="color:var(--amber)">'+doneCount+'/'+ex.sets+'</span>':''}</div>
+          <div class="exo-sub">${ex.isTime?(nSets+' × '+ex.timeReps+'s'):(nSets+' × '+ex.reps+' reps')}${ex.initCharge>0?' · <span style="color:var(--accent);font-weight:600">'+charge+' kg</span>':''}${doneCount>0&&!allDone?' · <span style="color:var(--amber)">'+doneCount+'/'+nSets+'</span>':''}</div>
         </div>
         <span class="exo-chevron" id="ec-${i}">▾</span>
       </div>
       <div class="exo-expand" id="ee-${i}">
-        <div class="exo-illus">
-          <div class="illus-svg">${ILLUSTRATIONS[ex.svg]||''}</div>
-          <div class="illus-info">
-            <div class="illus-tip">${ex.tip}</div>
-            <div class="illus-muscles">${ex.muscles.map(m=>`<span class="muscle-tag">${m}</span>`).join('')}</div>
-          </div>
-        </div>
+        <div class="illus-tip" style="padding:11px 16px;border-bottom:1px solid var(--border)">${ex.tip}</div>
+        ${exoVisualHTML(ex,i)}
         ${hasVar?`<div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--text2)">Machine</span>
           <span style="font-size:13px;font-weight:600;flex:1">${vName}</span>
           <button class="variant-btn" onclick="cycleVariant(${i})">⇄ Changer</button>
         </div>`:''}
         ${ex.initCharge>0?`<div class="charge-block">
-          <div class="charge-row">
-            <div class="charge-label">Charge actuelle</div>
-            <div class="charge-val">${charge}<span class="charge-unit">kg</span></div>
+          <div class="chg-grid">
+            <div class="chg-box">
+              <div class="chg-k">Dernière charge</div>
+              <div class="chg-v">${goal.prev}<span class="charge-unit"> kg</span></div>
+              <div class="chg-d">${goal.prevDate?fmtDate(goal.prevDate):'charge de référence'}</div>
+            </div>
+            <div class="chg-box goal">
+              <div class="chg-k" style="color:var(--accent)">Objectif du jour</div>
+              <div class="chg-v" style="color:var(--accent)">${goal.next}<span class="charge-unit"> kg</span></div>
+              <div class="chg-d">${goal.why}</div>
+            </div>
           </div>
-          <div style="margin-top:10px;font-size:11px;color:var(--text2);margin-bottom:6px">Mettre à jour la charge :</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Charge réellement utilisée :</div>
           <div class="charge-inputs">
-            <input type="number" id="ci-${i}" value="${charge}" step="2.5" min="0">
+            <input type="number" id="ci-${i}" value="${goal.next}" step="2.5" min="0">
             <button class="charge-save-btn" onclick="saveCharge(${i})">Enregistrer</button>
           </div>
         </div>`:''}
         ${seriesHTML}
         ${progHint}
-        <div class="series-actions"><button class="sbtn sbtn-reset" style="flex:1;text-align:center" onclick="seriesReset('${tk}',${i})">↺ Réinitialiser l'exercice</button></div>
+        <div class="series-actions">
+          <button class="sbtn sbtn-add" onclick="addSet('${tk}',${i})">+ Ajouter une série</button>
+          <button class="sbtn sbtn-reset" onclick="seriesReset('${tk}',${i})">↺ Vider</button>
+        </div>
       </div>
     </div>`;
   });
@@ -1814,7 +2168,7 @@ function renderSession(){
   // ---- Bouton de fin de séance ----
   let nbDone=0, nbSets=0;
   seance.exercises.forEach((ex,i)=>{
-    const ts=ST.seriesState['t_'+seance.id+'_'+ST.currentWeekDay+'_'+i];
+    const ts=ST.seriesState[seriesKey(seance,i)];
     if(ts&&ts.done&&ts.done.length){ nbDone++; nbSets+=ts.done.length; }
   });
   const all=nbDone>=seance.exercises.length;
@@ -1859,6 +2213,32 @@ function curEx(i){ return curSeance()?.exercises[i]; }
 function curExoKey(i){ const dn=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'][ST.currentWeekDay]; return dn+'_'+ST.weekStart+'_'+(curSeance()?.id||'')+'_'+i; }
 function openExo(i){ const ee=document.getElementById('ee-'+i),ec=document.getElementById('ec-'+i); if(ee)ee.classList.add('open'); if(ec)ec.classList.add('open'); }
 
+// Dernière charge réellement utilisée sur cet exercice (journal des séances),
+// et charge objectif du jour : +progression si toutes les séries ont atteint la cible.
+function lastLoggedExo(name){
+  const logs=(ST.sessionLog||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  for(let k=0;k<logs.length;k++){
+    const e=(logs[k].exos||[]).find(x=>x&&x.name===name);
+    if(e) return {e:e, date:logs[k].date};
+  }
+  return null;
+}
+function goalCharge(ex,charge){
+  const last=lastLoggedExo(exVariantName(ex));
+  if(!last||!last.e.charge){ return {prev:charge, prevDate:null, next:charge, why:'même charge pour caler la technique'}; }
+  const prev=last.e.charge;
+  const sets=(last.e.sets||[]).filter(function(x){return typeof x==='number';});
+  const full=sets.length>=ex.sets && sets.length>0 && Math.min.apply(null,sets)>=(ex.isTime?ex.timeReps:ex.reps);
+  if(!ex.isTime && ex.prog>0 && full) return {prev:prev, prevDate:last.date, next:prev+ex.prog, why:'toutes les séries validées → +'+ex.prog+' kg'};
+  return {prev:prev, prevDate:last.date, next:prev, why:'on reste dessus jusqu\'à valider toutes les séries'};
+}
+function addSet(tk,i){
+  const ts=getTS(tk); ts.extra=(ts.extra||0)+1;
+  delete ST.doneExos[curExoKey(i)];
+  save(); renderSession(); openExo(i);
+  toast('Série supplémentaire ajoutée');
+}
+
 function saveCharge(i){
   const ex=curEx(i); if(!ex)return;
   const val=parseFloat(document.getElementById('ci-'+i).value);
@@ -1897,7 +2277,7 @@ function validateSet(tk,i){
   const reps=ex.isTime?ex.timeReps:(ts.pending ?? ex.reps);
   ts.done.push(reps); ts.pending=null;
   beep(880,120); setTimeout(()=>beep(1100,160),140);
-  if(ts.done.length>=ex.sets){ ST.doneExos[curExoKey(i)]=true; save(); toast('Exercice terminé ✓'); renderSession(); openExo(i); }
+  if(ts.done.length>=exSets(ex,ts)){ ST.doneExos[curExoKey(i)]=true; save(); toast('Exercice terminé ✓'); renderSession(); openExo(i); }
   else { startRest(tk,i,ex.restSec); }
 }
 function startWork(tk,i){
