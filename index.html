@@ -296,6 +296,7 @@ select option{background:var(--bg3)}
     <div class="tile" onclick="showPage('poids')"><div class="tile-ic" style="background:rgba(91,156,246,.15)">⚖️</div><div class="tile-lbl">Poids</div></div>
     <div class="tile" onclick="showPage('data')"><div class="tile-ic" style="background:rgba(167,139,250,.15)">📊</div><div class="tile-lbl">Data</div></div>
   </div>
+  <div id="homeBuild" style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;letter-spacing:.03em;line-height:1.6"></div>
 </div>
 
 <!-- PAGE PROGRAMME -->
@@ -471,7 +472,19 @@ select option{background:var(--bg3)}
   <div id="buildInfo" style="font-size:11px;color:var(--text3);margin:-6px 0 10px"></div>
   <div class="card"><div class="form-title" style="margin-bottom:10px">📉 Poids (kg)</div><div id="dataPoids"></div></div>
   <div class="card" style="margin-top:10px"><div class="form-title" style="margin-bottom:10px">💪 Masse musculaire (%)</div><div id="dataMuscle"></div></div>
-  <div class="card" style="margin-top:10px"><div class="form-title" style="margin-bottom:10px">🔥 Calories par jour</div><div id="dataKcal"></div></div>
+  <div class="card" style="margin-top:10px">
+    <div class="form-title" style="margin-bottom:10px">🔥 Calories par jour</div>
+    <div id="dataKcal"></div>
+    <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:8px">Ajouter / corriger un relevé</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="qk-date" style="flex:1 1 140px;min-width:130px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 10px;font-size:14px">
+        <input type="number" id="qk-kcal" inputmode="numeric" placeholder="kcal" style="flex:0 1 92px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 10px;font-size:14px">
+        <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 16px;flex:0 0 auto" onclick="quickAddKcal()">Ajouter</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">Saisie directe, enregistrée immédiatement dans le graphique ci-dessus. Une date déjà présente est écrasée.</div>
+    </div>
+  </div>
   <div class="card" style="margin-top:10px">
     <div class="form-title" style="margin-bottom:6px">💾 Sauvegarde</div>
     <div id="backupInfo" style="font-size:12px;color:var(--text3);margin-bottom:10px"></div>
@@ -1207,6 +1220,53 @@ function renderBackupInfo(){
         :`<span style="color:var(--red,#e0435a)">Jamais exporté</span> — fais-le maintenant.`);
 }
 
+// Relevés calories saisis par Clément et transmis à la main (série de référence).
+// Injectés une seule fois, et JAMAIS par-dessus une saisie existante à la même date.
+const SEED_KCAL={
+  '2026-07-22':2500,'2026-07-26':1666,'2026-07-27':2061,'2026-07-28':2880,
+  '2026-07-29':2216,'2026-07-30':2272,'2026-07-31':3672,'2026-08-01':3483,
+  '2026-08-02':2383
+};
+const SEED_FLAG='fc_seed_kcal_v29';
+function seedKcal(force){
+  if(!force && localStorage.getItem(SEED_FLAG)) return 0;
+  let n=0;
+  Object.keys(SEED_KCAL).forEach(d=>{
+    const has=(ST.nutrition||[]).some(x=>x&&x.date===d&&x.kcal>0);
+    if(has) return;
+    ST.nutrition.push({date:d,kcal:SEED_KCAL[d],prot:null,gluc:null,lip:null,fibre:null,src:'saisie'});
+    n++;
+  });
+  ST.nutrition.sort((a,b)=>a.date<b.date?-1:1);
+  localStorage.setItem(SEED_FLAG,'1');
+  return n;
+}
+// Saisie directe depuis l'écran Data : un seul champ, écrit droit dans ST.nutrition,
+// donc plus aucune dépendance à mealLog / dayTotals / syncNutrition.
+function quickAddKcal(){
+  const di=document.getElementById('qk-date'), ki=document.getElementById('qk-kcal');
+  if(!di||!ki) return;
+  const d=di.value||today();
+  const k=parseInt(ki.value,10);
+  if(isNaN(k)||k<=0){ toast('Entre un nombre de calories'); return; }
+  const i=ST.nutrition.findIndex(n=>n&&n.date===d);
+  const rec={date:d,kcal:k,prot:null,gluc:null,lip:null,fibre:null,src:'saisie'};
+  if(i>=0) ST.nutrition[i]=rec; else ST.nutrition.push(rec);
+  ST.nutrition.sort((a,b)=>a.date<b.date?-1:1);
+  // les menus du même jour prendraient le dessus dans kcalSeries() : on les aligne
+  if(ST.mealLog&&ST.mealLog[d]){
+    const prev=ST.mealLog[d].manual||{};
+    ST.mealLog[d].manual={kcal:k, prot:prev.prot!=null?prev.prot:null};
+  }
+  save(); renderData(); renderHomeBuild();
+  ki.value='';
+  toast(k+' kcal enregistrées le '+fmtDate(d)+' ✓');
+}
+function forceSeedKcal(){
+  const n=seedKcal(true); save(); renderData();
+  toast(n?(n+' journée'+(n>1?'s':'')+' réinjectée'+(n>1?'s':'')+' ✓'):'Tout était déjà là');
+}
+
 function initPreloaded(){
   if(!localStorage.getItem(DKEY) && !bestStored()){
     ST.balanceData=PRELOADED.balanceData;
@@ -1222,6 +1282,8 @@ function initPreloaded(){
     Object.assign(ST.dailyWeights, PRELOADED.dailyWeights);
     save();
   }
+  seedKcal(false);
+  save();
 }
 
 // =================================================================
@@ -1393,7 +1455,8 @@ function kcalTarget(){
   const ws=weightSeries(); const last=ws.length?ws[ws.length-1].val:999;
   const cut=last>GOAL_WEIGHT+0.5;
   const sport=cut?2400:2750, repos=cut?2050:2450;
-  return {sport, repos, moy:Math.round((3*sport+4*repos)/7)};
+  // Objectif moyen = 2050 en sèche (valeur fixée par toi, pas une moyenne pondérée)
+  return {sport, repos, moy:cut?2050:2450};
 }
 
 function renderPoids(){
@@ -1425,8 +1488,17 @@ function renderData(){
   renderKcalChart();
   renderBuildInfo();
   renderBackupInfo();
+  const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
-const APP_BUILD='v28 · 03/08/2026';
+const APP_BUILD='v29 · 03/08/2026';
+// Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
+// si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
+function renderHomeBuild(){
+  const el=document.getElementById('homeBuild'); if(!el)return;
+  const nb=kcalSeries().length;
+  el.innerHTML=`FitCoach <strong style="color:var(--accent)">${APP_BUILD}</strong><br>`
+    +`<span style="opacity:.8">${(ST.balanceData||[]).length} pesées · ${nb} journée${nb>1?'s':''} de calories en mémoire</span>`;
+}
 function renderBuildInfo(){
   const el=document.getElementById('buildInfo'); if(!el)return;
   const nbMeal=Object.keys(ST.mealLog||{}).filter(d=>{try{return dayTotals(d).kcal>0}catch(e){return false}}).length;
@@ -1445,7 +1517,10 @@ function renderKcalChart(){
         Si tu as saisi tes calories ailleurs (autre fichier, autre adresse, Safari vs écran d'accueil), les données sont restées là-bas :
         ouvre cette version-là, <strong>Data → ⬇️ Exporter</strong>, puis reviens ici et <strong>⬆️ Importer</strong>.
       </div>
-      <button class="btn" style="margin-top:12px;width:auto;padding:0 16px" onclick="rebuildNutrition()">🔧 Reconstruire depuis les menus</button>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 16px" onclick="forceSeedKcal()">↩︎ Réinjecter mes relevés</button>
+        <button class="btn" style="margin-top:0;width:auto;padding:0 16px" onclick="rebuildNutrition()">🔧 Reconstruire depuis les menus</button>
+      </div>
     </div>`;
     return;
   }
@@ -2032,7 +2107,7 @@ function renderNutrition(last){
   const phase = cut ? 'Sèche' : 'Maintenance';
   const phaseColor = cut ? 'var(--amber)' : 'var(--accent)';
   // Cibles (issues de l'analyse : déficit léger 300-400 kcal, protéines prioritaires)
-  const kcalRepos = cut ? 2100 : 2450;
+  const kcalRepos = cut ? 2050 : 2450;   // aligné sur kcalTarget()
   const kcalSport = cut ? 2400 : 2750;
   const prot = cut ? 160 : 150; // g/j — protéines hautes surtout en sèche
   const desc = cut
@@ -2549,6 +2624,7 @@ renderLastMetrics();
 renderBalanceHist();
 populateFeedbackExo();
 document.getElementById('fb-seance').addEventListener('change',populateFeedbackExo);
+renderHomeBuild();
 showPage('home');
 </script>
 </body>
