@@ -96,6 +96,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .vis-link{flex:1;text-align:center;text-decoration:none;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--bg4)}
 .vis-link.tt{color:var(--text)}
 .vis-link.yt{color:var(--red)}
+.xx-block{padding:14px 16px;border-top:1px solid var(--border);background:var(--bg3)}
+.xx-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.xx-nm{font-size:13px;font-weight:600}
+.xx-ds{font-size:11.5px;color:var(--text2);margin-top:2px}
+.xx-in{width:100%;background:var(--bg4);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 10px;font-size:14px;font-family:inherit;margin-top:8px}
+.xx-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:2px}
+.xx-lb{font-size:11px;color:var(--text2)}
 .last-row{display:flex;align-items:center;gap:11px}
 .last-ic{flex:0 0 42px;height:42px;border-radius:11px;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center}
 .last-ic svg{width:26px;height:26px}
@@ -336,6 +343,7 @@ select option{background:var(--bg3)}
     <div class="tile" onclick="showPage('menus')"><div class="tile-ic" style="background:rgba(62,207,176,.15)">🍽️</div><div class="tile-lbl">Menu</div></div>
     <div class="tile" onclick="showPage('poids')"><div class="tile-ic" style="background:rgba(91,156,246,.15)">⚖️</div><div class="tile-lbl">Poids</div></div>
     <div class="tile" onclick="showPage('data')"><div class="tile-ic" style="background:rgba(167,139,250,.15)">📊</div><div class="tile-lbl">Data</div></div>
+    <div class="tile wide" onclick="showPage('holidays')"><div class="tile-ic" style="background:rgba(251,191,36,.15)">🏝️</div><div class="tile-lbl">Séance Holidays</div></div>
   </div>
   <div id="homeBuild" style="text-align:center;font-size:11px;color:var(--text3);margin-top:20px;letter-spacing:.03em;line-height:1.6"></div>
 </div>
@@ -345,6 +353,12 @@ select option{background:var(--bg3)}
   <div class="card" id="pickProgress"></div>
   <div class="card" id="pickLast"></div>
   <div id="pickChoice"></div>
+</div>
+
+<!-- PAGE SEANCE HOLIDAYS -->
+<div class="page" id="page-holidays">
+  <div class="card" id="holidayIntro"></div>
+  <div id="holidayList"></div>
 </div>
 
 <!-- PAGE PROGRAMME -->
@@ -566,372 +580,363 @@ select option{background:var(--bg3)}
 
 <script>
 const PRELOADED=JSON.parse([
-"{\"balanceData\":[{\"date\":\"2019-09-26\",\"poids\":105.8,\"imc\":30.9,\"img\":30.9,\"hydra\":50.4,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.9,\"age\":45.0,\"muscle\":65.6},{\"date\":\"2019-09-30\",\"poids\":104.2,",
-"\"imc\":30.4,\"img\":31.8,\"hydra\":50.0,\"gsc\":28.5,\"gv\":14.0,\"prot\":14.5,\"age\":45.0,\"muscle\":63.2},{\"date\":\"2019-10-07\",\"poids\":103.6,\"imc\":30.2,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":",
-"14.0,\"prot\":14.8,\"age\":45.0,\"muscle\":63.7},{\"date\":\"2019-10-14\",\"poids\":102.3,\"imc\":29.8,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":63.2},{\"date\":",
-"\"2019-10-21\",\"poids\":101.1,\"imc\":29.5,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":44.0,\"muscle\":62.1},{\"date\":\"2019-10-28\",\"poids\":99.9,\"imc\":29.1,\"img\":30.6,\"hy",
-"dra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":44.0,\"muscle\":61.7},{\"date\":\"2019-11-04\",\"poids\":98.9,\"imc\":28.8,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":44.",
-"0,\"muscle\":61.2},{\"date\":\"2019-11-12\",\"poids\":99.4,\"imc\":29.0,\"img\":30.0,\"hydra\":51.3,\"gsc\":26.9,\"gv\":13.0,\"prot\":14.9,\"age\":44.0,\"muscle\":62.3},{\"date\":\"2019-11-15\",\"poids\":99.4,\"",
-"imc\":29.0,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":44.0,\"muscle\":62.5},{\"date\":\"2019-11-18\",\"poids\":98.8,\"imc\":28.8,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":13",
-".0,\"prot\":14.9,\"age\":44.0,\"muscle\":61.6},{\"date\":\"2019-11-25\",\"poids\":99.0,\"imc\":28.9,\"img\":29.7,\"hydra\":51.5,\"gsc\":26.6,\"gv\":13.0,\"prot\":15.0,\"age\":44.0,\"muscle\":62.3},{\"date\":\"20",
-"19-12-02\",\"poids\":98.0,\"imc\":28.6,\"img\":29.8,\"hydra\":51.5,\"gsc\":26.7,\"gv\":12.0,\"prot\":14.9,\"age\":44.0,\"muscle\":61.6},{\"date\":\"2019-12-08\",\"poids\":96.0,\"imc\":28.0,\"img\":29.1,\"hydra\"",
-":51.9,\"gsc\":26.1,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":60.9},{\"date\":\"2019-12-16\",\"poids\":97.2,\"imc\":28.4,\"img\":29.3,\"hydra\":51.8,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.1,\"age\":43.0,\"m",
-"uscle\":61.7},{\"date\":\"2019-12-23\",\"poids\":96.4,\"imc\":28.1,\"img\":29.3,\"hydra\":51.9,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.0,\"age\":43.0,\"muscle\":61.1},{\"date\":\"2020-01-05\",\"poids\":97.1,\"imc\"",
-":28.3,\"img\":28.7,\"hydra\":52.2,\"gsc\":25.7,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":62.3},{\"date\":\"2020-01-13\",\"poids\":96.4,\"imc\":28.1,\"img\":29.2,\"hydra\":51.8,\"gsc\":26.2,\"gv\":12.0,\"",
-"prot\":15.2,\"age\":43.0,\"muscle\":61.1},{\"date\":\"2020-01-21\",\"poids\":96.0,\"imc\":28.0,\"img\":29.3,\"hydra\":51.8,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.1,\"age\":43.0,\"muscle\":60.6},{\"date\":\"2020-0",
-"1-28\",\"poids\":96.1,\"imc\":28.0,\"img\":29.2,\"hydra\":51.8,\"gsc\":26.2,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":60.9},{\"date\":\"2020-02-04\",\"poids\":96.1,\"imc\":28.0,\"img\":29.0,\"hydra\":52.",
-"0,\"gsc\":26.0,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":61.1},{\"date\":\"2020-02-25\",\"poids\":97.1,\"imc\":28.3,\"img\":29.5,\"hydra\":51.6,\"gsc\":26.4,\"gv\":12.0,\"prot\":15.1,\"age\":43.0,\"muscl",
-"e\":61.2},{\"date\":\"2020-03-04\",\"poids\":96.5,\"imc\":28.1,\"img\":29.6,\"hydra\":51.6,\"gsc\":26.5,\"gv\":12.0,\"prot\":15.0,\"age\":43.0,\"muscle\":60.7},{\"date\":\"2020-03-10\",\"poids\":97.3,\"imc\":28.",
-"4,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":12.0,\"prot\":14.8,\"age\":43.0,\"muscle\":60.1},{\"date\":\"2020-03-11\",\"poids\":97.6,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot",
-"\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-05-20\",\"poids\":96.4,\"imc\":28.1,\"img\":29.5,\"hydra\":51.7,\"gsc\":26.4,\"gv\":12.0,\"prot\":15.0,\"age\":44.0,\"muscle\":60.8},{\"date\":\"2020-05-26",
-"\",\"poids\":96.7,\"imc\":28.2,\"img\":29.9,\"hydra\":51.4,\"gsc\":26.8,\"gv\":12.0,\"prot\":14.9,\"age\":44.0,\"muscle\":60.5},{\"date\":\"2020-06-02\",\"poids\":96.3,\"imc\":28.1,\"img\":29.4,\"hydra\":51.7,\"g",
-"sc\":26.4,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":60.9},{\"date\":\"2020-06-09\",\"poids\":96.6,\"imc\":28.2,\"img\":29.3,\"hydra\":51.8,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":6",
-"1.3},{\"date\":\"2020-06-23\",\"poids\":96.5,\"imc\":28.1,\"img\":29.1,\"hydra\":52.0,\"gsc\":26.1,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":61.4},{\"date\":\"2020-07-06\",\"poids\":97.3,\"imc\":28.4,\"i",
-"mg\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":12.0,\"prot\":15.1,\"age\":45.0,\"muscle\":61.4},{\"date\":\"2020-07-09\",\"poids\":97.3,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":nu",
-"ll,\"age\":null,\"muscle\":null},{\"date\":\"2020-07-11\",\"poids\":97.3,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-07-14\",\"p",
-"oids\":98.8,\"imc\":28.8,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":62.4},{\"date\":\"2020-07-16\",\"poids\":97.0,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":",
-"null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-07-21\",\"poids\":98.0,\"imc\":28.6,\"img\":29.6,\"hydra\":51.6,\"gsc\":26.5,\"gv\":12.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.0}",
-",{\"date\":\"2020-07-28\",\"poids\":98.5,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-07-29\",\"poids\":97.8,\"imc\":null,\"img\":",
-"null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-07-30\",\"poids\":99.4,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"",
-"age\":null,\"muscle\":null},{\"date\":\"2020-08-11\",\"poids\":99.3,\"imc\":29.0,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":62.5},{\"date\":\"2020-08-14\",\"poids",
-"\":99.3,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-08-15\",\"poids\":98.2,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null",
-",\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-08-18\",\"poids\":98.2,\"imc\":28.6,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":61.6},{\"d",
-"ate\":\"2020-08-25\",\"poids\":98.5,\"imc\":28.7,\"img\":30.1,\"hydra\":51.1,\"gsc\":27.0,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":61.5},{\"date\":\"2020-09-02\",\"poids\":98.5,\"imc\":28.7,\"img\":30.1",
-",\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":61.6},{\"date\":\"2020-09-08\",\"poids\":98.3,\"imc\":28.7,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\"",
-":45.0,\"muscle\":61.6},{\"date\":\"2020-09-12\",\"poids\":98.4,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-09-15\",\"poids\":98",
-".4,\"imc\":28.7,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":61.6},{\"date\":\"2020-11-10\",\"poids\":101.7,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"g",
-"v\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.1},{\"date\":\"2020-11-17\",\"poids\":101.2,\"imc\":29.5,\"img\":29.5,\"hydra\":51.6,\"gsc\":26.4,\"gv\":13.0,\"prot\":15.1,\"age\":46.0,\"muscle\":64.2},{\"dat",
-"e\":\"2020-11-18\",\"poids\":102.0,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-11-20\",\"poids\":101.4,\"imc\":29.6,\"img\":29.9",
-",\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":46.0,\"muscle\":64.0},{\"date\":\"2020-11-23\",\"poids\":102.5,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age",
-"\":null,\"muscle\":null},{\"date\":\"2020-11-25\",\"poids\":101.1,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-11-26\",\"poids\":",
-"100.6,\"imc\":29.3,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.3},{\"date\":\"2020-11-30\",\"poids\":100.9,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null",
-",\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-12-02\",\"poids\":100.9,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9},{\"",
-"date\":\"2020-12-04\",\"poids\":101.2,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-12-05\",\"poids\":101.2,\"imc\":null,\"img\":n",
-"ull,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-12-07\",\"poids\":101.2,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"",
-"age\":null,\"muscle\":null},{\"date\":\"2020-12-08\",\"poids\":101.2,\"imc\":29.5,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.4},{\"date\":\"2020-12-11\",\"poid",
-"s\":100.8,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2020-12-12\",\"poids\":100.1,\"imc\":29.2,\"img\":30.3,\"hydra\":51.0,\"gsc\":2",
-"7.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.4},{\"date\":\"2020-12-14\",\"poids\":100.5,\"imc\":29.3,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":61.4}",
-",{\"date\":\"2020-12-15\",\"poids\":99.4,\"imc\":29.0,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.2},{\"date\":\"2020-12-29\",\"poids\":99.5,\"imc\":29.0,\"img\":",
-"29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.6},{\"date\":\"2020-12-31\",\"poids\":100.4,\"imc\":29.3,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"prot\":14.9,",
-"\"age\":45.0,\"muscle\":62.8},{\"date\":\"2021-01-03\",\"poids\":100.7,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-04\",\"poi",
-"ds\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.3},{\"date\":\"2021-01-05\",\"poids\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":50.9,\"gsc\":",
-"27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.3},{\"date\":\"2021-01-06\",\"poids\":100.9,\"imc\":29.4,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.5",
-"},{\"date\":\"2021-01-07\",\"poids\":101.2,\"imc\":29.5,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.1},{\"date\":\"2021-01-09\",\"poids\":100.6,\"imc\":null,\"im",
-"g\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-10\",\"poids\":100.0,\"imc\":29.2,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14",
-".9,\"age\":45.0,\"muscle\":62.4},{\"date\":\"2021-01-11\",\"poids\":101.1,\"imc\":null,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-12\",\"",
-"poids\":100.8,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9},{\"date\":\"2021-01-13\",\"poids\":101.0,\"imc\":null,\"img\":null,\"hydra\":null,\"gs",
-"c\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-14\",\"poids\":101.5,\"imc\":29.6,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":6",
-"3.3},{\"date\":\"2021-01-15\",\"poids\":101.5,\"imc\":29.6,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.6},{\"date\":\"2021-01-16\",\"poids\":101.0,\"imc\":29.5,",
-"\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.3},{\"date\":\"2021-01-17\",\"poids\":100.3,\"imc\":29.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\"",
-":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-18\",\"poids\":100.3,\"imc\":29.3,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.5},{\"date\":\"2021-01-19",
-"\",\"poids\":101.0,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-20\",\"poids\":99.9,\"imc\":29.1,\"img\":29.8,\"hydra\":51.4,\"",
-"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.0},{\"date\":\"2021-01-21\",\"poids\":100.3,\"imc\":29.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\"",
-":null},{\"date\":\"2021-01-22\",\"poids\":99.6,\"imc\":29.1,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.7},{\"date\":\"2021-01-23\",\"poids\":102.4,\"imc\":29.9",
-",\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-24\",\"poids\":99.5,\"imc\":29.0,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\"",
-":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-25\",\"poids\":102.7,\"imc\":30.0,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-26",
-"\",\"poids\":100.7,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9},{\"date\":\"2021-01-29\",\"poids\":100.3,\"imc\":29.3,\"img\":null,\"hydra\":null,",
-"\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-01-30\",\"poids\":100.6,\"imc\":29.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle",
-"\":null},{\"date\":\"2021-01-31\",\"poids\":101.0,\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.7},{\"date\":\"2021-02-02\",\"poids\":100.2,\"imc\":29",
-".2,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.6},{\"date\":\"2021-02-03\",\"poids\":100.9,\"imc\":29.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"pr",
-"ot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-02-04\",\"poids\":101.7,\"imc\":29.7,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.7},{\"date\":\"2021-02",
-"-05\",\"poids\":100.8,\"imc\":29.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-02-06\",\"poids\":101.7,\"imc\":29.7,\"img\":null,\"hydra\":nu",
-"ll,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-02-07\",\"poids\":101.2,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"mus",
-"cle\":null},{\"date\":\"2021-02-08\",\"poids\":100.9,\"imc\":29.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-02-09\",\"poids\":101.3,\"imc\"",
-":29.5,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.8},{\"date\":\"2021-02-10\",\"poids\":101.8,\"imc\":29.7,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,",
-"\"prot\":14.8,\"age\":46.0,\"muscle\":63.0},{\"date\":\"2021-02-11\",\"poids\":101.8,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021",
-"-02-14\",\"poids\":101.7,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-02-15\",\"poids\":101.7,\"imc\":29.7,\"img\":31.0,\"hydra\"",
-":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":46.0,\"muscle\":62.8},{\"date\":\"2021-02-16\",\"poids\":101.7,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"",
-"muscle\":63.1},{\"date\":\"2021-02-23\",\"poids\":102.4,\"imc\":29.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-02-24\",\"poids\":101.5,\"i",
-"mc\":29.6,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.4},{\"date\":\"2021-02-26\",\"poids\":101.3,\"imc\":29.5,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":13",
-".0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.0},{\"date\":\"2021-02-27\",\"poids\":101.3,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2",
-"021-02-28\",\"poids\":101.3,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-03-01\",\"poids\":101.3,\"imc\":29.5,\"img\":30.7,\"hyd",
-"ra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.9},{\"date\":\"2021-03-03\",\"poids\":101.0,\"imc\":29.5,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":46.",
-"0,\"muscle\":63.0},{\"date\":\"2021-03-04\",\"poids\":101.7,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-03-05\",\"poids\":101.3",
-",\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.8},{\"date\":\"2021-03-07\",\"poids\":101.3,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\"",
-":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-03-09\",\"poids\":99.9,\"imc\":29.1,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.0},{\"date\":",
-"\"2021-03-12\",\"poids\":101.6,\"imc\":29.6,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-03-15\",\"poids\":101.0,\"imc\":29.5,\"img\":null,\"h",
-"ydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-03-16\",\"poids\":101.3,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":n",
-"ull,\"muscle\":null},{\"date\":\"2021-03-18\",\"poids\":101.6,\"imc\":29.6,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":46.0,\"muscle\":62.6},{\"date\":\"2021-03-20\",\"poids\":101",
-".0,\"imc\":29.5,\"img\":30.6,\"hydra\":50.9,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.9},{\"date\":\"2021-03-21\",\"poids\":100.7,\"imc\":29.4,\"img\":30.6,\"hydra\":50.9,\"gsc\":27.4,\"g",
-"v\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.6},{\"date\":\"2021-03-22\",\"poids\":101.9,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"dat",
-"e\":\"2021-03-23\",\"poids\":100.4,\"imc\":29.3,\"img\":30.1,\"hydra\":51.1,\"gsc\":27.0,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.0},{\"date\":\"2021-03-24\",\"poids\":100.4,\"imc\":29.3,\"img\":30.1",
-",\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9},{\"date\":\"2021-03-25\",\"poids\":100.4,\"imc\":29.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age",
-"\":null,\"muscle\":null},{\"date\":\"2021-03-26\",\"poids\":100.4,\"imc\":29.3,\"img\":29.7,\"hydra\":51.4,\"gsc\":26.6,\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":63.5},{\"date\":\"2021-03-27\",\"poids\":",
-"99.9,\"imc\":29.1,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":63.1},{\"date\":\"2021-03-28\",\"poids\":101.2,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,",
-"\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-03-29\",\"poids\":100.1,\"imc\":29.2,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":63.1},{\"d",
-"ate\":\"2021-03-30\",\"poids\":99.2,\"imc\":28.9,\"img\":30.1,\"hydra\":51.3,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.1},{\"date\":\"2021-03-31\",\"poids\":100.1,\"imc\":29.2,\"img\":nul",
-"l,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-04-01\",\"poids\":99.6,\"imc\":29.1,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age",
-"\":null,\"muscle\":null},{\"date\":\"2021-04-02\",\"poids\":99.1,\"imc\":28.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-04-03\",\"poids\":9",
-"9.8,\"imc\":29.1,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-04-04\",\"poids\":99.1,\"imc\":28.9,\"img\":30.0,\"hydra\":51.3,\"gsc\":26.9,\"g",
-"v\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.2},{\"date\":\"2021-04-05\",\"poids\":99.1,\"imc\":28.9,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.2},{\"date",
-"\":\"2021-04-06\",\"poids\":99.1,\"imc\":28.9,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.5},{\"date\":\"2021-04-27\",\"poids\":99.1,\"imc\":28.9,\"img\":30.2,\"h",
-"ydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":62.0},{\"date\":\"2021-04-28\",\"poids\":99.8,\"imc\":29.1,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":nu",
-"ll,\"muscle\":null},{\"date\":\"2021-04-29\",\"poids\":100.1,\"imc\":29.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-01\",\"poids\":100.",
-"1,\"imc\":29.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-02\",\"poids\":99.8,\"imc\":29.1,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\"",
-":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-03\",\"poids\":100.1,\"imc\":29.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\"",
-":\"2021-05-04\",\"poids\":100.1,\"imc\":29.2,\"img\":30.3,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":15.0,\"age\":46.0,\"muscle\":62.4},{\"date\":\"2021-05-05\",\"poids\":100.5,\"imc\":29.3,\"img\":null,\"",
-"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-06\",\"poids\":100.9,\"imc\":29.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":",
-"null,\"muscle\":null},{\"date\":\"2021-05-07\",\"poids\":100.3,\"imc\":29.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-11\",\"poids\":10",
-"0.3,\"imc\":29.3,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":62.7},{\"date\":\"2021-05-14\",\"poids\":101.3,\"imc\":29.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"",
-"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-18\",\"poids\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.4},{\"da",
-"te\":\"2021-05-19\",\"poids\":101.5,\"imc\":29.6,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-05-25\",\"poids\":100.5,\"imc\":29.3,\"img\":30.",
-"4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.6},{\"date\":\"2021-06-01\",\"poids\":101.0,\"imc\":29.5,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"ag",
-"e\":47.0,\"muscle\":63.4},{\"date\":\"2021-06-09\",\"poids\":101.5,\"imc\":29.6,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.0},{\"date\":\"2021-06-10\",\"poids\"",
-":100.6,\"imc\":29.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-06-15\",\"poids\":102.8,\"imc\":30.0,\"img\":null,\"hydra\":null,\"gsc\":nul",
-"l,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-06-18\",\"poids\":102.1,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{",
-"\"date\":\"2021-06-22\",\"poids\":100.4,\"imc\":29.3,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.4},{\"date\":\"2021-06-29\",\"poids\":101.3,\"imc\":29.5,\"img\":",
-"30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9},{\"date\":\"2021-07-23\",\"poids\":101.4,\"imc\":29.6,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,",
-"\"age\":47.0,\"muscle\":62.9},{\"date\":\"2021-07-27\",\"poids\":102.0,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-09-04\",\"poi",
-"ds\":101.0,\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9},{\"date\":\"2021-09-06\",\"poids\":101.2,\"imc\":29.5,\"img\":30.6,\"hydra\":50.9,\"gsc\":",
-"27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.0},{\"date\":\"2021-09-09\",\"poids\":100.2,\"imc\":29.2,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.5",
-"},{\"date\":\"2021-09-14\",\"poids\":100.9,\"imc\":29.4,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.5},{\"date\":\"2021-09-21\",\"poids\":100.4,\"imc\":29.3,\"im",
-"g\":30.6,\"hydra\":50.7,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":62.3},{\"date\":\"2021-09-29\",\"poids\":100.1,\"imc\":29.2,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15",
-".0,\"age\":46.0,\"muscle\":63.3},{\"date\":\"2021-10-07\",\"poids\":99.6,\"imc\":29.1,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":46.0,\"muscle\":62.6},{\"date\":\"2021-10-12\",\"p",
-"oids\":100.8,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":47.0,\"muscle\":63.0},{\"date\":\"2021-10-19\",\"poids\":99.8,\"imc\":29.1,\"img\":30.5,\"hydra\":50.9,\"gsc\"",
-":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.0},{\"date\":\"2021-10-26\",\"poids\":101.6,\"imc\":29.6,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":nul",
-"l},{\"date\":\"2021-10-28\",\"poids\":100.9,\"imc\":29.4,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.3},{\"date\":\"2021-11-03\",\"poids\":101.4,\"imc\":29.6,\"i",
-"mg\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":47.0,\"muscle\":63.9},{\"date\":\"2021-11-09\",\"poids\":102.3,\"imc\":29.8,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":1",
-"4.7,\"age\":47.0,\"muscle\":62.8},{\"date\":\"2021-11-10\",\"poids\":102.3,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-11-11\",",
-"\"poids\":102.8,\"imc\":30.0,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":64.1},{\"date\":\"2021-11-17\",\"poids\":102.2,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"g",
-"sc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.4},{\"date\":\"2021-11-21\",\"poids\":101.7,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":",
-"null},{\"date\":\"2021-11-23\",\"poids\":101.1,\"imc\":29.5,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.8},{\"date\":\"2021-11-30\",\"poids\":102.0,\"imc\":29.8",
-",\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3},{\"date\":\"2021-12-05\",\"poids\":100.9,\"imc\":29.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot",
-"\":null,\"age\":null,\"muscle\":null},{\"date\":\"2021-12-07\",\"poids\":101.3,\"imc\":29.5,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.8},{\"date\":\"2021-12-1",
-"4\",\"poids\":102.1,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3},{\"date\":\"2021-12-21\",\"poids\":102.0,\"imc\":29.8,\"img\":31.1,\"hydra\":50.4",
-",\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9},{\"date\":\"2021-12-28\",\"poids\":103.6,\"imc\":30.2,\"img\":30.6,\"hydra\":50.7,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.9,\"age\":47.0,\"muscl",
-"e\":64.6},{\"date\":\"2022-01-04\",\"poids\":102.9,\"imc\":30.0,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.9},{\"date\":\"2022-01-11\",\"poids\":101.9,\"imc\":2",
-"9.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3},{\"date\":\"2022-01-18\",\"poids\":101.9,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"p",
-"rot\":14.8,\"age\":47.0,\"muscle\":63.3},{\"date\":\"2022-01-25\",\"poids\":102.5,\"imc\":29.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2022-0",
-"2-01\",\"poids\":102.3,\"imc\":29.8,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.6},{\"date\":\"2022-02-03\",\"poids\":101.8,\"imc\":29.7,\"img\":30.8,\"hydra\":5",
-"0.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.2},{\"date\":\"2022-02-13\",\"poids\":100.4,\"imc\":29.3,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":46.0,\"mu",
-"scle\":61.9},{\"date\":\"2022-02-15\",\"poids\":101.4,\"imc\":29.6,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.0},{\"date\":\"2022-02-22\",\"poids\":101.2,\"imc",
-"\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9},{\"date\":\"2022-02-28\",\"poids\":101.6,\"imc\":29.6,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0",
-",\"prot\":14.8,\"age\":47.0,\"muscle\":63.3},{\"date\":\"2022-03-08\",\"poids\":101.4,\"imc\":29.6,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.2},{\"date\":\"202",
-"2-03-15\",\"poids\":102.7,\"imc\":30.0,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.9},{\"date\":\"2022-03-21\",\"poids\":102.7,\"imc\":30.0,\"img\":null,\"hydra",
-"\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2022-03-23\",\"poids\":102.2,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,",
-"\"muscle\":null},{\"date\":\"2022-03-30\",\"poids\":102.6,\"imc\":29.9,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.8},{\"date\":\"2022-04-05\",\"poids\":102.3,\"",
-"imc\":29.8,\"img\":31.2,\"hydra\":50.5,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.6,\"age\":47.0,\"muscle\":63.1},{\"date\":\"2022-07-12\",\"poids\":102.3,\"imc\":29.8,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":1",
-"4.0,\"prot\":14.8,\"age\":48.0,\"muscle\":63.6},{\"date\":\"2022-07-18\",\"poids\":102.7,\"imc\":30.0,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"",
-"2022-07-23\",\"poids\":102.9,\"imc\":30.0,\"img\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.6,\"age\":48.0,\"muscle\":63.3},{\"date\":\"2022-08-16\",\"poids\":103.0,\"imc\":30.0,\"img\":31.3,\"hy",
-"dra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":63.5},{\"date\":\"2022-08-22\",\"poids\":103.7,\"imc\":30.2,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":48",
-".0,\"muscle\":64.3},{\"date\":\"2022-08-23\",\"poids\":103.7,\"imc\":30.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2022-08-25\",\"poids\":103.",
-"7,\"imc\":30.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2022-08-29\",\"poids\":103.7,\"imc\":30.2,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv",
-"\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":64.3},{\"date\":\"2022-09-05\",\"poids\":103.6,\"imc\":30.2,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":64.0},{\"date",
-"\":\"2022-09-12\",\"poids\":104.0,\"imc\":30.3,\"img\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.6,\"age\":48.0,\"muscle\":64.0},{\"date\":\"2022-09-13\",\"poids\":104.0,\"imc\":30.3,\"img\":31.3,",
-"\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":64.0},{\"date\":\"2022-09-30\",\"poids\":104.0,\"imc\":30.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\"",
-":null,\"muscle\":null},{\"date\":\"2022-10-08\",\"poids\":105.6,\"imc\":30.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2022-11-09\",\"poids\":1",
-"04.1,\"imc\":30.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2022-11-17\",\"poids\":104.9,\"imc\":30.6,\"img\":null,\"hydra\":null,\"gsc\":null,",
-"\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-01-13\",\"poids\":101.9,\"imc\":29.7,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":63.5},{\"d",
-"ate\":\"2023-01-16\",\"poids\":101.9,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-01-17\",\"poids\":101.9,\"imc\":29.7,\"img\":nu",
-"ll,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-01-21\",\"poids\":102.5,\"imc\":29.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"a",
-"ge\":null,\"muscle\":null},{\"date\":\"2023-01-24\",\"poids\":101.9,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-01-30\",\"poids",
-"\":101.9,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-02-06\",\"poids\":103.3,\"imc\":30.1,\"img\":31.0,\"hydra\":50.6,\"gsc\":27",
-".8,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":64.0},{\"date\":\"2023-02-12\",\"poids\":105.3,\"imc\":30.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},",
-"{\"date\":\"2023-02-13\",\"poids\":102.8,\"imc\":30.0,\"img\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.6,\"age\":48.0,\"muscle\":63.3},{\"date\":\"2023-03-16\",\"poids\":103.2,\"imc\":30.1,\"img\"",
-":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-03-21\",\"poids\":105.0,\"imc\":30.6,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":14.0,\"prot\":14.5",
-",\"age\":49.0,\"muscle\":63.9},{\"date\":\"2023-04-04\",\"poids\":104.3,\"imc\":30.4,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-04-07\",\"po",
-"ids\":103.9,\"imc\":30.3,\"img\":31.6,\"hydra\":50.0,\"gsc\":28.3,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":63.5},{\"date\":\"2023-04-12\",\"poids\":104.3,\"imc\":30.4,\"img\":31.5,\"hydra\":50.1,\"gsc\"",
-":28.2,\"gv\":14.0,\"prot\":14.7,\"age\":49.0,\"muscle\":64.0},{\"date\":\"2023-04-17\",\"poids\":104.6,\"imc\":30.5,\"img\":31.7,\"hydra\":49.9,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":64.",
-"0},{\"date\":\"2023-04-19\",\"poids\":103.7,\"imc\":30.2,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.7},{\"date\":\"2023-04-25\",\"poids\":104.8,\"imc\":30.6,\"i",
-"mg\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.6,\"age\":50.0,\"muscle\":64.3},{\"date\":\"2023-06-05\",\"poids\":106.2,\"imc\":31.0,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":n",
-"ull,\"age\":null,\"muscle\":null},{\"date\":\"2023-06-07\",\"poids\":106.2,\"imc\":31.0,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.6},{\"date\":\"2023-06-12\",",
-"\"poids\":106.2,\"imc\":31.0,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.5},{\"date\":\"2023-06-17\",\"poids\":105.7,\"imc\":30.8,\"img\":31.9,\"hydra\":49.9,\"g",
-"sc\":28.6,\"gv\":15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.5},{\"date\":\"2023-06-26\",\"poids\":106.0,\"imc\":30.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":",
-"null},{\"date\":\"2023-07-07\",\"poids\":106.5,\"imc\":31.1,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-07-16\",\"poids\":105.9,\"imc\":30.9",
-",\"img\":32.0,\"hydra\":49.8,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.7},{\"date\":\"2023-07-27\",\"poids\":104.6,\"imc\":30.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot",
-"\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-08-18\",\"poids\":104.4,\"imc\":30.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-08-2",
-"2\",\"poids\":104.7,\"imc\":30.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-08-23\",\"poids\":103.6,\"imc\":30.2,\"img\":null,\"hydra\":null",
-",\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-08-25\",\"poids\":104.0,\"imc\":30.3,\"img\":32.0,\"hydra\":49.9,\"gsc\":28.7,\"gv\":14.0,\"prot\":14.4,\"age\":50.0,\"muscl",
-"e\":63.1},{\"date\":\"2023-08-26\",\"poids\":102.6,\"imc\":29.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-08-28\",\"poids\":102.6,\"imc\":2",
-"9.9,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.7,\"age\":49.0,\"muscle\":63.3},{\"date\":\"2023-10-13\",\"poids\":102.6,\"imc\":29.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"p",
-"rot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-12-11\",\"poids\":103.7,\"imc\":30.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2023-1",
-"2-29\",\"poids\":103.7,\"imc\":30.2,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.9},{\"date\":\"2024-01-07\",\"poids\":105.1,\"imc\":30.7,\"img\":31.9,\"hydra\":4",
-"9.8,\"gsc\":28.6,\"gv\":14.0,\"prot\":14.6,\"age\":50.0,\"muscle\":64.2},{\"date\":\"2024-01-15\",\"poids\":105.1,\"imc\":30.7,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":14.0,\"prot\":14.5,\"age\":50.0,\"mu",
-"scle\":64.2},{\"date\":\"2024-01-31\",\"poids\":104.7,\"imc\":30.5,\"img\":31.6,\"hydra\":50.0,\"gsc\":28.3,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":64.2},{\"date\":\"2024-02-01\",\"poids\":105.3,\"imc",
-"\":30.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2024-02-02\",\"poids\":105.6,\"imc\":30.8,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0",
-",\"prot\":14.6,\"age\":50.0,\"muscle\":64.9},{\"date\":\"2024-02-06\",\"poids\":103.7,\"imc\":30.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"202",
-"4-02-08\",\"poids\":102.9,\"imc\":30.0,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":49.0,\"muscle\":63.2},{\"date\":\"2024-02-13\",\"poids\":102.9,\"imc\":30.0,\"img\":31.3,\"hydra",
-"\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":49.0,\"muscle\":63.4},{\"date\":\"2024-02-17\",\"poids\":102.2,\"imc\":29.8,\"img\":30.6,\"hydra\":50.7,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.9,\"age\":49.0,",
-"\"muscle\":63.8},{\"date\":\"2024-02-20\",\"poids\":102.2,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":49.0,\"muscle\":63.5},{\"date\":\"2024-11-05\",\"poids\":106.3,\"",
-"imc\":31.0,\"img\":32.5,\"hydra\":49.4,\"gsc\":29.1,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":64.1},{\"date\":\"2024-11-06\",\"poids\":106.9,\"imc\":31.2,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":1",
-"5.0,\"prot\":14.5,\"age\":52.0,\"muscle\":65.2},{\"date\":\"2024-11-07\",\"poids\":106.6,\"imc\":31.1,\"img\":32.0,\"hydra\":49.7,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.6,\"age\":52.0,\"muscle\":65.3},{\"date\":\"",
-"2024-11-08\",\"poids\":106.6,\"imc\":31.1,\"img\":32.0,\"hydra\":49.7,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.6,\"age\":52.0,\"muscle\":65.2},{\"date\":\"2024-11-09\",\"poids\":107.0,\"imc\":31.2,\"img\":null,\"hy",
-"dra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2024-11-11\",\"poids\":106.6,\"imc\":31.1,\"img\":32.5,\"hydra\":49.5,\"gsc\":29.1,\"gv\":15.0,\"prot\":14.4,\"age\":52",
-".0,\"muscle\":64.5},{\"date\":\"2024-11-12\",\"poids\":105.8,\"imc\":30.9,\"img\":32.1,\"hydra\":49.7,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.4},{\"date\":\"2024-11-13\",\"poids\":105.",
-"5,\"imc\":30.8,\"img\":32.4,\"hydra\":49.5,\"gsc\":29.0,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":63.8},{\"date\":\"2024-11-14\",\"poids\":105.5,\"imc\":30.8,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv",
-"\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.1},{\"date\":\"2024-11-15\",\"poids\":105.5,\"imc\":30.8,\"img\":32.1,\"hydra\":49.8,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":64.4},{\"date",
-"\":\"2024-11-18\",\"poids\":105.0,\"imc\":30.6,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.2},{\"date\":\"2024-11-19\",\"poids\":105.3,\"imc\":30.7,\"img\":32.1,",
-"\"hydra\":49.7,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.0},{\"date\":\"2024-11-20\",\"poids\":105.0,\"imc\":30.6,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.5,\"age\"",
-":51.0,\"muscle\":64.1},{\"date\":\"2024-11-21\",\"poids\":105.5,\"imc\":30.8,\"img\":32.0,\"hydra\":49.8,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.4},{\"date\":\"2024-11-22\",\"poids\":1",
-"05.3,\"imc\":30.7,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.5},{\"date\":\"2024-11-23\",\"poids\":105.3,\"imc\":30.7,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,",
-"\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.7},{\"date\":\"2024-11-24\",\"poids\":105.5,\"imc\":30.8,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.8},{\"d",
-"ate\":\"2024-11-25\",\"poids\":104.0,\"imc\":30.3,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":65.1},{\"date\":\"2024-11-26\",\"poids\":104.8,\"imc\":30.6,\"img\":31",
-".7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.4},{\"date\":\"2024-11-27\",\"poids\":105.3,\"imc\":30.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"a",
-"ge\":null,\"muscle\":null},{\"date\":\"2024-11-28\",\"poids\":104.6,\"imc\":30.5,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.6},{\"date\":\"2024-11-29\",\"poids",
-"\":104.6,\"imc\":30.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2024-11-30\",\"poids\":105.5,\"imc\":30.8,\"img\":31.5,\"hydra\":50.1,\"gsc\":28",
-".2,\"gv\":15.0,\"prot\":14.7,\"age\":51.0,\"muscle\":65.2},{\"date\":\"2024-12-01\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.3},",
-"{\"date\":\"2024-12-02\",\"poids\":104.2,\"imc\":30.4,\"img\":32.2,\"hydra\":49.7,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":63.1},{\"date\":\"2024-12-03\",\"poids\":103.6,\"imc\":30.2,\"img\"",
-":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.8},{\"date\":\"2024-12-04\",\"poids\":104.7,\"imc\":30.5,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null",
-",\"age\":null,\"muscle\":null},{\"date\":\"2024-12-05\",\"poids\":104.7,\"imc\":30.5,\"img\":31.3,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.7},{\"date\":\"2024-12-06\",\"po",
-"ids\":102.8,\"imc\":30.0,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.0},{\"date\":\"2024-12-09\",\"poids\":103.3,\"imc\":30.1,\"img\":31.7,\"hydra\":50.0,\"gsc\"",
-":28.4,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.1},{\"date\":\"2024-12-10\",\"poids\":103.7,\"imc\":30.2,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.",
-"0},{\"date\":\"2024-12-11\",\"poids\":103.5,\"imc\":30.2,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.9},{\"date\":\"2024-12-12\",\"poids\":104.1,\"imc\":30.4,\"i",
-"mg\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.3},{\"date\":\"2024-12-13\",\"poids\":104.4,\"imc\":30.5,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":1",
-"4.8,\"age\":51.0,\"muscle\":64.9},{\"date\":\"2024-12-14\",\"poids\":104.4,\"imc\":30.5,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.7},{\"date\":\"2024-12-16\",",
-"\"poids\":104.7,\"imc\":30.5,\"img\":31.6,\"hydra\":50.1,\"gsc\":28.3,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.5},{\"date\":\"2024-12-17\",\"poids\":102.1,\"imc\":29.8,\"img\":31.3,\"hydra\":50.3,\"g",
-"sc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.0},{\"date\":\"2024-12-18\",\"poids\":102.9,\"imc\":30.0,\"img\":31.5,\"hydra\":50.1,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":",
-"63.2},{\"date\":\"2024-12-19\",\"poids\":102.9,\"imc\":30.0,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.3},{\"date\":\"2024-12-20\",\"poids\":103.4,\"imc\":30.2",
-",\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.4},{\"date\":\"2024-12-29\",\"poids\":103.5,\"imc\":30.2,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot",
-"\":null,\"age\":null,\"muscle\":null},{\"date\":\"2024-12-30\",\"poids\":103.2,\"imc\":30.1,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":64.9},{\"date\":\"2024-12-3",
-"1\",\"poids\":102.0,\"imc\":29.8,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.2},{\"date\":\"2025-01-01\",\"poids\":103.3,\"imc\":30.1,\"img\":31.3,\"hydra\":50.3",
-",\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.7},{\"date\":\"2025-01-03\",\"poids\":103.2,\"imc\":30.1,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscl",
-"e\":63.8},{\"date\":\"2025-01-04\",\"poids\":102.2,\"imc\":29.8,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":50.0,\"muscle\":62.7},{\"date\":\"2025-01-05\",\"poids\":102.9,\"imc\":3",
-"0.0,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.4},{\"date\":\"2025-01-06\",\"poids\":103.6,\"imc\":30.2,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"p",
-"rot\":14.8,\"age\":51.0,\"muscle\":64.4},{\"date\":\"2025-01-07\",\"poids\":102.1,\"imc\":29.8,\"img\":30.2,\"hydra\":51.0,\"gsc\":27.1,\"gv\":14.0,\"prot\":15.0,\"age\":50.0,\"muscle\":64.4},{\"date\":\"2025-0",
-"1-08\",\"poids\":103.2,\"imc\":30.1,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.2},{\"date\":\"2025-01-09\",\"poids\":102.4,\"imc\":29.9,\"img\":null,\"hydra\":n",
-"ull,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-01-10\",\"poids\":102.7,\"imc\":30.0,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"mu",
-"scle\":64.4},{\"date\":\"2025-01-11\",\"poids\":103.2,\"imc\":30.1,\"img\":32.6,\"hydra\":49.4,\"gsc\":29.2,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":61.4},{\"date\":\"2025-01-12\",\"poids\":102.6,\"imc",
-"\":29.9,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-01-13\",\"poids\":104.6,\"imc\":30.5,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0",
-",\"prot\":14.7,\"age\":51.0,\"muscle\":64.6},{\"date\":\"2025-01-14\",\"poids\":102.2,\"imc\":29.8,\"img\":30.2,\"hydra\":51.0,\"gsc\":27.1,\"gv\":14.0,\"prot\":15.0,\"age\":50.0,\"muscle\":64.5},{\"date\":\"202",
-"5-01-15\",\"poids\":105.5,\"imc\":30.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-01-16\",\"poids\":104.5,\"imc\":30.5,\"img\":30.8,\"hydra",
-"\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":65.4},{\"date\":\"2025-01-17\",\"poids\":103.2,\"imc\":30.1,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,",
-"\"muscle\":64.9},{\"date\":\"2025-01-20\",\"poids\":103.2,\"imc\":30.1,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.6},{\"date\":\"2025-01-21\",\"poids\":102.4,\"",
-"imc\":29.9,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.7},{\"date\":\"2025-01-22\",\"poids\":103.0,\"imc\":30.0,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":1",
-"4.0,\"prot\":14.6,\"age\":51.0,\"muscle\":62.9},{\"date\":\"2025-01-23\",\"poids\":103.5,\"imc\":30.2,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.5},{\"date\":\"",
-"2025-01-24\",\"poids\":103.5,\"imc\":30.2,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.8},{\"date\":\"2025-01-27\",\"poids\":103.5,\"imc\":30.2,\"img\":null,\"hy",
-"dra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-01-28\",\"poids\":102.9,\"imc\":30.0,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":14.0,\"prot\":14.5,\"age\":51",
-".0,\"muscle\":62.0},{\"date\":\"2025-01-29\",\"poids\":103.4,\"imc\":30.2,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.9},{\"date\":\"2025-01-30\",\"poids\":103.",
-"7,\"imc\":30.2,\"img\":31.1,\"hydra\":50.5,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.3},{\"date\":\"2025-01-31\",\"poids\":102.4,\"imc\":29.9,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv",
-"\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":64.3},{\"date\":\"2025-02-03\",\"poids\":101.6,\"imc\":29.6,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":63.9},{\"date",
-"\":\"2025-02-04\",\"poids\":102.8,\"imc\":30.0,\"img\":31.1,\"hydra\":50.5,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.8},{\"date\":\"2025-02-05\",\"poids\":103.8,\"imc\":30.3,\"img\":30.9,",
-"\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.6},{\"date\":\"2025-02-06\",\"poids\":102.4,\"imc\":29.9,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\"",
-":50.0,\"muscle\":64.5},{\"date\":\"2025-02-07\",\"poids\":103.8,\"imc\":30.3,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.8},{\"date\":\"2025-02-16\",\"poids\":1",
-"01.8,\"imc\":29.7,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.1},{\"date\":\"2025-02-22\",\"poids\":101.2,\"imc\":29.5,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,",
-"\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.0},{\"date\":\"2025-02-24\",\"poids\":102.5,\"imc\":29.9,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.3},{\"d",
-"ate\":\"2025-02-25\",\"poids\":101.0,\"imc\":29.5,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":13.0,\"prot\":15.1,\"age\":50.0,\"muscle\":64.3},{\"date\":\"2025-02-28\",\"poids\":101.5,\"imc\":29.6,\"img\":29",
-".8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":14.0,\"prot\":15.1,\"age\":50.0,\"muscle\":64.4},{\"date\":\"2025-03-03\",\"poids\":102.6,\"imc\":29.9,\"img\":31.1,\"hydra\":50.5,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.7,\"a",
-"ge\":50.0,\"muscle\":63.5},{\"date\":\"2025-03-04\",\"poids\":100.9,\"imc\":29.4,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":63.6},{\"date\":\"2025-03-07\",\"poids",
-"\":100.6,\"imc\":29.3,\"img\":29.4,\"hydra\":51.6,\"gsc\":26.4,\"gv\":13.0,\"prot\":15.2,\"age\":50.0,\"muscle\":64.2},{\"date\":\"2025-03-10\",\"poids\":102.3,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":nu",
-"ll,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-03-11\",\"poids\":100.8,\"imc\":29.4,\"img\":29.6,\"hydra\":51.4,\"gsc\":26.5,\"gv\":13.0,\"prot\":15.2,\"age\":50.0,\"muscle\":64.1},",
-"{\"date\":\"2025-03-13\",\"poids\":101.6,\"imc\":29.6,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":14.0,\"prot\":15.1,\"age\":50.0,\"muscle\":64.4},{\"date\":\"2025-03-14\",\"poids\":100.7,\"imc\":29.4,\"img\"",
-":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.1,\"age\":50.0,\"muscle\":63.9},{\"date\":\"2025-03-17\",\"poids\":102.2,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null",
-",\"age\":null,\"muscle\":null},{\"date\":\"2025-03-18\",\"poids\":101.1,\"imc\":29.5,\"img\":29.5,\"hydra\":51.5,\"gsc\":26.4,\"gv\":13.0,\"prot\":15.2,\"age\":50.0,\"muscle\":64.5},{\"date\":\"2025-03-21\",\"po",
-"ids\":100.7,\"imc\":29.4,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.2},{\"date\":\"2025-03-25\",\"poids\":100.7,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\"",
-":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":63.3},{\"date\":\"2025-03-26\",\"poids\":102.3,\"imc\":29.8,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":nul",
-"l},{\"date\":\"2025-03-27\",\"poids\":101.8,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-03-28\",\"poids\":100.3,\"imc\":29.3,\"i",
-"mg\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":62.7},{\"date\":\"2025-04-01\",\"poids\":100.3,\"imc\":29.3,\"img\":30.3,\"hydra\":51.1,\"gsc\":27.2,\"gv\":14.0,\"prot\":1",
-"4.8,\"age\":50.0,\"muscle\":63.1},{\"date\":\"2025-04-04\",\"poids\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":62.7},{\"date\":\"2025-04-16\",",
-"\"poids\":101.2,\"imc\":29.5,\"img\":29.9,\"hydra\":51.2,\"gsc\":26.8,\"gv\":14.0,\"prot\":15.1,\"age\":51.0,\"muscle\":64.2},{\"date\":\"2025-04-22\",\"poids\":101.0,\"imc\":29.5,\"img\":30.5,\"hydra\":50.8,\"g",
-"sc\":27.3,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.3},{\"date\":\"2025-04-25\",\"poids\":100.9,\"imc\":29.4,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":",
-"63.9},{\"date\":\"2025-04-28\",\"poids\":101.8,\"imc\":29.7,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-04-29\",\"poids\":100.0,\"imc\":29.2",
-",\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":62.2},{\"date\":\"2025-05-02\",\"poids\":100.0,\"imc\":29.2,\"img\":29.7,\"hydra\":51.4,\"gsc\":26.6,\"gv\":14.0,\"prot",
-"\":15.1,\"age\":51.0,\"muscle\":63.6},{\"date\":\"2025-05-06\",\"poids\":100.8,\"imc\":29.4,\"img\":30.1,\"hydra\":51.1,\"gsc\":27.0,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":63.7},{\"date\":\"2025-05-0",
-"9\",\"poids\":100.8,\"imc\":29.4,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.7},{\"date\":\"2025-05-15\",\"poids\":100.0,\"imc\":29.2,\"img\":30.0,\"hydra\":51.2",
-",\"gsc\":26.9,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":63.3},{\"date\":\"2025-05-19\",\"poids\":99.5,\"imc\":29.0,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":51.0,\"muscle",
-"\":63.0},{\"date\":\"2025-05-22\",\"poids\":100.5,\"imc\":29.3,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":61.4},{\"date\":\"2025-06-02\",\"poids\":99.7,\"imc\":29.",
-"1,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":63.2},{\"date\":\"2025-06-06\",\"poids\":99.7,\"imc\":29.1,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot",
-"\":15.0,\"age\":51.0,\"muscle\":63.3},{\"date\":\"2025-06-10\",\"poids\":100.0,\"imc\":29.2,\"img\":30.9,\"hydra\":50.7,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":62.2},{\"date\":\"2025-06-1",
-"3\",\"poids\":99.7,\"imc\":29.1,\"img\":29.4,\"hydra\":51.6,\"gsc\":26.4,\"gv\":13.0,\"prot\":15.2,\"age\":51.0,\"muscle\":63.8},{\"date\":\"2025-06-20\",\"poids\":99.7,\"imc\":29.1,\"img\":30.3,\"hydra\":51.0,\"",
-"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":62.6},{\"date\":\"2025-06-24\",\"poids\":99.3,\"imc\":29.0,\"img\":29.7,\"hydra\":51.4,\"gsc\":26.6,\"gv\":13.0,\"prot\":15.1,\"age\":51.0,\"muscle\":",
-"63.0},{\"date\":\"2025-07-01\",\"poids\":100.5,\"imc\":29.3,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.4},{\"date\":\"2025-08-04\",\"poids\":101.1,\"imc\":29.5",
-",\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.3},{\"date\":\"2025-08-22\",\"poids\":103.3,\"imc\":30.1,\"img\":31.5,\"hydra\":50.1,\"gsc\":28.2,\"gv\":14.0,\"prot",
-"\":14.7,\"age\":52.0,\"muscle\":63.6},{\"date\":\"2025-09-04\",\"poids\":102.5,\"imc\":29.9,\"img\":30.3,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":15.0,\"age\":52.0,\"muscle\":64.5},{\"date\":\"2025-09-0",
-"5\",\"poids\":102.1,\"imc\":29.8,\"img\":30.2,\"hydra\":51.0,\"gsc\":27.1,\"gv\":14.0,\"prot\":15.0,\"age\":52.0,\"muscle\":64.5},{\"date\":\"2025-09-12\",\"poids\":100.9,\"imc\":29.4,\"img\":30.8,\"hydra\":50.7",
-",\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":62.8},{\"date\":\"2025-09-15\",\"poids\":101.6,\"imc\":29.6,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscl",
-"e\":63.8},{\"date\":\"2025-09-18\",\"poids\":101.3,\"imc\":29.5,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":62.9},{\"date\":\"2025-09-23\",\"poids\":103.4,\"imc\":3",
-"0.2,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.4},{\"date\":\"2025-09-25\",\"poids\":103.0,\"imc\":30.0,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"p",
-"rot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-09-26\",\"poids\":102.0,\"imc\":29.8,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":63.5},{\"date\":\"2025-0",
-"9-30\",\"poids\":101.4,\"imc\":29.6,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.2},{\"date\":\"2025-10-03\",\"poids\":102.4,\"imc\":29.9,\"img\":32.2,\"hydra\":4",
-"9.7,\"gsc\":28.9,\"gv\":14.0,\"prot\":14.4,\"age\":52.0,\"muscle\":61.8},{\"date\":\"2025-10-07\",\"poids\":102.3,\"imc\":29.8,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"mu",
-"scle\":63.5},{\"date\":\"2025-10-09\",\"poids\":103.9,\"imc\":30.3,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":null,\"muscle\":null},{\"date\":\"2025-10-13\",\"poids\":102.1,\"imc",
-"\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":63.7},{\"date\":\"2025-10-17\",\"poids\":103.3,\"imc\":30.1,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0",
-",\"prot\":14.8,\"age\":52.0,\"muscle\":64.5},{\"date\":\"2025-10-23\",\"poids\":103.3,\"imc\":30.1,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.5},{\"date\":\"202",
-"5-11-04\",\"poids\":103.0,\"imc\":30.0,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.7,\"age\":52.0,\"muscle\":64.0},{\"date\":\"2025-11-08\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra",
-"\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":52.0,\"muscle\":64.5},{\"date\":\"2025-11-14\",\"poids\":103.0,\"imc\":30.0,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,",
-"\"muscle\":64.1},{\"date\":\"2025-11-17\",\"poids\":102.6,\"imc\":29.9,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3},{\"date\":\"2025-11-21\",\"poids\":101.3,\"",
-"imc\":29.5,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.8},{\"date\":\"2025-11-25\",\"poids\":101.9,\"imc\":29.7,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":1",
-"4.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.9},{\"date\":\"2025-12-02\",\"poids\":101.1,\"imc\":29.5,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.1},{\"date\":\"",
-"2025-12-05\",\"poids\":102.3,\"imc\":29.8,\"img\":30.2,\"hydra\":51.0,\"gsc\":27.1,\"gv\":14.0,\"prot\":15.0,\"age\":52.0,\"muscle\":64.5},{\"date\":\"2025-12-15\",\"poids\":101.2,\"imc\":29.5,\"img\":30.6,\"hy",
-"dra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.3},{\"date\":\"2025-12-19\",\"poids\":102.9,\"imc\":30.0,\"img\":null,\"hydra\":null,\"gsc\":null,\"gv\":null,\"prot\":null,\"age\":nu",
-"ll,\"muscle\":null},{\"date\":\"2026-01-05\",\"poids\":103.2,\"imc\":30.1,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3},{\"date\":\"2026-01-09\",\"poids\":103.",
-"2,\"imc\":30.1,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.2},{\"date\":\"2026-01-13\",\"poids\":103.2,\"imc\":30.1,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv",
-"\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.2},{\"date\":\"2026-01-20\",\"poids\":103.1,\"imc\":30.1,\"img\":31.7,\"hydra\":50.1,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.5,\"age\":52.0,\"muscle\":63.3},{\"date",
-"\":\"2026-01-30\",\"poids\":103.5,\"imc\":30.2,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.4},{\"date\":\"2026-02-03\",\"poids\":103.0,\"imc\":30.0,\"img\":30.7,",
-"\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.4},{\"date\":\"2026-02-06\",\"poids\":103.0,\"imc\":30.0,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\"",
-":52.0,\"muscle\":64.3},{\"date\":\"2026-02-10\",\"poids\":103.5,\"imc\":30.2,\"img\":30.6,\"hydra\":50.7,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.9,\"age\":52.0,\"muscle\":64.8},{\"date\":\"2026-03-02\",\"poids\":1",
-"03.4,\"imc\":30.2,\"img\":31.3,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.0},{\"date\":\"2026-03-05\",\"poids\":103.4,\"imc\":30.2,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,",
-"\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3},{\"date\":\"2026-03-10\",\"poids\":102.9,\"imc\":30.0,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.1},{\"d",
-"ate\":\"2026-03-16\",\"poids\":103.3,\"imc\":30.1,\"img\":31.2,\"hydra\":50.3,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.1},{\"date\":\"2026-03-20\",\"poids\":103.9,\"imc\":30.3,\"img\":31",
-".2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.7,\"age\":52.0,\"muscle\":64.5},{\"date\":\"2026-03-23\",\"poids\":103.9,\"imc\":30.3,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"a",
-"ge\":52.0,\"muscle\":64.7},{\"date\":\"2026-03-27\",\"poids\":105.0,\"imc\":30.6,\"img\":31.2,\"hydra\":50.3,\"gsc\":28.0,\"gv\":15.0,\"prot\":14.8,\"age\":52.0,\"muscle\":65.2},{\"date\":\"2026-04-07\",\"poids",
-"\":105.0,\"imc\":30.6,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":15.0,\"prot\":14.7,\"age\":52.0,\"muscle\":65.1},{\"date\":\"2026-04-28\",\"poids\":105.4,\"imc\":30.7,\"img\":31.2,\"hydra\":50.3,\"gsc\":28",
-".0,\"gv\":15.0,\"prot\":14.8,\"age\":54.0,\"muscle\":65.7},{\"date\":\"2026-05-22\",\"poids\":106.6,\"imc\":31.1,\"img\":32.0,\"hydra\":49.8,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.5,\"age\":54.0,\"muscle\":65.5},",
-"{\"date\":\"2026-06-14\",\"poids\":108.0,\"imc\":31.5,\"img\":32.6,\"hydra\":49.3,\"gsc\":29.2,\"gv\":16.0,\"prot\":14.4,\"age\":54.0,\"muscle\":65.4},{\"date\":\"2026-06-16\",\"poids\":106.7,\"imc\":31.1,\"img\"",
-":32.0,\"hydra\":49.8,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.5,\"age\":54.0,\"muscle\":65.5},{\"date\":\"2026-07-21\",\"poids\":108.6,\"imc\":31.7,\"img\":32.1,\"hydra\":49.6,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.6",
-",\"age\":54.0,\"muscle\":66.7},{\"date\":\"2026-07-23\",\"poids\":107.8,\"imc\":31.4,\"img\":31.7,\"hydra\":49.9,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.7,\"age\":54.0,\"muscle\":66.5},{\"date\":\"2026-07-26\",\"po",
-"ids\":107.8,\"imc\":31.4,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":54.0,\"muscle\":66.4},{\"date\":\"2026-08-01\",\"poids\":107.8,\"imc\":31.4,\"img\":31.7,\"hydra\":49.9,\"gsc\"",
-":28.4,\"gv\":15.0,\"prot\":14.7,\"age\":54.0,\"muscle\":66.6}],\"dailyWeights\":{\"2019-09-26\":105.8,\"2019-09-30\":104.2,\"2019-10-07\":103.6,\"2019-10-14\":102.3,\"2019-10-21\":101.1,\"2019-10-28\":9",
-"9.9,\"2019-11-04\":98.9,\"2019-11-12\":99.4,\"2019-11-15\":99.4,\"2019-11-18\":98.8,\"2019-11-25\":99.0,\"2019-12-02\":98.0,\"2019-12-08\":96.0,\"2019-12-16\":97.2,\"2019-12-23\":96.4,\"2020-01-05\":9",
-"7.1,\"2020-01-13\":96.4,\"2020-01-21\":96.0,\"2020-01-28\":96.1,\"2020-02-04\":96.1,\"2020-02-25\":97.1,\"2020-03-04\":96.5,\"2020-03-10\":97.3,\"2020-03-11\":97.6,\"2020-05-20\":96.4,\"2020-05-26\":9",
-"6.7,\"2020-06-02\":96.3,\"2020-06-09\":96.6,\"2020-06-23\":96.5,\"2020-07-06\":97.3,\"2020-07-09\":97.3,\"2020-07-11\":97.3,\"2020-07-14\":98.8,\"2020-07-16\":97.0,\"2020-07-21\":98.0,\"2020-07-28\":9",
-"8.5,\"2020-07-29\":97.8,\"2020-07-30\":99.4,\"2020-08-11\":99.3,\"2020-08-14\":99.3,\"2020-08-15\":98.2,\"2020-08-18\":98.2,\"2020-08-25\":98.5,\"2020-09-02\":98.5,\"2020-09-08\":98.3,\"2020-09-12\":9",
-"8.4,\"2020-09-15\":98.4,\"2020-11-10\":101.7,\"2020-11-17\":101.2,\"2020-11-18\":102.0,\"2020-11-20\":101.4,\"2020-11-23\":102.5,\"2020-11-25\":101.1,\"2020-11-26\":100.6,\"2020-11-30\":100.9,\"2020-",
-"12-02\":100.9,\"2020-12-04\":101.2,\"2020-12-05\":101.2,\"2020-12-07\":101.2,\"2020-12-08\":101.2,\"2020-12-11\":100.8,\"2020-12-12\":100.1,\"2020-12-14\":100.5,\"2020-12-15\":99.4,\"2020-12-29\":99.",
-"5,\"2020-12-31\":100.4,\"2021-01-03\":100.7,\"2021-01-04\":100.0,\"2021-01-05\":100.0,\"2021-01-06\":100.9,\"2021-01-07\":101.2,\"2021-01-09\":100.6,\"2021-01-10\":100.0,\"2021-01-11\":101.1,\"2021-0",
-"1-12\":100.8,\"2021-01-13\":101.0,\"2021-01-14\":101.5,\"2021-01-15\":101.5,\"2021-01-16\":101.0,\"2021-01-17\":100.3,\"2021-01-18\":100.3,\"2021-01-19\":101.0,\"2021-01-20\":99.9,\"2021-01-21\":100.",
-"3,\"2021-01-22\":99.6,\"2021-01-23\":102.4,\"2021-01-24\":99.5,\"2021-01-25\":102.7,\"2021-01-26\":100.7,\"2021-01-29\":100.3,\"2021-01-30\":100.6,\"2021-01-31\":101.0,\"2021-02-02\":100.2,\"2021-02-",
-"03\":100.9,\"2021-02-04\":101.7,\"2021-02-05\":100.8,\"2021-02-06\":101.7,\"2021-02-07\":101.2,\"2021-02-08\":100.9,\"2021-02-09\":101.3,\"2021-02-10\":101.8,\"2021-02-11\":101.8,\"2021-02-14\":101.7",
-",\"2021-02-15\":101.7,\"2021-02-16\":101.7,\"2021-02-23\":102.4,\"2021-02-24\":101.5,\"2021-02-26\":101.3,\"2021-02-27\":101.3,\"2021-02-28\":101.3,\"2021-03-01\":101.3,\"2021-03-03\":101.0,\"2021-03",
-"-04\":101.7,\"2021-03-05\":101.3,\"2021-03-07\":101.3,\"2021-03-09\":99.9,\"2021-03-12\":101.6,\"2021-03-15\":101.0,\"2021-03-16\":101.3,\"2021-03-18\":101.6,\"2021-03-20\":101.0,\"2021-03-21\":100.7",
-",\"2021-03-22\":101.9,\"2021-03-23\":100.4,\"2021-03-24\":100.4,\"2021-03-25\":100.4,\"2021-03-26\":100.4,\"2021-03-27\":99.9,\"2021-03-28\":101.2,\"2021-03-29\":100.1,\"2021-03-30\":99.2,\"2021-03-3",
-"1\":100.1,\"2021-04-01\":99.6,\"2021-04-02\":99.1,\"2021-04-03\":99.8,\"2021-04-04\":99.1,\"2021-04-05\":99.1,\"2021-04-06\":99.1,\"2021-04-27\":99.1,\"2021-04-28\":99.8,\"2021-04-29\":100.1,\"2021-05",
-"-01\":100.1,\"2021-05-02\":99.8,\"2021-05-03\":100.1,\"2021-05-04\":100.1,\"2021-05-05\":100.5,\"2021-05-06\":100.9,\"2021-05-07\":100.3,\"2021-05-11\":100.3,\"2021-05-14\":101.3,\"2021-05-18\":100.0",
-",\"2021-05-19\":101.5,\"2021-05-25\":100.5,\"2021-06-01\":101.0,\"2021-06-09\":101.5,\"2021-06-10\":100.6,\"2021-06-15\":102.8,\"2021-06-18\":102.1,\"2021-06-22\":100.4,\"2021-06-29\":101.3,\"2021-07",
-"-23\":101.4,\"2021-07-27\":102.0,\"2021-09-04\":101.0,\"2021-09-06\":101.2,\"2021-09-09\":100.2,\"2021-09-14\":100.9,\"2021-09-21\":100.4,\"2021-09-29\":100.1,\"2021-10-07\":99.6,\"2021-10-12\":100.8",
-",\"2021-10-19\":99.8,\"2021-10-26\":101.6,\"2021-10-28\":100.9,\"2021-11-03\":101.4,\"2021-11-09\":102.3,\"2021-11-10\":102.3,\"2021-11-11\":102.8,\"2021-11-17\":102.2,\"2021-11-21\":101.7,\"2021-11-",
-"23\":101.1,\"2021-11-30\":102.0,\"2021-12-05\":100.9,\"2021-12-07\":101.3,\"2021-12-14\":102.1,\"2021-12-21\":102.0,\"2021-12-28\":103.6,\"2022-01-04\":102.9,\"2022-01-11\":101.9,\"2022-01-18\":101.9",
-",\"2022-01-25\":102.5,\"2022-02-01\":102.3,\"2022-02-03\":101.8,\"2022-02-13\":100.4,\"2022-02-15\":101.4,\"2022-02-22\":101.2,\"2022-02-28\":101.6,\"2022-03-08\":101.4,\"2022-03-15\":102.7,\"2022-03",
-"-21\":102.7,\"2022-03-23\":102.2,\"2022-03-30\":102.6,\"2022-04-05\":102.3,\"2022-07-12\":102.3,\"2022-07-18\":102.7,\"2022-07-23\":102.9,\"2022-08-16\":103.0,\"2022-08-22\":103.7,\"2022-08-23\":103.",
-"7,\"2022-08-25\":103.7,\"2022-08-29\":103.7,\"2022-09-05\":103.6,\"2022-09-12\":104.0,\"2022-09-13\":104.0,\"2022-09-30\":104.0,\"2022-10-08\":105.6,\"2022-11-09\":104.1,\"2022-11-17\":104.9,\"2023-0",
-"1-13\":101.9,\"2023-01-16\":101.9,\"2023-01-17\":101.9,\"2023-01-21\":102.5,\"2023-01-24\":101.9,\"2023-01-30\":101.9,\"2023-02-06\":103.3,\"2023-02-12\":105.3,\"2023-02-13\":102.8,\"2023-03-16\":103",
-".2,\"2023-03-21\":105.0,\"2023-04-04\":104.3,\"2023-04-07\":103.9,\"2023-04-12\":104.3,\"2023-04-17\":104.6,\"2023-04-19\":103.7,\"2023-04-25\":104.8,\"2023-06-05\":106.2,\"2023-06-07\":106.2,\"2023-",
-"06-12\":106.2,\"2023-06-17\":105.7,\"2023-06-26\":106.0,\"2023-07-07\":106.5,\"2023-07-16\":105.9,\"2023-07-27\":104.6,\"2023-08-18\":104.4,\"2023-08-22\":104.7,\"2023-08-23\":103.6,\"2023-08-25\":10",
-"4.0,\"2023-08-26\":102.6,\"2023-08-28\":102.6,\"2023-10-13\":102.6,\"2023-12-11\":103.7,\"2023-12-29\":103.7,\"2024-01-07\":105.1,\"2024-01-15\":105.1,\"2024-01-31\":104.7,\"2024-02-01\":105.3,\"2024",
-"-02-02\":105.6,\"2024-02-06\":103.7,\"2024-02-08\":102.9,\"2024-02-13\":102.9,\"2024-02-17\":102.2,\"2024-02-20\":102.2,\"2024-11-05\":106.3,\"2024-11-06\":106.9,\"2024-11-07\":106.6,\"2024-11-08\":1",
-"06.6,\"2024-11-09\":107.0,\"2024-11-11\":106.6,\"2024-11-12\":105.8,\"2024-11-13\":105.5,\"2024-11-14\":105.5,\"2024-11-15\":105.5,\"2024-11-18\":105.0,\"2024-11-19\":105.3,\"2024-11-20\":105.0,\"202",
-"4-11-21\":105.5,\"2024-11-22\":105.3,\"2024-11-23\":105.3,\"2024-11-24\":105.5,\"2024-11-25\":104.0,\"2024-11-26\":104.8,\"2024-11-27\":105.3,\"2024-11-28\":104.6,\"2024-11-29\":104.6,\"2024-11-30\":",
-"105.5,\"2024-12-01\":104.8,\"2024-12-02\":104.2,\"2024-12-03\":103.6,\"2024-12-04\":104.7,\"2024-12-05\":104.7,\"2024-12-06\":102.8,\"2024-12-09\":103.3,\"2024-12-10\":103.7,\"2024-12-11\":103.5,\"20",
-"24-12-12\":104.1,\"2024-12-13\":104.4,\"2024-12-14\":104.4,\"2024-12-16\":104.7,\"2024-12-17\":102.1,\"2024-12-18\":102.9,\"2024-12-19\":102.9,\"2024-12-20\":103.4,\"2024-12-29\":103.5,\"2024-12-30\"",
-":103.2,\"2024-12-31\":102.0,\"2025-01-01\":103.3,\"2025-01-03\":103.2,\"2025-01-04\":102.2,\"2025-01-05\":102.9,\"2025-01-06\":103.6,\"2025-01-07\":102.1,\"2025-01-08\":103.2,\"2025-01-09\":102.4,\"2",
-"025-01-10\":102.7,\"2025-01-11\":103.2,\"2025-01-12\":102.6,\"2025-01-13\":104.6,\"2025-01-14\":102.2,\"2025-01-15\":105.5,\"2025-01-16\":104.5,\"2025-01-17\":103.2,\"2025-01-20\":103.2,\"2025-01-21",
-"\":102.4,\"2025-01-22\":103.0,\"2025-01-23\":103.5,\"2025-01-24\":103.5,\"2025-01-27\":103.5,\"2025-01-28\":102.9,\"2025-01-29\":103.4,\"2025-01-30\":103.7,\"2025-01-31\":102.4,\"2025-02-03\":101.6,\"",
-"2025-02-04\":102.8,\"2025-02-05\":103.8,\"2025-02-06\":102.4,\"2025-02-07\":103.8,\"2025-02-16\":101.8,\"2025-02-22\":101.2,\"2025-02-24\":102.5,\"2025-02-25\":101.0,\"2025-02-28\":101.5,\"2025-03-0",
-"3\":102.6,\"2025-03-04\":100.9,\"2025-03-07\":100.6,\"2025-03-10\":102.3,\"2025-03-11\":100.8,\"2025-03-13\":101.6,\"2025-03-14\":100.7,\"2025-03-17\":102.2,\"2025-03-18\":101.1,\"2025-03-21\":100.7,",
-"\"2025-03-25\":100.7,\"2025-03-26\":102.3,\"2025-03-27\":101.8,\"2025-03-28\":100.3,\"2025-04-01\":100.3,\"2025-04-04\":100.0,\"2025-04-16\":101.2,\"2025-04-22\":101.0,\"2025-04-25\":100.9,\"2025-04-",
-"28\":101.8,\"2025-04-29\":100.0,\"2025-05-02\":100.0,\"2025-05-06\":100.8,\"2025-05-09\":100.8,\"2025-05-15\":100.0,\"2025-05-19\":99.5,\"2025-05-22\":100.5,\"2025-06-02\":99.7,\"2025-06-06\":99.7,\"2",
-"025-06-10\":100.0,\"2025-06-13\":99.7,\"2025-06-20\":99.7,\"2025-06-24\":99.3,\"2025-07-01\":100.5,\"2025-08-04\":101.1,\"2025-08-22\":103.3,\"2025-09-04\":102.5,\"2025-09-05\":102.1,\"2025-09-12\":1",
-"00.9,\"2025-09-15\":101.6,\"2025-09-18\":101.3,\"2025-09-23\":103.4,\"2025-09-25\":103.0,\"2025-09-26\":102.0,\"2025-09-30\":101.4,\"2025-10-03\":102.4,\"2025-10-07\":102.3,\"2025-10-09\":103.9,\"202",
-"5-10-13\":102.1,\"2025-10-17\":103.3,\"2025-10-23\":103.3,\"2025-11-04\":103.0,\"2025-11-08\":104.8,\"2025-11-14\":103.0,\"2025-11-17\":102.6,\"2025-11-21\":101.3,\"2025-11-25\":101.9,\"2025-12-02\":",
-"101.1,\"2025-12-05\":102.3,\"2025-12-15\":101.2,\"2025-12-19\":102.9,\"2026-01-05\":103.2,\"2026-01-09\":103.2,\"2026-01-13\":103.2,\"2026-01-20\":103.1,\"2026-01-30\":103.5,\"2026-02-03\":103.0,\"20",
-"26-02-06\":103.0,\"2026-02-10\":103.5,\"2026-03-02\":103.4,\"2026-03-05\":103.4,\"2026-03-10\":102.9,\"2026-03-16\":103.3,\"2026-03-20\":103.9,\"2026-03-23\":103.9,\"2026-03-27\":105.0,\"2026-04-07\"",
-":105.0,\"2026-04-28\":105.4,\"2026-05-22\":106.6,\"2026-06-14\":108.0,\"2026-06-16\":106.7,\"2026-07-21\":108.6,\"2026-07-23\":107.8,\"2026-07-26\":107.8,\"2026-08-01\":107.8},\"activities\":[{\"date",
-"\":\"2026-07-29\",\"type\":\"Musculation\",\"dist\":0.0,\"dur\":\"00:37\",\"cal\":306.0,\"fc\":113.0,\"fcmax\":136.0,\"te\":2.0,\"notes\":\"\"},{\"date\":\"2026-07-29\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:10\"",
-",\"cal\":143.0,\"fc\":138.0,\"fcmax\":156.0,\"te\":2.6,\"notes\":\"\"},{\"date\":\"2026-07-23\",\"type\":\"Musculation\",\"dist\":0.0,\"dur\":\"00:42\",\"cal\":400.0,\"fc\":120.0,\"fcmax\":144.0,\"te\":2.3,\"notes\":",
-"\"\"},{\"date\":\"2026-07-23\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:11\",\"cal\":145.0,\"fc\":129.0,\"fcmax\":145.0,\"te\":2.3,\"notes\":\"\"},{\"date\":\"2026-07-21\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"0",
-"0:57\",\"cal\":687.0,\"fc\":135.0,\"fcmax\":164.0,\"te\":3.5,\"notes\":\"\"},{\"date\":\"2026-07-21\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:10\",\"cal\":111.0,\"fc\":122.0,\"fcmax\":141.0,\"te\":1.9,\"notes\":",
-"\"\"},{\"date\":\"2026-07-17\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:55\",\"cal\":630.0,\"fc\":135.0,\"fcmax\":160.0,\"te\":3.6,\"notes\":\"\"},{\"date\":\"2026-07-05\",\"type\":\"Randonnée\",\"dist\":6.64,\"dur",
-"\":\"03:27\",\"cal\":1585.0,\"fc\":119.0,\"fcmax\":167.0,\"te\":3.4,\"notes\":\"\"},{\"date\":\"2026-07-04\",\"type\":\"Randonnée\",\"dist\":6.95,\"dur\":\"05:16\",\"cal\":2250.0,\"fc\":115.0,\"fcmax\":165.0,\"te\":3.",
-"4,\"notes\":\"\"},{\"date\":\"2026-06-30\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:58\",\"cal\":590.0,\"fc\":122.0,\"fcmax\":154.0,\"te\":3.0,\"notes\":\"\"},{\"date\":\"2026-06-18\",\"type\":\"Cardio\",\"dist\":0.",
-"0,\"dur\":\"01:00\",\"cal\":632.0,\"fc\":127.0,\"fcmax\":161.0,\"te\":3.0,\"notes\":\"\"},{\"date\":\"2026-06-16\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"01:21\",\"cal\":963.0,\"fc\":142.0,\"fcmax\":176.0,\"te\":4.",
-"9,\"notes\":\"\"},{\"date\":\"2026-06-12\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"01:05\",\"cal\":612.0,\"fc\":128.0,\"fcmax\":173.0,\"te\":3.2,\"notes\":\"\"},{\"date\":\"2026-06-09\",\"type\":\"Cardio\",\"dist\":0.",
-"0,\"dur\":\"01:06\",\"cal\":813.0,\"fc\":143.0,\"fcmax\":184.0,\"te\":4.6,\"notes\":\"\"},{\"date\":\"2026-06-05\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:50\",\"cal\":630.0,\"fc\":135.0,\"fcmax\":162.0,\"te\":3.",
-"2,\"notes\":\"\"},{\"date\":\"2026-05-28\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:40\",\"cal\":349.0,\"fc\":113.0,\"fcmax\":136.0,\"te\":1.9,\"notes\":\"\"},{\"date\":\"2026-05-26\",\"type\":\"Cardio\",\"dist\":0.",
-"0,\"dur\":\"00:48\",\"cal\":508.0,\"fc\":128.0,\"fcmax\":155.0,\"te\":3.2,\"notes\":\"\"},{\"date\":\"2026-05-21\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:37\",\"cal\":347.0,\"fc\":118.0,\"fcmax\":152.0,\"te\":2.",
-"2,\"notes\":\"\"},{\"date\":\"2026-05-19\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"03:21\",\"cal\":1248.0,\"fc\":100.0,\"fcmax\":166.0,\"te\":3.5,\"notes\":\"\"},{\"date\":\"2026-05-15\",\"type\":\"Cardio\",\"dist\":0",
-".0,\"dur\":\"01:55\",\"cal\":793.0,\"fc\":110.0,\"fcmax\":151.0,\"te\":2.7,\"notes\":\"\"},{\"date\":\"2026-05-12\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"01:08\",\"cal\":847.0,\"fc\":142.0,\"fcmax\":171.0,\"te\":4",
-".3,\"notes\":\"\"},{\"date\":\"2026-05-12\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:00\",\"cal\":null,\"fc\":104.0,\"fcmax\":104.0,\"te\":0.0,\"notes\":\"\"},{\"date\":\"2026-05-07\",\"type\":\"Cardio\",\"dist\":0.",
-"0,\"dur\":\"01:45\",\"cal\":769.0,\"fc\":112.0,\"fcmax\":150.0,\"te\":2.6,\"notes\":\"\"},{\"date\":\"2026-05-05\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"01:03\",\"cal\":763.0,\"fc\":138.0,\"fcmax\":179.0,\"te\":4.",
-"0,\"notes\":\"\"},{\"date\":\"2026-04-30\",\"type\":\"Cardio\",\"dist\":0.0,\"dur\":\"00:06\",\"cal\":67.0,\"fc\":116.0,\"fcmax\":129.0,\"te\":0.8,\"notes\":\"\"}]}"
+"{\"balanceData\":[{\"date\":\"2019-09-26\",\"poids\":107.1,\"imc\":31.2,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":46.0,\"muscle\":65.9,\"bmr\":2007.0},{\"date\":\"2019-09-30\",\"",
+"poids\":104.2,\"imc\":30.4,\"img\":31.8,\"hydra\":50.0,\"gsc\":28.5,\"gv\":14.0,\"prot\":14.5,\"age\":45.0,\"muscle\":63.2,\"bmr\":1924.0},{\"date\":\"2019-10-07\",\"poids\":103.6,\"imc\":30.2,\"img\":31.1,\"hy",
+"dra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":45.0,\"muscle\":63.7,\"bmr\":1937.0},{\"date\":\"2019-10-14\",\"poids\":102.3,\"imc\":29.8,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":13.0,\"prot\":",
+"14.8,\"age\":45.0,\"muscle\":63.2,\"bmr\":1921.0},{\"date\":\"2019-10-21\",\"poids\":101.1,\"imc\":29.5,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":44.0,\"muscle\":62.1,\"bmr\":18",
+"88.0},{\"date\":\"2019-10-28\",\"poids\":99.9,\"imc\":29.1,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":44.0,\"muscle\":61.7,\"bmr\":1873.0},{\"date\":\"2019-11-04\",\"poids\":98.9",
+",\"imc\":28.8,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":44.0,\"muscle\":61.2,\"bmr\":1855.0},{\"date\":\"2019-11-12\",\"poids\":99.4,\"imc\":29.0,\"img\":30.0,\"hydra\":51.3,\"gs",
+"c\":26.9,\"gv\":13.0,\"prot\":14.9,\"age\":44.0,\"muscle\":62.3,\"bmr\":1888.0},{\"date\":\"2019-11-15\",\"poids\":99.4,\"imc\":29.0,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":44.",
+"0,\"muscle\":62.5,\"bmr\":1893.0},{\"date\":\"2019-11-18\",\"poids\":98.8,\"imc\":28.8,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":44.0,\"muscle\":61.6,\"bmr\":1868.0},{\"date\":\"",
+"2019-11-25\",\"poids\":99.0,\"imc\":28.9,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.1,\"age\":44.0,\"muscle\":62.2,\"bmr\":1884.0},{\"date\":\"2019-12-02\",\"poids\":98.0,\"imc\":28.6,\"im",
+"g\":29.7,\"hydra\":51.4,\"gsc\":26.6,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":61.6,\"bmr\":1864.0},{\"date\":\"2019-12-08\",\"poids\":96.0,\"imc\":28.0,\"img\":29.1,\"hydra\":51.9,\"gsc\":26.1,\"gv\":12",
+".0,\"prot\":15.2,\"age\":43.0,\"muscle\":60.9,\"bmr\":1840.0},{\"date\":\"2019-12-16\",\"poids\":97.2,\"imc\":28.4,\"img\":29.3,\"hydra\":51.8,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.1,\"age\":43.0,\"muscle\":61.7",
+",\"bmr\":1865.0},{\"date\":\"2019-12-23\",\"poids\":96.4,\"imc\":28.1,\"img\":29.3,\"hydra\":51.9,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.0,\"age\":43.0,\"muscle\":61.1,\"bmr\":1845.0},{\"date\":\"2020-01-05\",\"po",
+"ids\":97.1,\"imc\":28.3,\"img\":28.6,\"hydra\":52.3,\"gsc\":25.6,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":62.3,\"bmr\":1882.0},{\"date\":\"2020-01-13\",\"poids\":96.4,\"imc\":28.1,\"img\":29.2,\"hydra\"",
+":51.8,\"gsc\":26.2,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":61.1,\"bmr\":1846.0},{\"date\":\"2020-01-21\",\"poids\":96.0,\"imc\":28.0,\"img\":29.4,\"hydra\":51.7,\"gsc\":26.4,\"gv\":12.0,\"prot\":15.1,",
+"\"age\":43.0,\"muscle\":60.6,\"bmr\":1831.0},{\"date\":\"2020-01-28\",\"poids\":96.1,\"imc\":28.0,\"img\":29.2,\"hydra\":51.8,\"gsc\":26.2,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":60.9,\"bmr\":1839.0},",
+"{\"date\":\"2020-02-04\",\"poids\":96.1,\"imc\":28.0,\"img\":29.0,\"hydra\":52.0,\"gsc\":26.0,\"gv\":12.0,\"prot\":15.2,\"age\":43.0,\"muscle\":61.1,\"bmr\":1846.0},{\"date\":\"2020-02-25\",\"poids\":97.1,\"imc\"",
+":28.3,\"img\":29.5,\"hydra\":51.6,\"gsc\":26.4,\"gv\":12.0,\"prot\":15.1,\"age\":43.0,\"muscle\":61.2,\"bmr\":1851.0},{\"date\":\"2020-03-04\",\"poids\":96.5,\"imc\":28.1,\"img\":29.5,\"hydra\":51.7,\"gsc\":26.",
+"4,\"gv\":12.0,\"prot\":15.0,\"age\":43.0,\"muscle\":60.6,\"bmr\":1834.0},{\"date\":\"2020-03-10\",\"poids\":97.3,\"imc\":28.4,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":12.0,\"prot\":14.8,\"age\":43.0,\"mus",
+"cle\":60.1,\"bmr\":1821.0},{\"date\":\"2020-03-11\",\"poids\":97.6,\"imc\":28.5,\"img\":29.5,\"hydra\":51.6,\"gsc\":26.4,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":61.7,\"bmr\":1864.0},{\"date\":\"2020-0",
+"5-20\",\"poids\":96.4,\"imc\":28.1,\"img\":29.5,\"hydra\":51.7,\"gsc\":26.4,\"gv\":12.0,\"prot\":15.0,\"age\":44.0,\"muscle\":60.8,\"bmr\":1837.0},{\"date\":\"2020-05-26\",\"poids\":96.7,\"imc\":28.2,\"img\":29.",
+"9,\"hydra\":51.4,\"gsc\":26.8,\"gv\":12.0,\"prot\":14.9,\"age\":44.0,\"muscle\":60.5,\"bmr\":1830.0},{\"date\":\"2020-06-02\",\"poids\":96.3,\"imc\":28.1,\"img\":29.4,\"hydra\":51.7,\"gsc\":26.4,\"gv\":12.0,\"pr",
+"ot\":15.1,\"age\":44.0,\"muscle\":60.9,\"bmr\":1838.0},{\"date\":\"2020-06-09\",\"poids\":96.6,\"imc\":28.2,\"img\":29.3,\"hydra\":51.8,\"gsc\":26.3,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":61.3,\"bmr\"",
+":1849.0},{\"date\":\"2020-06-23\",\"poids\":96.5,\"imc\":28.1,\"img\":29.1,\"hydra\":52.0,\"gsc\":26.1,\"gv\":12.0,\"prot\":15.1,\"age\":44.0,\"muscle\":61.4,\"bmr\":1852.0},{\"date\":\"2020-07-06\",\"poids\":9",
+"7.3,\"imc\":28.4,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":12.0,\"prot\":15.1,\"age\":45.0,\"muscle\":61.4,\"bmr\":1855.0},{\"date\":\"2020-07-09\",\"poids\":97.3},{\"date\":\"2020-07-11\",\"poids\":97.3}",
+",{\"date\":\"2020-07-14\",\"poids\":98.8,\"imc\":28.8,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":62.4,\"bmr\":1887.0},{\"date\":\"2020-07-16\",\"poids\":97.0},{\"d",
+"ate\":\"2020-07-21\",\"poids\":98.0,\"imc\":28.6,\"img\":29.6,\"hydra\":51.6,\"gsc\":26.5,\"gv\":12.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.0,\"bmr\":1873.0},{\"date\":\"2020-07-28\",\"poids\":98.5,\"imc\":28",
+".7,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":61.5,\"bmr\":1861.0},{\"date\":\"2020-07-29\",\"poids\":97.8},{\"date\":\"2020-07-30\",\"poids\":100.1,\"imc\":29.2,",
+"\"img\":30.1,\"hydra\":51.1,\"gsc\":27.0,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.7,\"bmr\":1899.0},{\"date\":\"2020-08-11\",\"poids\":99.3,\"imc\":29.0,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\"",
+":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":62.5,\"bmr\":1891.0},{\"date\":\"2020-08-14\",\"poids\":99.3},{\"date\":\"2020-08-15\",\"poids\":98.2},{\"date\":\"2020-08-18\",\"poids\":98.2,\"imc\":28.6,\"img\":29",
+".9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":61.6,\"bmr\":1862.0},{\"date\":\"2020-08-25\",\"poids\":98.5,\"imc\":28.7,\"img\":30.1,\"hydra\":51.1,\"gsc\":27.0,\"gv\":13.0,\"p",
+"rot\":15.0,\"age\":45.0,\"muscle\":61.5,\"bmr\":1860.0},{\"date\":\"2020-09-02\",\"poids\":98.5,\"imc\":28.7,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":61.6,\"bmr",
+"\":1863.0},{\"date\":\"2020-09-08\",\"poids\":98.3,\"imc\":28.7,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":61.6,\"bmr\":1863.0},{\"date\":\"2020-09-12\",\"poids\":",
+"98.4},{\"date\":\"2020-09-15\",\"poids\":98.4,\"imc\":28.7,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":61.6,\"bmr\":1864.0},{\"date\":\"2020-11-10\",\"poids\":101.",
+"7,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.1,\"bmr\":1914.0},{\"date\":\"2020-11-17\",\"poids\":101.2,\"imc\":29.5,\"img\":29.5,\"hydra\":51.5,\"",
+"gsc\":26.4,\"gv\":13.0,\"prot\":15.2,\"age\":46.0,\"muscle\":64.2,\"bmr\":1943.0},{\"date\":\"2020-11-18\",\"poids\":102.0},{\"date\":\"2020-11-20\",\"poids\":101.4,\"imc\":29.6,\"img\":29.9,\"hydra\":51.3,\"gs",
+"c\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":46.0,\"muscle\":64.0,\"bmr\":1938.0},{\"date\":\"2020-11-23\",\"poids\":102.5},{\"date\":\"2020-11-25\",\"poids\":102.1},{\"date\":\"2020-11-26\",\"poids\":100.6,\"imc",
+"\":29.3,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.3,\"bmr\":1890.0},{\"date\":\"2020-11-30\",\"poids\":100.9},{\"date\":\"2020-12-02\",\"poids\":100.9,\"imc\":",
+"29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9,\"bmr\":1907.0},{\"date\":\"2020-12-04\",\"poids\":101.2},{\"date\":\"2020-12-05\",\"poids\":101.2},{\"date\"",
+":\"2020-12-07\",\"poids\":101.2},{\"date\":\"2020-12-08\",\"poids\":101.2,\"imc\":29.5,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.2,\"bmr\":1915.0},{\"date\":\"",
+"2020-12-11\",\"poids\":100.8},{\"date\":\"2020-12-12\",\"poids\":100.1,\"imc\":29.2,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.4,\"bmr\":1891.0},{\"date\":\"20",
+"20-12-14\",\"poids\":100.5,\"imc\":29.3,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":61.4,\"bmr\":1864.0},{\"date\":\"2020-12-15\",\"poids\":99.4,\"imc\":29.0,\"img",
+"\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.2,\"bmr\":1883.0},{\"date\":\"2020-12-29\",\"poids\":99.5,\"imc\":29.0,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.",
+"0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.6,\"bmr\":1894.0},{\"date\":\"2020-12-31\",\"poids\":100.4,\"imc\":29.3,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.8",
+",\"bmr\":1902.0},{\"date\":\"2021-01-03\",\"poids\":101.1,\"imc\":29.5,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.1,\"bmr\":1911.0},{\"date\":\"2021-01-04\",\"p",
+"oids\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.3,\"bmr\":1888.0},{\"date\":\"2021-01-05\",\"poids\":100.0,\"imc\":29.2,\"img\":30.4,\"hyd",
+"ra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.3,\"bmr\":1886.0},{\"date\":\"2021-01-06\",\"poids\":100.9,\"imc\":29.4,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":1",
+"4.8,\"age\":45.0,\"muscle\":62.5,\"bmr\":1895.0},{\"date\":\"2021-01-07\",\"poids\":101.2,\"imc\":29.5,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.1,\"bmr\":191",
+"1.0},{\"date\":\"2021-01-09\",\"poids\":100.6},{\"date\":\"2021-01-10\",\"poids\":100.0,\"imc\":29.2,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.4,\"bmr\":1890.",
+"0},{\"date\":\"2021-01-11\",\"poids\":101.1},{\"date\":\"2021-01-12\",\"poids\":100.8,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9,\"bmr\":1907.0}",
+",{\"date\":\"2021-01-13\",\"poids\":101.3,\"imc\":29.5,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.3,\"bmr\":1917.0},{\"date\":\"2021-01-14\",\"poids\":101.5,\"i",
+"mc\":29.6,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.3,\"bmr\":1918.0},{\"date\":\"2021-01-15\",\"poids\":101.5,\"imc\":29.6,\"img\":30.3,\"hydra\":51.0,\"gsc\"",
+":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.6,\"bmr\":1926.0},{\"date\":\"2021-01-16\",\"poids\":101.0,\"imc\":29.5,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0",
+",\"muscle\":63.3,\"bmr\":1918.0},{\"date\":\"2021-01-17\",\"poids\":101.0,\"imc\":29.5,\"img\":30.3,\"hydra\":51.1,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.3,\"bmr\":1917.0},{\"date\":\"",
+"2021-01-18\",\"poids\":100.3,\"imc\":29.3,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.5,\"bmr\":1892.0},{\"date\":\"2021-01-19\",\"poids\":101.4,\"imc\":29.6},",
+"{\"date\":\"2021-01-20\",\"poids\":99.9,\"imc\":29.1,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.0,\"bmr\":1905.0},{\"date\":\"2021-01-21\",\"poids\":100.3,\"imc",
+"\":29.3},{\"date\":\"2021-01-22\",\"poids\":99.6,\"imc\":29.1,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.7,\"bmr\":1896.0},{\"date\":\"2021-01-23\",\"poids\":10",
+"0.6,\"imc\":29.3,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.7,\"bmr\":1898.0},{\"date\":\"2021-01-24\",\"poids\":99.5,\"imc\":29.0},{\"date\":\"2021-01-25\",\"p",
+"oids\":102.7,\"imc\":30.0},{\"date\":\"2021-01-26\",\"poids\":100.7,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9,\"bmr\":1906.0},{\"date\":\"2021-",
+"01-29\",\"poids\":100.3,\"imc\":29.3},{\"date\":\"2021-01-30\",\"poids\":100.6,\"imc\":29.3},{\"date\":\"2021-01-31\",\"poids\":101.0,\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14",
+".8,\"age\":46.0,\"muscle\":62.7,\"bmr\":1901.0},{\"date\":\"2021-02-02\",\"poids\":100.2,\"imc\":29.2,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.6,\"bmr\":1896",
+".0},{\"date\":\"2021-02-03\",\"poids\":100.9,\"imc\":29.4},{\"date\":\"2021-02-04\",\"poids\":101.7,\"imc\":29.7,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":63.7,\"",
+"bmr\":1930.0},{\"date\":\"2021-02-05\",\"poids\":100.8,\"imc\":29.4},{\"date\":\"2021-02-06\",\"poids\":101.7,\"imc\":29.7},{\"date\":\"2021-02-07\",\"poids\":101.2,\"imc\":29.5},{\"date\":\"2021-02-08\",\"poid",
+"s\":100.9,\"imc\":29.4},{\"date\":\"2021-02-09\",\"poids\":101.3,\"imc\":29.5,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.8,\"bmr\":1904.0},{\"date\":\"2021-02-",
+"10\",\"poids\":101.8,\"imc\":29.7,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.0,\"bmr\":1912.0},{\"date\":\"2021-02-11\",\"poids\":101.8,\"imc\":29.7},{\"date\":",
+"\"2021-02-14\",\"poids\":101.7,\"imc\":29.7},{\"date\":\"2021-02-15\",\"poids\":101.7,\"imc\":29.7,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":46.0,\"muscle\":62.8,\"bmr\":1907.0}",
+",{\"date\":\"2021-02-16\",\"poids\":101.7,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.1,\"bmr\":1913.0},{\"date\":\"2021-02-23\",\"poids\":101.7,\"i",
+"mc\":29.7,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.4,\"bmr\":1921.0},{\"date\":\"2021-02-24\",\"poids\":101.5,\"imc\":29.6,\"img\":30.4,\"hydra\":51.0,\"gsc\"",
+":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.4,\"bmr\":1920.0},{\"date\":\"2021-02-26\",\"poids\":101.3,\"imc\":29.5,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.9,\"age\":46.0",
+",\"muscle\":63.0,\"bmr\":1911.0},{\"date\":\"2021-02-27\",\"poids\":101.3,\"imc\":29.5},{\"date\":\"2021-02-28\",\"poids\":101.3,\"imc\":29.5},{\"date\":\"2021-03-01\",\"poids\":101.3,\"imc\":29.5,\"img\":30.7,",
+"\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.9,\"bmr\":1908.0},{\"date\":\"2021-03-03\",\"poids\":101.0,\"imc\":29.5,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"pro",
+"t\":14.8,\"age\":46.0,\"muscle\":63.0,\"bmr\":1908.0},{\"date\":\"2021-03-04\",\"poids\":101.7,\"imc\":29.7},{\"date\":\"2021-03-05\",\"poids\":101.3,\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":",
+"13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.8,\"bmr\":1905.0},{\"date\":\"2021-03-07\",\"poids\":101.3,\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":6",
+"2.9,\"bmr\":1906.0},{\"date\":\"2021-03-09\",\"poids\":99.9,\"imc\":29.1,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.0,\"bmr\":1906.0},{\"date\":\"2021-03-12\",",
+"\"poids\":101.6,\"imc\":29.6},{\"date\":\"2021-03-15\",\"poids\":101.9,\"imc\":29.7,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.2,\"bmr\":1918.0},{\"date\":\"202",
+"1-03-16\",\"poids\":101.0,\"imc\":29.5,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.8,\"bmr\":1903.0},{\"date\":\"2021-03-18\",\"poids\":100.7,\"imc\":29.4,\"img",
+"\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.8,\"bmr\":1902.0},{\"date\":\"2021-03-20\",\"poids\":101.0,\"imc\":29.5,\"img\":30.6,\"hydra\":50.9,\"gsc\":27.4,\"gv\":13",
+".0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.9,\"bmr\":1906.0},{\"date\":\"2021-03-21\",\"poids\":100.7,\"imc\":29.4,\"img\":30.6,\"hydra\":50.9,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscle\":62.",
+"6,\"bmr\":1898.0},{\"date\":\"2021-03-22\",\"poids\":101.4,\"imc\":29.6,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":63.0,\"bmr\":1911.0},{\"date\":\"2021-03-23\",\"",
+"poids\":100.4,\"imc\":29.3,\"img\":30.1,\"hydra\":51.1,\"gsc\":27.0,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.0,\"bmr\":1907.0},{\"date\":\"2021-03-24\",\"poids\":100.4,\"imc\":29.3,\"img\":30.1,\"hy",
+"dra\":51.2,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.9,\"bmr\":1906.0},{\"date\":\"2021-03-25\",\"poids\":100.4,\"imc\":29.3},{\"date\":\"2021-03-26\",\"poids\":100.4,\"imc\":29.3,\"img\"",
+":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":63.1,\"bmr\":1911.0},{\"date\":\"2021-03-27\",\"poids\":99.9,\"imc\":29.1,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":13.0",
+",\"prot\":15.1,\"age\":45.0,\"muscle\":63.1,\"bmr\":1909.0},{\"date\":\"2021-03-28\",\"poids\":101.2,\"imc\":29.5},{\"date\":\"2021-03-29\",\"poids\":100.1,\"imc\":29.2,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,",
+"\"gv\":13.0,\"prot\":15.1,\"age\":45.0,\"muscle\":63.1,\"bmr\":1909.0},{\"date\":\"2021-03-30\",\"poids\":99.2,\"imc\":28.9,\"img\":30.1,\"hydra\":51.3,\"gsc\":27.0,\"gv\":13.0,\"prot\":14.8,\"age\":45.0,\"muscl",
+"e\":62.1,\"bmr\":1880.0},{\"date\":\"2021-03-31\",\"poids\":99.7,\"imc\":29.1},{\"date\":\"2021-04-01\",\"poids\":99.6,\"imc\":29.1},{\"date\":\"2021-04-02\",\"poids\":99.1,\"imc\":28.9},{\"date\":\"2021-04-03\"",
+",\"poids\":99.8,\"imc\":29.1},{\"date\":\"2021-04-04\",\"poids\":99.1,\"imc\":28.9,\"img\":30.0,\"hydra\":51.3,\"gsc\":26.9,\"gv\":13.0,\"prot\":14.9,\"age\":45.0,\"muscle\":62.2,\"bmr\":1882.0},{\"date\":\"2021",
+"-04-05\",\"poids\":99.1,\"imc\":28.9,\"img\":29.9,\"hydra\":51.3,\"gsc\":26.8,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.2,\"bmr\":1883.0},{\"date\":\"2021-04-06\",\"poids\":99.1,\"imc\":28.9,\"img\":2",
+"9.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":45.0,\"muscle\":62.5,\"bmr\":1889.0},{\"date\":\"2021-04-27\",\"poids\":99.1,\"imc\":28.9,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":13.0,\"",
+"prot\":14.9,\"age\":46.0,\"muscle\":62.0,\"bmr\":1873.0},{\"date\":\"2021-04-28\",\"poids\":99.8,\"imc\":29.1},{\"date\":\"2021-04-29\",\"poids\":100.1,\"imc\":29.2},{\"date\":\"2021-05-01\",\"poids\":100.1,\"i",
+"mc\":29.2},{\"date\":\"2021-05-02\",\"poids\":100.1,\"imc\":29.2},{\"date\":\"2021-05-03\",\"poids\":100.1,\"imc\":29.2},{\"date\":\"2021-05-04\",\"poids\":100.1,\"imc\":29.2,\"img\":30.3,\"hydra\":50.9,\"gsc\":",
+"27.2,\"gv\":13.0,\"prot\":15.0,\"age\":46.0,\"muscle\":62.4,\"bmr\":1889.0},{\"date\":\"2021-05-05\",\"poids\":100.5,\"imc\":29.3},{\"date\":\"2021-05-06\",\"poids\":100.9,\"imc\":29.4},{\"date\":\"2021-05-07\"",
+",\"poids\":100.3,\"imc\":29.3},{\"date\":\"2021-05-11\",\"poids\":100.3,\"imc\":29.3,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":62.7,\"bmr\":1896.0},{\"date\":\"20",
+"21-05-14\",\"poids\":101.3,\"imc\":29.5},{\"date\":\"2021-05-18\",\"poids\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.4,\"bmr\":1888.0},{\"",
+"date\":\"2021-05-19\",\"poids\":101.5,\"imc\":29.6},{\"date\":\"2021-05-25\",\"poids\":100.5,\"imc\":29.3,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.6,\"bmr\":1",
+"895.0},{\"date\":\"2021-06-01\",\"poids\":101.0,\"imc\":29.5,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":47.0,\"muscle\":63.4,\"bmr\":1919.0},{\"date\":\"2021-06-09\",\"poids\":10",
+"1.5,\"imc\":29.6,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.0,\"bmr\":1909.0},{\"date\":\"2021-06-10\",\"poids\":100.6,\"imc\":29.3},{\"date\":\"2021-06-15\",\"",
+"poids\":101.5,\"imc\":29.6,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.0,\"bmr\":1909.0},{\"date\":\"2021-06-18\",\"poids\":102.1,\"imc\":29.8},{\"date\":\"2021",
+"-06-22\",\"poids\":100.4,\"imc\":29.3,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.4,\"bmr\":1890.0},{\"date\":\"2021-06-29\",\"poids\":101.3,\"imc\":29.5,\"img\"",
+":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9,\"bmr\":1906.0},{\"date\":\"2021-07-23\",\"poids\":101.4,\"imc\":29.6,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.",
+"0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9,\"bmr\":1905.0},{\"date\":\"2021-07-27\",\"poids\":102.0,\"imc\":29.8},{\"date\":\"2021-09-04\",\"poids\":101.0,\"imc\":29.5,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4",
+",\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9,\"bmr\":1903.0},{\"date\":\"2021-09-06\",\"poids\":101.2,\"imc\":29.5,\"img\":30.6,\"hydra\":50.9,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"mus",
+"cle\":63.0,\"bmr\":1907.0},{\"date\":\"2021-09-09\",\"poids\":100.2,\"imc\":29.2,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.8,\"age\":46.0,\"muscle\":62.5,\"bmr\":1891.0},{\"date\":\"2021-",
+"09-14\",\"poids\":100.9,\"imc\":29.4,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.5,\"bmr\":1893.0},{\"date\":\"2021-09-21\",\"poids\":100.4,\"imc\":29.3,\"img\":",
+"30.6,\"hydra\":50.7,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":62.3,\"bmr\":1885.0},{\"date\":\"2021-09-29\",\"poids\":100.9,\"imc\":29.4,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0",
+",\"prot\":14.8,\"age\":47.0,\"muscle\":62.7,\"bmr\":1898.0},{\"date\":\"2021-10-07\",\"poids\":99.6,\"imc\":29.1,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":46.0,\"muscle\":62.6,\"",
+"bmr\":1893.0},{\"date\":\"2021-10-12\",\"poids\":100.8,\"imc\":29.4,\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":47.0,\"muscle\":63.0,\"bmr\":1907.0},{\"date\":\"2021-10-19\",\"poi",
+"ds\":99.8,\"imc\":29.1,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":13.0,\"prot\":14.9,\"age\":46.0,\"muscle\":62.1,\"bmr\":1879.0},{\"date\":\"2021-10-26\",\"poids\":101.6,\"imc\":29.6},{\"date\":\"2021-10-",
+"28\",\"poids\":100.9,\"imc\":29.4,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.3,\"bmr\":1888.0},{\"date\":\"2021-11-03\",\"poids\":101.4,\"imc\":29.6,\"img\":30.",
+"0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":13.0,\"prot\":15.0,\"age\":47.0,\"muscle\":63.9,\"bmr\":1932.0},{\"date\":\"2021-11-09\",\"poids\":102.3,\"imc\":29.8,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"p",
+"rot\":14.7,\"age\":47.0,\"muscle\":62.8,\"bmr\":1906.0},{\"date\":\"2021-11-10\",\"poids\":102.3,\"imc\":29.8},{\"date\":\"2021-11-11\",\"poids\":102.8,\"imc\":30.0,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv",
+"\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":64.1,\"bmr\":1942.0},{\"date\":\"2021-11-17\",\"poids\":102.2,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\"",
+":63.4,\"bmr\":1922.0},{\"date\":\"2021-11-21\",\"poids\":101.7,\"imc\":29.7},{\"date\":\"2021-11-23\",\"poids\":101.1,\"imc\":29.5,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0",
+",\"muscle\":62.8,\"bmr\":1900.0},{\"date\":\"2021-11-30\",\"poids\":102.0,\"imc\":29.8,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3,\"bmr\":1917.0},{\"date\":\"",
+"2021-12-05\",\"poids\":100.9,\"imc\":29.4},{\"date\":\"2021-12-07\",\"poids\":101.3,\"imc\":29.5,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.8,\"bmr\":1902.0},",
+"{\"date\":\"2021-12-14\",\"poids\":102.1,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3,\"bmr\":1919.0},{\"date\":\"2021-12-21\",\"poids\":102.0,\"im",
+"c\":29.8,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9,\"bmr\":1907.0},{\"date\":\"2021-12-28\",\"poids\":103.6,\"imc\":30.2,\"img\":30.6,\"hydra\":50.7,\"gsc\":",
+"27.4,\"gv\":14.0,\"prot\":14.9,\"age\":47.0,\"muscle\":64.6,\"bmr\":1958.0},{\"date\":\"2022-01-04\",\"poids\":102.9,\"imc\":30.0,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,",
+"\"muscle\":63.9,\"bmr\":1937.0},{\"date\":\"2022-01-11\",\"poids\":101.9,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3,\"bmr\":1918.0},{\"date\":\"2",
+"022-01-18\",\"poids\":101.9,\"imc\":29.7,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.3,\"bmr\":1918.0},{\"date\":\"2022-01-25\",\"poids\":101.1,\"imc\":29.5,\"i",
+"mg\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.1,\"bmr\":1910.0},{\"date\":\"2022-02-01\",\"poids\":102.3,\"imc\":29.8,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":",
+"14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.6,\"bmr\":1927.0},{\"date\":\"2022-02-03\",\"poids\":101.8,\"imc\":29.7,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":6",
+"3.2,\"bmr\":1915.0},{\"date\":\"2022-02-13\",\"poids\":100.4,\"imc\":29.3,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":13.0,\"prot\":14.7,\"age\":46.0,\"muscle\":61.9,\"bmr\":1874.0},{\"date\":\"2022-02-15\"",
+",\"poids\":101.4,\"imc\":29.6,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.0,\"bmr\":1908.0},{\"date\":\"2022-02-22\",\"poids\":101.2,\"imc\":29.5,\"img\":30.6,\"",
+"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":62.9,\"bmr\":1905.0},{\"date\":\"2022-02-28\",\"poids\":101.6,\"imc\":29.6,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot",
+"\":14.8,\"age\":47.0,\"muscle\":63.3,\"bmr\":1916.0},{\"date\":\"2022-03-08\",\"poids\":101.4,\"imc\":29.6,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":13.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.2,\"bmr\":",
+"1912.0},{\"date\":\"2022-03-15\",\"poids\":102.7,\"imc\":30.0,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"muscle\":63.9,\"bmr\":1938.0},{\"date\":\"2022-03-21\",\"poids\":1",
+"02.7,\"imc\":30.0},{\"date\":\"2022-03-23\",\"poids\":102.2,\"imc\":29.8},{\"date\":\"2022-03-30\",\"poids\":102.6,\"imc\":29.9,\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":47.0,\"m",
+"uscle\":63.8,\"bmr\":1933.0},{\"date\":\"2022-04-05\",\"poids\":102.3,\"imc\":29.8,\"img\":31.2,\"hydra\":50.5,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.6,\"age\":47.0,\"muscle\":63.1,\"bmr\":1913.0},{\"date\":\"202",
+"2-07-12\",\"poids\":102.3,\"imc\":29.8,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":63.6,\"bmr\":1926.0},{\"date\":\"2022-07-18\",\"poids\":102.7,\"imc\":30.0},{\"d",
+"ate\":\"2022-07-23\",\"poids\":102.9,\"imc\":30.0,\"img\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.6,\"age\":48.0,\"muscle\":63.3,\"bmr\":1918.0},{\"date\":\"2022-08-16\",\"poids\":103.0,\"imc\":",
+"30.0,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":63.5,\"bmr\":1926.0},{\"date\":\"2022-08-22\",\"poids\":103.7,\"imc\":30.2,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.",
+"8,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":64.3,\"bmr\":1949.0},{\"date\":\"2022-08-23\",\"poids\":103.7,\"imc\":30.2},{\"date\":\"2022-08-25\",\"poids\":103.7,\"imc\":30.2},{\"date\":\"2022-08-29\",\"p",
+"oids\":103.7,\"imc\":30.2,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":64.3,\"bmr\":1948.0},{\"date\":\"2022-09-05\",\"poids\":103.6,\"imc\":30.2,\"img\":31.1,\"hyd",
+"ra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":64.0,\"bmr\":1941.0},{\"date\":\"2022-09-12\",\"poids\":104.0,\"imc\":30.3,\"img\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":1",
+"4.6,\"age\":48.0,\"muscle\":64.0,\"bmr\":1941.0},{\"date\":\"2022-09-13\",\"poids\":104.0,\"imc\":30.3,\"img\":31.3,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":64.0,\"bmr\":194",
+"2.0},{\"date\":\"2022-09-30\",\"poids\":104.0,\"imc\":30.3},{\"date\":\"2022-10-08\",\"poids\":105.6,\"imc\":30.8},{\"date\":\"2022-11-09\",\"poids\":104.1,\"imc\":30.4},{\"date\":\"2022-11-17\",\"poids\":104.9",
+",\"imc\":30.6},{\"date\":\"2023-01-13\",\"poids\":101.9,\"imc\":29.7,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":48.0,\"muscle\":63.5,\"bmr\":1922.0},{\"date\":\"2023-01-16\",\"poi",
+"ds\":101.9,\"imc\":29.7},{\"date\":\"2023-01-17\",\"poids\":101.9,\"imc\":29.7},{\"date\":\"2023-01-21\",\"poids\":102.5,\"imc\":29.9},{\"date\":\"2023-01-24\",\"poids\":101.9,\"imc\":29.7},{\"date\":\"2023-01-",
+"30\",\"poids\":101.9,\"imc\":29.7},{\"date\":\"2023-02-06\",\"poids\":103.3,\"imc\":30.1,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":64.0,\"bmr\":1940.0},{\"date\":",
+"\"2023-02-12\",\"poids\":105.3,\"imc\":30.7},{\"date\":\"2023-02-13\",\"poids\":102.8,\"imc\":30.0,\"img\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.6,\"age\":48.0,\"muscle\":63.3,\"bmr\":1918.0}",
+",{\"date\":\"2023-03-16\",\"poids\":103.2,\"imc\":30.1},{\"date\":\"2023-03-21\",\"poids\":105.0,\"imc\":30.6,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":14.0,\"prot\":14.5,\"age\":49.0,\"muscle\":63.9,\"bmr",
+"\":1940.0},{\"date\":\"2023-04-04\",\"poids\":104.3,\"imc\":30.4},{\"date\":\"2023-04-07\",\"poids\":103.9,\"imc\":30.3,\"img\":31.6,\"hydra\":50.0,\"gsc\":28.3,\"gv\":14.0,\"prot\":14.7,\"age\":48.0,\"muscle\":",
+"63.5,\"bmr\":1927.0},{\"date\":\"2023-04-12\",\"poids\":104.3,\"imc\":30.4,\"img\":31.5,\"hydra\":50.1,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.7,\"age\":49.0,\"muscle\":64.0,\"bmr\":1943.0},{\"date\":\"2023-04-17",
+"\",\"poids\":105.4,\"imc\":30.7,\"img\":31.9,\"hydra\":49.8,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.6,\"age\":50.0,\"muscle\":64.2,\"bmr\":1949.0},{\"date\":\"2023-04-19\",\"poids\":103.7,\"imc\":30.2,\"img\":31.4,",
+"\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.7,\"bmr\":1930.0},{\"date\":\"2023-04-25\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":14.0,\"pro",
+"t\":14.6,\"age\":50.0,\"muscle\":64.3,\"bmr\":1951.0},{\"date\":\"2023-06-05\",\"poids\":106.2,\"imc\":31.0},{\"date\":\"2023-06-07\",\"poids\":106.2,\"imc\":31.0,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":",
+"15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.6,\"bmr\":1963.0},{\"date\":\"2023-06-12\",\"poids\":106.2,\"imc\":31.0,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":6",
+"4.5,\"bmr\":1960.0},{\"date\":\"2023-06-17\",\"poids\":105.7,\"imc\":30.8,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.5,\"bmr\":1959.0},{\"date\":\"2023-06-26\"",
+",\"poids\":106.0,\"imc\":30.9},{\"date\":\"2023-07-07\",\"poids\":106.5,\"imc\":31.1},{\"date\":\"2023-07-16\",\"poids\":105.9,\"imc\":30.9,\"img\":31.9,\"hydra\":49.8,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.6,\"ag",
+"e\":50.0,\"muscle\":64.7,\"bmr\":1964.0},{\"date\":\"2023-07-27\",\"poids\":104.6,\"imc\":30.5},{\"date\":\"2023-08-18\",\"poids\":104.4,\"imc\":30.5},{\"date\":\"2023-08-22\",\"poids\":104.7,\"imc\":30.5},{\"d",
+"ate\":\"2023-08-23\",\"poids\":103.6,\"imc\":30.2},{\"date\":\"2023-08-25\",\"poids\":104.0,\"imc\":30.3,\"img\":32.0,\"hydra\":49.9,\"gsc\":28.7,\"gv\":14.0,\"prot\":14.4,\"age\":50.0,\"muscle\":63.1,\"bmr\":19",
+"15.0},{\"date\":\"2023-08-26\",\"poids\":102.6,\"imc\":29.9},{\"date\":\"2023-08-28\",\"poids\":102.6,\"imc\":29.9,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":49.0,\"muscle\":63.3",
+",\"bmr\":1917.0},{\"date\":\"2023-10-13\",\"poids\":102.6,\"imc\":29.9},{\"date\":\"2023-12-11\",\"poids\":103.7,\"imc\":30.2},{\"date\":\"2023-12-29\",\"poids\":103.7,\"imc\":30.2,\"img\":31.4,\"hydra\":50.2,\"",
+"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.9,\"bmr\":1937.0},{\"date\":\"2024-01-07\",\"poids\":105.1,\"imc\":30.7,\"img\":31.9,\"hydra\":49.8,\"gsc\":28.6,\"gv\":14.0,\"prot\":14.6,\"age\":",
+"50.0,\"muscle\":64.2,\"bmr\":1948.0},{\"date\":\"2024-01-15\",\"poids\":105.1,\"imc\":30.7,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":14.0,\"prot\":14.5,\"age\":50.0,\"muscle\":64.2,\"bmr\":1947.0},{\"dat",
+"e\":\"2024-01-31\",\"poids\":104.7,\"imc\":30.5,\"img\":31.6,\"hydra\":50.0,\"gsc\":28.3,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":64.2,\"bmr\":1946.0},{\"date\":\"2024-02-01\",\"poids\":105.3,\"imc\":30",
+".7},{\"date\":\"2024-02-02\",\"poids\":105.6,\"imc\":30.8,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":50.0,\"muscle\":64.9,\"bmr\":1968.0},{\"date\":\"2024-02-06\",\"poids\":103.7",
+",\"imc\":30.2},{\"date\":\"2024-02-08\",\"poids\":102.9,\"imc\":30.0,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":49.0,\"muscle\":63.2,\"bmr\":1914.0},{\"date\":\"2024-02-13\",\"poi",
+"ds\":102.9,\"imc\":30.0,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":49.0,\"muscle\":63.4,\"bmr\":1920.0},{\"date\":\"2024-02-17\",\"poids\":102.2,\"imc\":29.8,\"img\":30.6,\"hydra",
+"\":50.7,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.9,\"age\":49.0,\"muscle\":63.8,\"bmr\":1928.0},{\"date\":\"2024-02-20\",\"poids\":102.2,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.",
+"8,\"age\":49.0,\"muscle\":63.5,\"bmr\":1921.0},{\"date\":\"2024-11-05\",\"poids\":106.3,\"imc\":31.0,\"img\":32.5,\"hydra\":49.5,\"gsc\":29.1,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":64.3,\"bmr\":1953.",
+"0},{\"date\":\"2024-11-06\",\"poids\":106.9,\"imc\":31.2,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.5,\"age\":52.0,\"muscle\":65.2,\"bmr\":1978.0},{\"date\":\"2024-11-07\",\"poids\":106.6,",
+"\"imc\":31.1,\"img\":32.0,\"hydra\":49.7,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.6,\"age\":52.0,\"muscle\":65.3,\"bmr\":1981.0},{\"date\":\"2024-11-08\",\"poids\":106.6,\"imc\":31.1,\"img\":32.0,\"hydra\":49.7,\"gs",
+"c\":28.7,\"gv\":15.0,\"prot\":14.6,\"age\":52.0,\"muscle\":65.2,\"bmr\":1977.0},{\"date\":\"2024-11-09\",\"poids\":107.0,\"imc\":31.2},{\"date\":\"2024-11-11\",\"poids\":106.6,\"imc\":31.1,\"img\":32.5,\"hydra\"",
+":49.5,\"gsc\":29.1,\"gv\":15.0,\"prot\":14.4,\"age\":52.0,\"muscle\":64.5,\"bmr\":1958.0},{\"date\":\"2024-11-12\",\"poids\":105.8,\"imc\":30.9,\"img\":32.1,\"hydra\":49.7,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.5",
+",\"age\":51.0,\"muscle\":64.4,\"bmr\":1955.0},{\"date\":\"2024-11-13\",\"poids\":105.8,\"imc\":30.9,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.4,\"bmr\":1954.0",
+"},{\"date\":\"2024-11-14\",\"poids\":105.5,\"imc\":30.8,\"img\":32.2,\"hydra\":49.6,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.1,\"bmr\":1945.0},{\"date\":\"2024-11-15\",\"poids\":105.5,\"",
+"imc\":30.8,\"img\":32.1,\"hydra\":49.7,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.3,\"bmr\":1950.0},{\"date\":\"2024-11-18\",\"poids\":105.0,\"imc\":30.6,\"img\":31.8,\"hydra\":49.9,\"gsc",
+"\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.2,\"bmr\":1947.0},{\"date\":\"2024-11-19\",\"poids\":105.3,\"imc\":30.7,\"img\":32.1,\"hydra\":49.7,\"gsc\":28.8,\"gv\":15.0,\"prot\":14.5,\"age\":51.",
+"0,\"muscle\":64.0,\"bmr\":1941.0},{\"date\":\"2024-11-20\",\"poids\":105.0,\"imc\":30.6,\"img\":31.9,\"hydra\":49.9,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.1,\"bmr\":1942.0},{\"date\":",
+"\"2024-11-21\",\"poids\":105.5,\"imc\":30.8,\"img\":32.0,\"hydra\":49.8,\"gsc\":28.7,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.4,\"bmr\":1953.0},{\"date\":\"2024-11-22\",\"poids\":105.3,\"imc\":30.7,",
+"\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.5,\"bmr\":1956.0},{\"date\":\"2024-11-23\",\"poids\":105.3,\"imc\":30.7,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv",
+"\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.7,\"bmr\":1960.0},{\"date\":\"2024-11-24\",\"poids\":105.5,\"imc\":30.8,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\"",
+":64.8,\"bmr\":1964.0},{\"date\":\"2024-11-25\",\"poids\":105.9,\"imc\":30.9,\"img\":32.4,\"hydra\":49.5,\"gsc\":29.0,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":64.1,\"bmr\":1944.0},{\"date\":\"2024-11-2",
+"6\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.4,\"bmr\":1950.0},{\"date\":\"2024-11-27\",\"poids\":105.3,\"imc\":30.7,\"img\":31.3",
+",\"hydra\":50.2,\"gsc\":28.1,\"gv\":15.0,\"prot\":14.8,\"age\":51.0,\"muscle\":65.2,\"bmr\":1974.0},{\"date\":\"2024-11-28\",\"poids\":104.6,\"imc\":30.5,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"pr",
+"ot\":14.7,\"age\":51.0,\"muscle\":64.6,\"bmr\":1957.0},{\"date\":\"2024-11-29\",\"poids\":104.6,\"imc\":30.5},{\"date\":\"2024-11-30\",\"poids\":105.5,\"imc\":30.8,\"img\":31.5,\"hydra\":50.1,\"gsc\":28.2,\"gv\"",
+":15.0,\"prot\":14.7,\"age\":51.0,\"muscle\":65.2,\"bmr\":1975.0},{\"date\":\"2024-12-01\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":",
+"64.3,\"bmr\":1949.0},{\"date\":\"2024-12-02\",\"poids\":104.2,\"imc\":30.4,\"img\":32.2,\"hydra\":49.7,\"gsc\":28.9,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":63.1,\"bmr\":1914.0},{\"date\":\"2024-12-03",
+"\",\"poids\":103.6,\"imc\":30.2,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.8,\"bmr\":1931.0},{\"date\":\"2024-12-04\",\"poids\":104.8,\"imc\":30.6,\"img\":31.5,",
+"\"hydra\":50.1,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.6,\"bmr\":1957.0},{\"date\":\"2024-12-05\",\"poids\":104.7,\"imc\":30.5,\"img\":31.3,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"pro",
+"t\":14.8,\"age\":51.0,\"muscle\":64.7,\"bmr\":1958.0},{\"date\":\"2024-12-06\",\"poids\":102.8,\"imc\":30.0,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.0,\"bmr\"",
+":1935.0},{\"date\":\"2024-12-09\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.4,\"bmr\":1951.0},{\"date\":\"2024-12-10\",\"poids\":",
+"103.7,\"imc\":30.2,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.0,\"bmr\":1938.0},{\"date\":\"2024-12-11\",\"poids\":104.6,\"imc\":30.5,\"img\":31.8,\"hydra\":50",
+".0,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.5,\"age\":51.0,\"muscle\":64.0,\"bmr\":1940.0},{\"date\":\"2024-12-12\",\"poids\":104.1,\"imc\":30.4,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"a",
+"ge\":51.0,\"muscle\":64.3,\"bmr\":1945.0},{\"date\":\"2024-12-13\",\"poids\":104.8,\"imc\":30.6,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":65.0,\"bmr\":1967.0},{",
+"\"date\":\"2024-12-14\",\"poids\":104.4,\"imc\":30.5,\"img\":31.1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.7,\"bmr\":1958.0},{\"date\":\"2024-12-16\",\"poids\":104.7,\"imc",
+"\":30.5,\"img\":31.6,\"hydra\":50.1,\"gsc\":28.3,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":64.5,\"bmr\":1952.0},{\"date\":\"2024-12-17\",\"poids\":102.1,\"imc\":29.8,\"img\":31.3,\"hydra\":50.3,\"gsc\":2",
+"8.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.0,\"bmr\":1905.0},{\"date\":\"2024-12-18\",\"poids\":102.9,\"imc\":30.0,\"img\":31.5,\"hydra\":50.1,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"",
+"muscle\":63.2,\"bmr\":1913.0},{\"date\":\"2024-12-19\",\"poids\":102.9,\"imc\":30.0,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.3,\"bmr\":1915.0},{\"date\":\"20",
+"24-12-20\",\"poids\":103.4,\"imc\":30.2,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.4,\"bmr\":1921.0},{\"date\":\"2024-12-29\",\"poids\":103.5,\"imc\":30.2},{\"",
+"date\":\"2024-12-30\",\"poids\":103.2,\"imc\":30.1,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":64.9,\"bmr\":1960.0},{\"date\":\"2024-12-31\",\"poids\":103.2,\"imc\"",
+":30.1,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.1,\"bmr\":1910.0},{\"date\":\"2025-01-01\",\"poids\":103.3,\"imc\":30.1,\"img\":31.3,\"hydra\":50.3,\"gsc\":28",
+".1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.7,\"bmr\":1928.0},{\"date\":\"2025-01-03\",\"poids\":103.2,\"imc\":30.1,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"m",
+"uscle\":63.8,\"bmr\":1929.0},{\"date\":\"2025-01-04\",\"poids\":102.2,\"imc\":29.8,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":62.8,\"bmr\":1899.0},{\"date\":\"202",
+"5-01-05\",\"poids\":102.9,\"imc\":30.0,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.4,\"bmr\":1918.0},{\"date\":\"2025-01-06\",\"poids\":103.6,\"imc\":30.2,\"img",
+"\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.4,\"bmr\":1948.0},{\"date\":\"2025-01-07\",\"poids\":103.6,\"imc\":30.2,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14",
+".0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.5,\"bmr\":1950.0},{\"date\":\"2025-01-08\",\"poids\":103.2,\"imc\":30.1,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.",
+"2,\"bmr\":1940.0},{\"date\":\"2025-01-09\",\"poids\":103.2,\"imc\":30.1,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.2,\"bmr\":1941.0},{\"date\":\"2025-01-10\",\"",
+"poids\":103.1,\"imc\":30.1,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.1,\"bmr\":1937.0},{\"date\":\"2025-01-11\",\"poids\":103.2,\"imc\":30.1,\"img\":32.6,\"hy",
+"dra\":49.4,\"gsc\":29.2,\"gv\":15.0,\"prot\":14.4,\"age\":51.0,\"muscle\":61.4,\"bmr\":1865.0},{\"date\":\"2025-01-12\",\"poids\":102.6,\"imc\":29.9},{\"date\":\"2025-01-13\",\"poids\":104.6,\"imc\":30.5,\"img\"",
+":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.6,\"bmr\":1956.0},{\"date\":\"2025-01-14\",\"poids\":104.6,\"imc\":30.5,\"img\":31.4,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.",
+"0,\"prot\":14.7,\"age\":51.0,\"muscle\":64.6,\"bmr\":1956.0},{\"date\":\"2025-01-15\",\"poids\":104.4,\"imc\":30.5,\"img\":31.9,\"hydra\":49.8,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.6,\"age\":51.0,\"muscle\":63.8",
+",\"bmr\":1932.0},{\"date\":\"2025-01-16\",\"poids\":104.5,\"imc\":30.5,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":65.4,\"bmr\":1978.0},{\"date\":\"2025-01-17\",\"p",
+"oids\":104.2,\"imc\":30.4,\"img\":30.7,\"hydra\":50.6,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":65.2,\"bmr\":1971.0},{\"date\":\"2025-01-20\",\"poids\":103.2,\"imc\":30.1,\"img\":30.7,\"hyd",
+"ra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.6,\"bmr\":1952.0},{\"date\":\"2025-01-21\",\"poids\":103.2,\"imc\":30.1,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":1",
+"4.8,\"age\":51.0,\"muscle\":64.4,\"bmr\":1945.0},{\"date\":\"2025-01-22\",\"poids\":103.0,\"imc\":30.0,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":62.9,\"bmr\":190",
+"5.0},{\"date\":\"2025-01-23\",\"poids\":103.5,\"imc\":30.2,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.5,\"bmr\":1950.0},{\"date\":\"2025-01-24\",\"poids\":103.",
+"5,\"imc\":30.2,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.8,\"bmr\":1960.0},{\"date\":\"2025-01-27\",\"poids\":103.5,\"imc\":30.2},{\"date\":\"2025-01-28\",\"po",
+"ids\":102.9,\"imc\":30.0,\"img\":32.3,\"hydra\":49.6,\"gsc\":29.0,\"gv\":14.0,\"prot\":14.4,\"age\":51.0,\"muscle\":61.8,\"bmr\":1875.0},{\"date\":\"2025-01-29\",\"poids\":103.4,\"imc\":30.2,\"img\":31.3,\"hydr",
+"a\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.9,\"bmr\":1932.0},{\"date\":\"2025-01-30\",\"poids\":103.7,\"imc\":30.2,\"img\":31.1,\"hydra\":50.5,\"gsc\":27.9,\"gv\":14.0,\"prot\":14",
+".7,\"age\":51.0,\"muscle\":64.3,\"bmr\":1945.0},{\"date\":\"2025-01-31\",\"poids\":103.7,\"imc\":30.2,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.3,\"bmr\":1946",
+".0},{\"date\":\"2025-02-03\",\"poids\":103.2,\"imc\":30.1,\"img\":31.3,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.8,\"bmr\":1929.0},{\"date\":\"2025-02-04\",\"poids\":102.8",
+",\"imc\":30.0,\"img\":31.1,\"hydra\":50.5,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":63.8,\"bmr\":1930.0},{\"date\":\"2025-02-05\",\"poids\":103.8,\"imc\":30.3,\"img\":30.9,\"hydra\":50.5,\"g",
+"sc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.6,\"bmr\":1955.0},{\"date\":\"2025-02-06\",\"poids\":103.8,\"imc\":30.3,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":5",
+"1.0,\"muscle\":64.8,\"bmr\":1958.0},{\"date\":\"2025-02-07\",\"poids\":103.8,\"imc\":30.3,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":64.8,\"bmr\":1959.0},{\"date",
+"\":\"2025-02-16\",\"poids\":101.8,\"imc\":29.7,\"img\":31.0,\"hydra\":50.6,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.1,\"bmr\":1907.0},{\"date\":\"2025-02-22\",\"poids\":101.2,\"imc\":29.",
+"5,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.0,\"bmr\":1901.0},{\"date\":\"2025-02-24\",\"poids\":102.5,\"imc\":29.9,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"",
+"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.3,\"bmr\":1915.0},{\"date\":\"2025-02-25\",\"poids\":101.0,\"imc\":29.5,\"img\":29.6,\"hydra\":51.5,\"gsc\":26.5,\"gv\":13.0,\"prot\":15.1,\"age\":50.0,\"muscl",
+"e\":64.3,\"bmr\":1939.0},{\"date\":\"2025-02-28\",\"poids\":101.5,\"imc\":29.6,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":14.0,\"prot\":15.1,\"age\":50.0,\"muscle\":64.4,\"bmr\":1942.0},{\"date\":\"2025-03",
+"-03\",\"poids\":102.6,\"imc\":29.9,\"img\":31.1,\"hydra\":50.5,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.7,\"age\":50.0,\"muscle\":63.5,\"bmr\":1920.0},{\"date\":\"2025-03-04\",\"poids\":102.6,\"imc\":29.9,\"img\":31",
+".1,\"hydra\":50.4,\"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.5,\"bmr\":1921.0},{\"date\":\"2025-03-07\",\"poids\":102.7,\"imc\":30.0,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"",
+"prot\":14.8,\"age\":51.0,\"muscle\":64.1,\"bmr\":1937.0},{\"date\":\"2025-03-10\",\"poids\":102.3,\"imc\":29.8},{\"date\":\"2025-03-11\",\"poids\":100.8,\"imc\":29.4,\"img\":29.6,\"hydra\":51.4,\"gsc\":26.5,\"g",
+"v\":13.0,\"prot\":15.2,\"age\":50.0,\"muscle\":64.1,\"bmr\":1932.0},{\"date\":\"2025-03-13\",\"poids\":101.6,\"imc\":29.6,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":14.0,\"prot\":15.1,\"age\":50.0,\"muscle",
+"\":64.4,\"bmr\":1941.0},{\"date\":\"2025-03-14\",\"poids\":100.7,\"imc\":29.4,\"img\":29.8,\"hydra\":51.3,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.1,\"age\":50.0,\"muscle\":63.9,\"bmr\":1925.0},{\"date\":\"2025-03-",
+"17\",\"poids\":102.2,\"imc\":29.8},{\"date\":\"2025-03-18\",\"poids\":101.1,\"imc\":29.5,\"img\":29.5,\"hydra\":51.5,\"gsc\":26.4,\"gv\":13.0,\"prot\":15.2,\"age\":50.0,\"muscle\":64.5,\"bmr\":1942.0},{\"date\":",
+"\"2025-03-21\",\"poids\":100.7,\"imc\":29.4,\"img\":30.4,\"hydra\":51.0,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":63.2,\"bmr\":1906.0},{\"date\":\"2025-03-25\",\"poids\":100.7,\"imc\":29.4,",
+"\"img\":30.3,\"hydra\":51.0,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":63.3,\"bmr\":1908.0},{\"date\":\"2025-03-26\",\"poids\":102.3,\"imc\":29.8},{\"date\":\"2025-03-27\",\"poids\":101.8,\"i",
+"mc\":29.7},{\"date\":\"2025-03-28\",\"poids\":100.3,\"imc\":29.3,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":50.0,\"muscle\":62.7,\"bmr\":1891.0},{\"date\":\"2025-04-01\",\"poids\"",
+":100.3,\"imc\":29.3,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":62.9,\"bmr\":1897.0},{\"date\":\"2025-04-04\",\"poids\":100.0,\"imc\":29.2,\"img\":30.4,\"hydra\":5",
+"0.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":50.0,\"muscle\":62.7,\"bmr\":1891.0},{\"date\":\"2025-04-16\",\"poids\":101.2,\"imc\":29.5,\"img\":29.9,\"hydra\":51.2,\"gsc\":26.8,\"gv\":14.0,\"prot\":15.1,\"",
+"age\":51.0,\"muscle\":64.2,\"bmr\":1933.0},{\"date\":\"2025-04-22\",\"poids\":101.8,\"imc\":29.7,\"img\":30.7,\"hydra\":50.8,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.7,\"bmr\":1923.0},",
+"{\"date\":\"2025-04-25\",\"poids\":101.2,\"imc\":29.5,\"img\":30.3,\"hydra\":51.1,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.8,\"bmr\":1922.0},{\"date\":\"2025-04-28\",\"poids\":101.8,\"im",
+"c\":29.7},{\"date\":\"2025-04-29\",\"poids\":100.5,\"imc\":29.3,\"img\":30.4,\"hydra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.0,\"bmr\":1900.0},{\"date\":\"2025-05-02\",\"poids\":",
+"100.0,\"imc\":29.2,\"img\":29.7,\"hydra\":51.4,\"gsc\":26.6,\"gv\":14.0,\"prot\":15.1,\"age\":51.0,\"muscle\":63.6,\"bmr\":1915.0},{\"date\":\"2025-05-06\",\"poids\":100.8,\"imc\":29.4,\"img\":30.1,\"hydra\":51",
+".1,\"gsc\":27.0,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":63.7,\"bmr\":1918.0},{\"date\":\"2025-05-09\",\"poids\":100.8,\"imc\":29.4,\"img\":30.1,\"hydra\":51.2,\"gsc\":27.0,\"gv\":14.0,\"prot\":14.9,\"a",
+"ge\":51.0,\"muscle\":63.7,\"bmr\":1917.0},{\"date\":\"2025-05-15\",\"poids\":100.0,\"imc\":29.2,\"img\":30.0,\"hydra\":51.2,\"gsc\":26.9,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":63.3,\"bmr\":1906.0},{",
+"\"date\":\"2025-05-19\",\"poids\":100.0,\"imc\":29.2,\"img\":30.0,\"hydra\":51.1,\"gsc\":26.9,\"gv\":14.0,\"prot\":15.1,\"age\":51.0,\"muscle\":63.2,\"bmr\":1903.0},{\"date\":\"2025-05-22\",\"poids\":100.5,\"imc",
+"\":29.3,\"img\":31.5,\"hydra\":50.2,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.6,\"age\":51.0,\"muscle\":61.4,\"bmr\":1856.0},{\"date\":\"2025-06-02\",\"poids\":100.6,\"imc\":29.3,\"img\":29.9,\"hydra\":51.3,\"gsc\":2",
+"6.8,\"gv\":14.0,\"prot\":15.0,\"age\":51.0,\"muscle\":63.8,\"bmr\":1920.0},{\"date\":\"2025-06-06\",\"poids\":99.7,\"imc\":29.1,\"img\":29.8,\"hydra\":51.4,\"gsc\":26.7,\"gv\":13.0,\"prot\":15.0,\"age\":51.0,\"m",
+"uscle\":63.3,\"bmr\":1904.0},{\"date\":\"2025-06-10\",\"poids\":100.0,\"imc\":29.2,\"img\":30.9,\"hydra\":50.7,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.7,\"age\":51.0,\"muscle\":62.2,\"bmr\":1875.0},{\"date\":\"202",
+"5-06-13\",\"poids\":100.0,\"imc\":29.2,\"img\":29.5,\"hydra\":51.5,\"gsc\":26.4,\"gv\":13.0,\"prot\":15.2,\"age\":51.0,\"muscle\":63.8,\"bmr\":1920.0},{\"date\":\"2025-06-20\",\"poids\":102.0,\"imc\":29.8,\"img",
+"\":31.4,\"hydra\":50.3,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.6,\"age\":52.0,\"muscle\":63.0,\"bmr\":1902.0},{\"date\":\"2025-06-24\",\"poids\":99.3,\"imc\":29.0,\"img\":29.7,\"hydra\":51.4,\"gsc\":26.6,\"gv\":13.",
+"0,\"prot\":15.1,\"age\":51.0,\"muscle\":63.0,\"bmr\":1896.0},{\"date\":\"2025-07-01\",\"poids\":100.5,\"imc\":29.3,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.4",
+",\"bmr\":1909.0},{\"date\":\"2025-08-04\",\"poids\":101.1,\"imc\":29.5,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.3,\"bmr\":1909.0},{\"date\":\"2025-08-22\",\"p",
+"oids\":103.3,\"imc\":30.1,\"img\":31.5,\"hydra\":50.1,\"gsc\":28.2,\"gv\":14.0,\"prot\":14.7,\"age\":52.0,\"muscle\":63.6,\"bmr\":1922.0},{\"date\":\"2025-09-04\",\"poids\":102.5,\"imc\":29.9,\"img\":30.3,\"hyd",
+"ra\":50.9,\"gsc\":27.2,\"gv\":14.0,\"prot\":15.0,\"age\":52.0,\"muscle\":64.5,\"bmr\":1946.0},{\"date\":\"2025-09-05\",\"poids\":102.1,\"imc\":29.8,\"img\":30.2,\"hydra\":51.0,\"gsc\":27.1,\"gv\":14.0,\"prot\":1",
+"5.0,\"age\":52.0,\"muscle\":64.5,\"bmr\":1943.0},{\"date\":\"2025-09-12\",\"poids\":100.9,\"imc\":29.4,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":62.8,\"bmr\":189",
+"4.0},{\"date\":\"2025-09-15\",\"poids\":101.6,\"imc\":29.6,\"img\":30.5,\"hydra\":50.8,\"gsc\":27.3,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.8,\"bmr\":1923.0},{\"date\":\"2025-09-18\",\"poids\":101.",
+"3,\"imc\":29.5,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":62.9,\"bmr\":1898.0},{\"date\":\"2025-09-23\",\"poids\":103.4,\"imc\":30.2,\"img\":31.1,\"hydra\":50.4,\"",
+"gsc\":27.9,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.4,\"bmr\":1944.0},{\"date\":\"2025-09-25\",\"poids\":103.0,\"imc\":30.0},{\"date\":\"2025-09-26\",\"poids\":102.0,\"imc\":29.8,\"img\":31.0,\"hydr",
+"a\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":63.5,\"bmr\":1916.0},{\"date\":\"2025-09-30\",\"poids\":101.4,\"imc\":29.6,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14",
+".8,\"age\":51.0,\"muscle\":63.2,\"bmr\":1908.0},{\"date\":\"2025-10-03\",\"poids\":102.4,\"imc\":29.9,\"img\":32.2,\"hydra\":49.7,\"gsc\":28.9,\"gv\":14.0,\"prot\":14.4,\"age\":52.0,\"muscle\":61.8,\"bmr\":1872",
+".0},{\"date\":\"2025-10-07\",\"poids\":102.3,\"imc\":29.8,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":63.5,\"bmr\":1919.0},{\"date\":\"2025-10-09\",\"poids\":103.9",
+",\"imc\":30.3},{\"date\":\"2025-10-13\",\"poids\":102.1,\"imc\":29.8,\"img\":30.8,\"hydra\":50.6,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":63.7,\"bmr\":1924.0},{\"date\":\"2025-10-17\",\"poi",
+"ds\":103.3,\"imc\":30.1,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.5,\"bmr\":1947.0},{\"date\":\"2025-10-23\",\"poids\":103.3,\"imc\":30.1,\"img\":30.9,\"hydra",
+"\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.5,\"bmr\":1947.0},{\"date\":\"2025-11-04\",\"poids\":103.0,\"imc\":30.0,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.",
+"7,\"age\":52.0,\"muscle\":64.0,\"bmr\":1932.0},{\"date\":\"2025-11-08\",\"poids\":104.8,\"imc\":30.6,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":52.0,\"muscle\":64.5,\"bmr\":1951.",
+"0},{\"date\":\"2025-11-14\",\"poids\":103.0,\"imc\":30.0,\"img\":30.9,\"hydra\":50.6,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.1,\"bmr\":1937.0},{\"date\":\"2025-11-17\",\"poids\":102.6,",
+"\"imc\":29.9,\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3,\"bmr\":1941.0},{\"date\":\"2025-11-21\",\"poids\":101.3,\"imc\":29.5,\"img\":30.4,\"hydra\":50.9,\"gs",
+"c\":27.2,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":63.8,\"bmr\":1922.0},{\"date\":\"2025-11-25\",\"poids\":101.9,\"imc\":29.7,\"img\":30.5,\"hydra\":50.9,\"gsc\":27.3,\"gv\":14.0,\"prot\":14.8,\"age\":51",
+".0,\"muscle\":63.9,\"bmr\":1927.0},{\"date\":\"2025-12-02\",\"poids\":101.1,\"imc\":29.5,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.1,\"bmr\":1902.0},{\"date\"",
+":\"2025-12-05\",\"poids\":101.8,\"imc\":29.7,\"img\":30.2,\"hydra\":51.1,\"gsc\":27.1,\"gv\":14.0,\"prot\":14.9,\"age\":51.0,\"muscle\":64.2,\"bmr\":1936.0},{\"date\":\"2025-12-15\",\"poids\":101.2,\"imc\":29.5",
+",\"img\":30.6,\"hydra\":50.8,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.8,\"age\":51.0,\"muscle\":63.3,\"bmr\":1909.0},{\"date\":\"2025-12-19\",\"poids\":102.9,\"imc\":30.0},{\"date\":\"2026-01-05\",\"poids\":103.2,\"",
+"imc\":30.1,\"img\":30.9,\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3,\"bmr\":1942.0},{\"date\":\"2026-01-09\",\"poids\":103.2,\"imc\":30.1,\"img\":31.0,\"hydra\":50.5,\"gsc",
+"\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.2,\"bmr\":1939.0},{\"date\":\"2026-01-13\",\"poids\":103.2,\"imc\":30.1,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.",
+"0,\"muscle\":64.2,\"bmr\":1939.0},{\"date\":\"2026-01-20\",\"poids\":103.1,\"imc\":30.1,\"img\":31.7,\"hydra\":50.1,\"gsc\":28.4,\"gv\":14.0,\"prot\":14.5,\"age\":52.0,\"muscle\":63.3,\"bmr\":1914.0},{\"date\":",
+"\"2026-01-30\",\"poids\":103.5,\"imc\":30.2,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.4,\"bmr\":1947.0},{\"date\":\"2026-02-03\",\"poids\":103.0,\"imc\":30.0,",
+"\"img\":30.7,\"hydra\":50.7,\"gsc\":27.5,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.4,\"bmr\":1945.0},{\"date\":\"2026-02-06\",\"poids\":103.0,\"imc\":30.0,\"img\":30.8,\"hydra\":50.7,\"gsc\":27.6,\"gv",
+"\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3,\"bmr\":1941.0},{\"date\":\"2026-02-10\",\"poids\":103.5,\"imc\":30.2,\"img\":30.6,\"hydra\":50.7,\"gsc\":27.4,\"gv\":14.0,\"prot\":14.9,\"age\":52.0,\"muscle\"",
+":64.8,\"bmr\":1958.0},{\"date\":\"2026-03-02\",\"poids\":103.4,\"imc\":30.2,\"img\":31.3,\"hydra\":50.2,\"gsc\":28.1,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.0,\"bmr\":1935.0},{\"date\":\"2026-03-0",
+"5\",\"poids\":103.4,\"imc\":30.2,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.3,\"bmr\":1944.0},{\"date\":\"2026-03-10\",\"poids\":102.9,\"imc\":30.0,\"img\":30.9",
+",\"hydra\":50.5,\"gsc\":27.7,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.1,\"bmr\":1935.0},{\"date\":\"2026-03-16\",\"poids\":103.3,\"imc\":30.1,\"img\":31.2,\"hydra\":50.3,\"gsc\":28.0,\"gv\":14.0,\"pr",
+"ot\":14.8,\"age\":52.0,\"muscle\":64.1,\"bmr\":1937.0},{\"date\":\"2026-03-20\",\"poids\":103.9,\"imc\":30.3,\"img\":31.2,\"hydra\":50.4,\"gsc\":28.0,\"gv\":14.0,\"prot\":14.7,\"age\":52.0,\"muscle\":64.5,\"bmr",
+"\":1951.0},{\"date\":\"2026-03-23\",\"poids\":103.9,\"imc\":30.3,\"img\":31.0,\"hydra\":50.5,\"gsc\":27.8,\"gv\":14.0,\"prot\":14.8,\"age\":52.0,\"muscle\":64.7,\"bmr\":1954.0},{\"date\":\"2026-03-27\",\"poids\"",
+":105.0,\"imc\":30.6,\"img\":31.2,\"hydra\":50.3,\"gsc\":28.0,\"gv\":15.0,\"prot\":14.8,\"age\":52.0,\"muscle\":65.2,\"bmr\":1971.0},{\"date\":\"2026-04-07\",\"poids\":105.0,\"imc\":30.6,\"img\":31.3,\"hydra\":5",
+"0.3,\"gsc\":28.1,\"gv\":15.0,\"prot\":14.7,\"age\":52.0,\"muscle\":65.1,\"bmr\":1969.0},{\"date\":\"2026-04-28\",\"poids\":105.4,\"imc\":30.7,\"img\":31.2,\"hydra\":50.3,\"gsc\":28.0,\"gv\":15.0,\"prot\":14.8,\"",
+"age\":54.0,\"muscle\":65.7,\"bmr\":1987.0},{\"date\":\"2026-05-22\",\"poids\":106.6,\"imc\":31.1,\"img\":31.9,\"hydra\":49.8,\"gsc\":28.6,\"gv\":15.0,\"prot\":14.6,\"age\":54.0,\"muscle\":65.5,\"bmr\":1984.0},",
+"{\"date\":\"2026-06-14\",\"poids\":108.0,\"imc\":31.5,\"img\":32.6,\"hydra\":49.3,\"gsc\":29.2,\"gv\":16.0,\"prot\":14.4,\"age\":54.0,\"muscle\":65.4,\"bmr\":1986.0},{\"date\":\"2026-06-16\",\"poids\":106.5,\"im",
+"c\":31.1,\"img\":32.5,\"hydra\":49.4,\"gsc\":29.1,\"gv\":15.0,\"prot\":14.4,\"age\":54.0,\"muscle\":64.6,\"bmr\":1959.0},{\"date\":\"2026-07-21\",\"poids\":108.6,\"imc\":31.7,\"img\":32.1,\"hydra\":49.6,\"gsc\":",
+"28.8,\"gv\":15.0,\"prot\":14.6,\"age\":54.0,\"muscle\":66.7,\"bmr\":2023.0},{\"date\":\"2026-07-23\",\"poids\":108.6,\"imc\":31.7,\"img\":32.5,\"hydra\":49.3,\"gsc\":29.1,\"gv\":16.0,\"prot\":14.5,\"age\":54.0,",
+"\"muscle\":66.1,\"bmr\":2005.0},{\"date\":\"2026-07-26\",\"poids\":107.8,\"imc\":31.4,\"img\":31.8,\"hydra\":49.9,\"gsc\":28.5,\"gv\":15.0,\"prot\":14.6,\"age\":54.0,\"muscle\":66.4,\"bmr\":2011.0},{\"date\":\"2",
+"026-08-01\",\"poids\":107.8,\"imc\":31.4,\"img\":31.6,\"hydra\":50.0,\"gsc\":28.3,\"gv\":15.0,\"prot\":14.7,\"age\":54.0,\"muscle\":66.7,\"bmr\":2021.0},{\"date\":\"2026-08-03\",\"poids\":107.8,\"imc\":31.4,\"i",
+"mg\":31.7,\"hydra\":49.9,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.7,\"age\":54.0,\"muscle\":66.6,\"bmr\":2018.0},{\"date\":\"2026-08-05\",\"poids\":106.4,\"imc\":31.0,\"img\":32.0,\"hydra\":49.8,\"gsc\":28.7,\"gv\":",
+"15.0,\"prot\":14.5,\"age\":54.0,\"muscle\":65.5,\"bmr\":1982.0},{\"date\":\"2026-08-07\",\"poids\":105.6,\"imc\":30.8,\"img\":31.0,\"hydra\":50.4,\"gsc\":27.8,\"gv\":15.0,\"prot\":14.8,\"age\":54.0,\"muscle\":6",
+"5.9,\"bmr\":1993.0},{\"date\":\"2026-08-12\",\"poids\":106.5,\"imc\":31.1,\"img\":32.6,\"hydra\":49.4,\"gsc\":29.2,\"gv\":15.0,\"prot\":14.4,\"age\":54.0,\"muscle\":64.5,\"bmr\":1956.0},{\"date\":\"2026-08-14\"",
+",\"poids\":106.8,\"imc\":31.2},{\"date\":\"2026-08-18\",\"poids\":106.5,\"imc\":31.1,\"img\":32.4,\"hydra\":49.5,\"gsc\":29.0,\"gv\":15.0,\"prot\":14.4,\"age\":54.0,\"muscle\":64.8,\"bmr\":1963.0},{\"date\":\"20",
+"26-08-19\",\"poids\":106.0,\"imc\":30.9,\"img\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":54.0,\"muscle\":65.4,\"bmr\":1980.0},{\"date\":\"2026-08-21\",\"poids\":106.0,\"imc\":30.9,\"im",
+"g\":31.7,\"hydra\":50.0,\"gsc\":28.4,\"gv\":15.0,\"prot\":14.6,\"age\":54.0,\"muscle\":65.3,\"bmr\":1977.0}],\"dailyWeights\":{\"2019-09-26\":107.1,\"2019-09-30\":104.2,\"2019-10-07\":103.6,\"2019-10-14\":",
+"102.3,\"2019-10-21\":101.1,\"2019-10-28\":99.9,\"2019-11-04\":98.9,\"2019-11-12\":99.4,\"2019-11-15\":99.4,\"2019-11-18\":98.8,\"2019-11-25\":99.0,\"2019-12-02\":98.0,\"2019-12-08\":96.0,\"2019-12-16",
+"\":97.2,\"2019-12-23\":96.4,\"2020-01-05\":97.1,\"2020-01-13\":96.4,\"2020-01-21\":96.0,\"2020-01-28\":96.1,\"2020-02-04\":96.1,\"2020-02-25\":97.1,\"2020-03-04\":96.5,\"2020-03-10\":97.3,\"2020-03-11",
+"\":97.6,\"2020-05-20\":96.4,\"2020-05-26\":96.7,\"2020-06-02\":96.3,\"2020-06-09\":96.6,\"2020-06-23\":96.5,\"2020-07-06\":97.3,\"2020-07-09\":97.3,\"2020-07-11\":97.3,\"2020-07-14\":98.8,\"2020-07-16",
+"\":97.0,\"2020-07-21\":98.0,\"2020-07-28\":98.5,\"2020-07-29\":97.8,\"2020-07-30\":100.1,\"2020-08-11\":99.3,\"2020-08-14\":99.3,\"2020-08-15\":98.2,\"2020-08-18\":98.2,\"2020-08-25\":98.5,\"2020-09-0",
+"2\":98.5,\"2020-09-08\":98.3,\"2020-09-12\":98.4,\"2020-09-15\":98.4,\"2020-11-10\":101.7,\"2020-11-17\":101.2,\"2020-11-18\":102.0,\"2020-11-20\":101.4,\"2020-11-23\":102.5,\"2020-11-25\":102.1,\"202",
+"0-11-26\":100.6,\"2020-11-30\":100.9,\"2020-12-02\":100.9,\"2020-12-04\":101.2,\"2020-12-05\":101.2,\"2020-12-07\":101.2,\"2020-12-08\":101.2,\"2020-12-11\":100.8,\"2020-12-12\":100.1,\"2020-12-14\":",
+"100.5,\"2020-12-15\":99.4,\"2020-12-29\":99.5,\"2020-12-31\":100.4,\"2021-01-03\":101.1,\"2021-01-04\":100.0,\"2021-01-05\":100.0,\"2021-01-06\":100.9,\"2021-01-07\":101.2,\"2021-01-09\":100.6,\"2021",
+"-01-10\":100.0,\"2021-01-11\":101.1,\"2021-01-12\":100.8,\"2021-01-13\":101.3,\"2021-01-14\":101.5,\"2021-01-15\":101.5,\"2021-01-16\":101.0,\"2021-01-17\":101.0,\"2021-01-18\":100.3,\"2021-01-19\":1",
+"01.4,\"2021-01-20\":99.9,\"2021-01-21\":100.3,\"2021-01-22\":99.6,\"2021-01-23\":100.6,\"2021-01-24\":99.5,\"2021-01-25\":102.7,\"2021-01-26\":100.7,\"2021-01-29\":100.3,\"2021-01-30\":100.6,\"2021-0",
+"1-31\":101.0,\"2021-02-02\":100.2,\"2021-02-03\":100.9,\"2021-02-04\":101.7,\"2021-02-05\":100.8,\"2021-02-06\":101.7,\"2021-02-07\":101.2,\"2021-02-08\":100.9,\"2021-02-09\":101.3,\"2021-02-10\":101",
+".8,\"2021-02-11\":101.8,\"2021-02-14\":101.7,\"2021-02-15\":101.7,\"2021-02-16\":101.7,\"2021-02-23\":101.7,\"2021-02-24\":101.5,\"2021-02-26\":101.3,\"2021-02-27\":101.3,\"2021-02-28\":101.3,\"2021-",
+"03-01\":101.3,\"2021-03-03\":101.0,\"2021-03-04\":101.7,\"2021-03-05\":101.3,\"2021-03-07\":101.3,\"2021-03-09\":99.9,\"2021-03-12\":101.6,\"2021-03-15\":101.9,\"2021-03-16\":101.0,\"2021-03-18\":100",
+".7,\"2021-03-20\":101.0,\"2021-03-21\":100.7,\"2021-03-22\":101.4,\"2021-03-23\":100.4,\"2021-03-24\":100.4,\"2021-03-25\":100.4,\"2021-03-26\":100.4,\"2021-03-27\":99.9,\"2021-03-28\":101.2,\"2021-0",
+"3-29\":100.1,\"2021-03-30\":99.2,\"2021-03-31\":99.7,\"2021-04-01\":99.6,\"2021-04-02\":99.1,\"2021-04-03\":99.8,\"2021-04-04\":99.1,\"2021-04-05\":99.1,\"2021-04-06\":99.1,\"2021-04-27\":99.1,\"2021-",
+"04-28\":99.8,\"2021-04-29\":100.1,\"2021-05-01\":100.1,\"2021-05-02\":100.1,\"2021-05-03\":100.1,\"2021-05-04\":100.1,\"2021-05-05\":100.5,\"2021-05-06\":100.9,\"2021-05-07\":100.3,\"2021-05-11\":100",
+".3,\"2021-05-14\":101.3,\"2021-05-18\":100.0,\"2021-05-19\":101.5,\"2021-05-25\":100.5,\"2021-06-01\":101.0,\"2021-06-09\":101.5,\"2021-06-10\":100.6,\"2021-06-15\":101.5,\"2021-06-18\":102.1,\"2021-",
+"06-22\":100.4,\"2021-06-29\":101.3,\"2021-07-23\":101.4,\"2021-07-27\":102.0,\"2021-09-04\":101.0,\"2021-09-06\":101.2,\"2021-09-09\":100.2,\"2021-09-14\":100.9,\"2021-09-21\":100.4,\"2021-09-29\":10",
+"0.9,\"2021-10-07\":99.6,\"2021-10-12\":100.8,\"2021-10-19\":99.8,\"2021-10-26\":101.6,\"2021-10-28\":100.9,\"2021-11-03\":101.4,\"2021-11-09\":102.3,\"2021-11-10\":102.3,\"2021-11-11\":102.8,\"2021-1",
+"1-17\":102.2,\"2021-11-21\":101.7,\"2021-11-23\":101.1,\"2021-11-30\":102.0,\"2021-12-05\":100.9,\"2021-12-07\":101.3,\"2021-12-14\":102.1,\"2021-12-21\":102.0,\"2021-12-28\":103.6,\"2022-01-04\":102",
+".9,\"2022-01-11\":101.9,\"2022-01-18\":101.9,\"2022-01-25\":101.1,\"2022-02-01\":102.3,\"2022-02-03\":101.8,\"2022-02-13\":100.4,\"2022-02-15\":101.4,\"2022-02-22\":101.2,\"2022-02-28\":101.6,\"2022-",
+"03-08\":101.4,\"2022-03-15\":102.7,\"2022-03-21\":102.7,\"2022-03-23\":102.2,\"2022-03-30\":102.6,\"2022-04-05\":102.3,\"2022-07-12\":102.3,\"2022-07-18\":102.7,\"2022-07-23\":102.9,\"2022-08-16\":10",
+"3.0,\"2022-08-22\":103.7,\"2022-08-23\":103.7,\"2022-08-25\":103.7,\"2022-08-29\":103.7,\"2022-09-05\":103.6,\"2022-09-12\":104.0,\"2022-09-13\":104.0,\"2022-09-30\":104.0,\"2022-10-08\":105.6,\"2022",
+"-11-09\":104.1,\"2022-11-17\":104.9,\"2023-01-13\":101.9,\"2023-01-16\":101.9,\"2023-01-17\":101.9,\"2023-01-21\":102.5,\"2023-01-24\":101.9,\"2023-01-30\":101.9,\"2023-02-06\":103.3,\"2023-02-12\":1",
+"05.3,\"2023-02-13\":102.8,\"2023-03-16\":103.2,\"2023-03-21\":105.0,\"2023-04-04\":104.3,\"2023-04-07\":103.9,\"2023-04-12\":104.3,\"2023-04-17\":105.4,\"2023-04-19\":103.7,\"2023-04-25\":104.8,\"202",
+"3-06-05\":106.2,\"2023-06-07\":106.2,\"2023-06-12\":106.2,\"2023-06-17\":105.7,\"2023-06-26\":106.0,\"2023-07-07\":106.5,\"2023-07-16\":105.9,\"2023-07-27\":104.6,\"2023-08-18\":104.4,\"2023-08-22\":",
+"104.7,\"2023-08-23\":103.6,\"2023-08-25\":104.0,\"2023-08-26\":102.6,\"2023-08-28\":102.6,\"2023-10-13\":102.6,\"2023-12-11\":103.7,\"2023-12-29\":103.7,\"2024-01-07\":105.1,\"2024-01-15\":105.1,\"20",
+"24-01-31\":104.7,\"2024-02-01\":105.3,\"2024-02-02\":105.6,\"2024-02-06\":103.7,\"2024-02-08\":102.9,\"2024-02-13\":102.9,\"2024-02-17\":102.2,\"2024-02-20\":102.2,\"2024-11-05\":106.3,\"2024-11-06\"",
+":106.9,\"2024-11-07\":106.6,\"2024-11-08\":106.6,\"2024-11-09\":107.0,\"2024-11-11\":106.6,\"2024-11-12\":105.8,\"2024-11-13\":105.8,\"2024-11-14\":105.5,\"2024-11-15\":105.5,\"2024-11-18\":105.0,\"2",
+"024-11-19\":105.3,\"2024-11-20\":105.0,\"2024-11-21\":105.5,\"2024-11-22\":105.3,\"2024-11-23\":105.3,\"2024-11-24\":105.5,\"2024-11-25\":105.9,\"2024-11-26\":104.8,\"2024-11-27\":105.3,\"2024-11-28",
+"\":104.6,\"2024-11-29\":104.6,\"2024-11-30\":105.5,\"2024-12-01\":104.8,\"2024-12-02\":104.2,\"2024-12-03\":103.6,\"2024-12-04\":104.8,\"2024-12-05\":104.7,\"2024-12-06\":102.8,\"2024-12-09\":104.8,\"",
+"2024-12-10\":103.7,\"2024-12-11\":104.6,\"2024-12-12\":104.1,\"2024-12-13\":104.8,\"2024-12-14\":104.4,\"2024-12-16\":104.7,\"2024-12-17\":102.1,\"2024-12-18\":102.9,\"2024-12-19\":102.9,\"2024-12-2",
+"0\":103.4,\"2024-12-29\":103.5,\"2024-12-30\":103.2,\"2024-12-31\":103.2,\"2025-01-01\":103.3,\"2025-01-03\":103.2,\"2025-01-04\":102.2,\"2025-01-05\":102.9,\"2025-01-06\":103.6,\"2025-01-07\":103.6,",
+"\"2025-01-08\":103.2,\"2025-01-09\":103.2,\"2025-01-10\":103.1,\"2025-01-11\":103.2,\"2025-01-12\":102.6,\"2025-01-13\":104.6,\"2025-01-14\":104.6,\"2025-01-15\":104.4,\"2025-01-16\":104.5,\"2025-01-",
+"17\":104.2,\"2025-01-20\":103.2,\"2025-01-21\":103.2,\"2025-01-22\":103.0,\"2025-01-23\":103.5,\"2025-01-24\":103.5,\"2025-01-27\":103.5,\"2025-01-28\":102.9,\"2025-01-29\":103.4,\"2025-01-30\":103.7",
+",\"2025-01-31\":103.7,\"2025-02-03\":103.2,\"2025-02-04\":102.8,\"2025-02-05\":103.8,\"2025-02-06\":103.8,\"2025-02-07\":103.8,\"2025-02-16\":101.8,\"2025-02-22\":101.2,\"2025-02-24\":102.5,\"2025-02",
+"-25\":101.0,\"2025-02-28\":101.5,\"2025-03-03\":102.6,\"2025-03-04\":102.6,\"2025-03-07\":102.7,\"2025-03-10\":102.3,\"2025-03-11\":100.8,\"2025-03-13\":101.6,\"2025-03-14\":100.7,\"2025-03-17\":102.",
+"2,\"2025-03-18\":101.1,\"2025-03-21\":100.7,\"2025-03-25\":100.7,\"2025-03-26\":102.3,\"2025-03-27\":101.8,\"2025-03-28\":100.3,\"2025-04-01\":100.3,\"2025-04-04\":100.0,\"2025-04-16\":101.2,\"2025-0",
+"4-22\":101.8,\"2025-04-25\":101.2,\"2025-04-28\":101.8,\"2025-04-29\":100.5,\"2025-05-02\":100.0,\"2025-05-06\":100.8,\"2025-05-09\":100.8,\"2025-05-15\":100.0,\"2025-05-19\":100.0,\"2025-05-22\":100",
+".5,\"2025-06-02\":100.6,\"2025-06-06\":99.7,\"2025-06-10\":100.0,\"2025-06-13\":100.0,\"2025-06-20\":102.0,\"2025-06-24\":99.3,\"2025-07-01\":100.5,\"2025-08-04\":101.1,\"2025-08-22\":103.3,\"2025-09",
+"-04\":102.5,\"2025-09-05\":102.1,\"2025-09-12\":100.9,\"2025-09-15\":101.6,\"2025-09-18\":101.3,\"2025-09-23\":103.4,\"2025-09-25\":103.0,\"2025-09-26\":102.0,\"2025-09-30\":101.4,\"2025-10-03\":102.",
+"4,\"2025-10-07\":102.3,\"2025-10-09\":103.9,\"2025-10-13\":102.1,\"2025-10-17\":103.3,\"2025-10-23\":103.3,\"2025-11-04\":103.0,\"2025-11-08\":104.8,\"2025-11-14\":103.0,\"2025-11-17\":102.6,\"2025-1",
+"1-21\":101.3,\"2025-11-25\":101.9,\"2025-12-02\":101.1,\"2025-12-05\":101.8,\"2025-12-15\":101.2,\"2025-12-19\":102.9,\"2026-01-05\":103.2,\"2026-01-09\":103.2,\"2026-01-13\":103.2,\"2026-01-20\":103",
+".1,\"2026-01-30\":103.5,\"2026-02-03\":103.0,\"2026-02-06\":103.0,\"2026-02-10\":103.5,\"2026-03-02\":103.4,\"2026-03-05\":103.4,\"2026-03-10\":102.9,\"2026-03-16\":103.3,\"2026-03-20\":103.9,\"2026-",
+"03-23\":103.9,\"2026-03-27\":105.0,\"2026-04-07\":105.0,\"2026-04-28\":105.4,\"2026-05-22\":106.6,\"2026-06-14\":108.0,\"2026-06-16\":106.5,\"2026-07-21\":108.6,\"2026-07-23\":108.6,\"2026-07-26\":10",
+"7.8,\"2026-08-01\":107.8,\"2026-08-03\":107.8,\"2026-08-05\":106.4,\"2026-08-07\":105.6,\"2026-08-12\":106.5,\"2026-08-14\":106.8,\"2026-08-18\":106.5,\"2026-08-19\":106.0,\"2026-08-21\":106.0},\"act",
+"ivities\":[{\"date\":\"2026-08-22\",\"type\":\"Musculation\",\"titre\":\"Musculation\",\"dur\":\"00:55\",\"kcal\":375.0,\"hr\":106.0,\"src\":\"garmin\"},{\"date\":\"2026-08-19\",\"type\":\"Musculation\",\"titre\":\"M",
+"usculation\",\"dur\":\"00:55\",\"kcal\":423.0,\"hr\":110.0,\"src\":\"garmin\"},{\"date\":\"2026-08-14\",\"type\":\"Musculation\",\"titre\":\"Musculation\",\"dur\":\"00:50\",\"kcal\":331.0,\"hr\":102.0,\"src\":\"garmi",
+"n\"},{\"date\":\"2026-08-14\",\"type\":\"Cardio\",\"titre\":\"Cardio\",\"dur\":\"00:09\",\"kcal\":71.0,\"hr\":102.0,\"src\":\"garmin\"},{\"date\":\"2026-08-12\",\"type\":\"Musculation\",\"titre\":\"Musculation\",\"dur\"",
+":\"00:41\",\"kcal\":203.0,\"hr\":89.0,\"src\":\"garmin\"},{\"date\":\"2026-08-12\",\"type\":\"Cardio\",\"titre\":\"Cardio\",\"dur\":\"00:05\",\"kcal\":40.0,\"hr\":97.0,\"src\":\"garmin\"},{\"date\":\"2026-08-11\",\"type",
+"\":\"Randonnée\",\"titre\":\"Roure Randonnée\",\"dur\":\"02:37\",\"kcal\":571.0,\"hr\":81.0,\"src\":\"garmin\"},{\"date\":\"2026-08-10\",\"type\":\"Randonnée\",\"titre\":\"Roure Randonnée\",\"dur\":\"03:34\",\"kcal\":",
+"966.0,\"hr\":89.0,\"src\":\"garmin\"},{\"date\":\"2026-08-09\",\"type\":\"Randonnée\",\"titre\":\"Roure Randonnée\",\"dur\":\"04:09\",\"kcal\":1546.0,\"hr\":103.0,\"src\":\"garmin\"},{\"date\":\"2026-08-05\",\"type\"",
+":\"Musculation\",\"titre\":\"Musculation\",\"dur\":\"01:00\",\"kcal\":437.0,\"hr\":109.0,\"src\":\"garmin\"},{\"date\":\"2026-08-05\",\"type\":\"Cardio\",\"titre\":\"Cardio\",\"dur\":\"00:08\",\"kcal\":92.0,\"hr\":121.",
+"0,\"src\":\"garmin\"},{\"date\":\"2026-08-03\",\"type\":\"Musculation\",\"titre\":\"Musculation\",\"dur\":\"00:49\",\"kcal\":316.0,\"hr\":99.0,\"src\":\"garmin\"},{\"date\":\"2026-08-03\",\"type\":\"Cardio\",\"titre\":",
+"\"Cardio\",\"dur\":\"00:10\",\"kcal\":73.0,\"hr\":100.0,\"src\":\"garmin\"},{\"date\":\"2026-07-29\",\"type\":\"Musculation\",\"titre\":\"Musculation\",\"dur\":\"00:37\",\"kcal\":306.0,\"hr\":113.0,\"src\":\"garmin\"},",
+"{\"date\":\"2026-07-29\",\"type\":\"Cardio\",\"titre\":\"Cardio\",\"dur\":\"00:10\",\"kcal\":143.0,\"hr\":138.0,\"src\":\"garmin\"},{\"date\":\"2026-07-23\",\"type\":\"Musculation\",\"titre\":\"Musculation\",\"dur\":\"0",
+"0:42\",\"kcal\":400.0,\"hr\":120.0,\"src\":\"garmin\"},{\"date\":\"2026-07-23\",\"type\":\"Cardio\",\"titre\":\"Cardio\",\"dur\":\"00:11\",\"kcal\":145.0,\"hr\":129.0,\"src\":\"garmin\"},{\"date\":\"2026-07-21\",\"type",
+"\":\"Cardio\",\"titre\":\"Cardio\",\"dur\":\"00:57\",\"kcal\":687.0,\"hr\":135.0,\"src\":\"garmin\"},{\"date\":\"2026-07-21\",\"type\":\"Cardio\",\"titre\":\"Abdominaux Tabata : planches et\",\"dur\":\"00:10\",\"kcal",
+"\":111.0,\"hr\":122.0,\"src\":\"garmin\"},{\"date\":\"2026-07-17\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:55\",\"kcal\":630.0,\"hr\":135.0,\"src\":\"garmin\"},{\"date\":\"2026-07-17\",\"type\":\"Exercice de re",
+"spiration\",\"titre\":\"Détente/Concentr.\",\"dur\":\"00:03\",\"hr\":94.0,\"src\":\"garmin\"},{\"date\":\"2026-07-05\",\"type\":\"Randonnée\",\"titre\":\"\",\"dur\":\"03:27\",\"kcal\":1585.0,\"hr\":119.0,\"src\":\"garm",
+"in\"},{\"date\":\"2026-07-04\",\"type\":\"Randonnée\",\"titre\":\"\",\"dur\":\"05:16\",\"kcal\":2250.0,\"hr\":115.0,\"src\":\"garmin\"},{\"date\":\"2026-06-30\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:58\",\"kcal\":",
+"590.0,\"hr\":122.0,\"src\":\"garmin\"},{\"date\":\"2026-06-18\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:00\",\"kcal\":632.0,\"hr\":127.0,\"src\":\"garmin\"},{\"date\":\"2026-06-16\",\"type\":\"Cardio\",\"titre\":",
+"\"\",\"dur\":\"01:21\",\"kcal\":963.0,\"hr\":142.0,\"src\":\"garmin\"},{\"date\":\"2026-06-12\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:05\",\"kcal\":612.0,\"hr\":128.0,\"src\":\"garmin\"},{\"date\":\"2026-06-09\",",
+"\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:06\",\"kcal\":813.0,\"hr\":143.0,\"src\":\"garmin\"},{\"date\":\"2026-06-05\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:50\",\"kcal\":630.0,\"hr\":135.0,\"src\":\"garmin",
+"\"},{\"date\":\"2026-05-28\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:40\",\"kcal\":349.0,\"hr\":113.0,\"src\":\"garmin\"},{\"date\":\"2026-05-26\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:48\",\"kcal\":508.0,",
+"\"hr\":128.0,\"src\":\"garmin\"},{\"date\":\"2026-05-21\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:37\",\"kcal\":347.0,\"hr\":118.0,\"src\":\"garmin\"},{\"date\":\"2026-05-19\",\"type\":\"Cardio\",\"titre\":\"\",\"du",
+"r\":\"03:21\",\"kcal\":1248.0,\"hr\":100.0,\"src\":\"garmin\"},{\"date\":\"2026-05-15\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:55\",\"kcal\":793.0,\"hr\":110.0,\"src\":\"garmin\"},{\"date\":\"2026-05-12\",\"type",
+"\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:08\",\"kcal\":847.0,\"hr\":142.0,\"src\":\"garmin\"},{\"date\":\"2026-05-12\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:00\",\"hr\":104.0,\"src\":\"garmin\"},{\"date\":\"2026-0",
+"5-07\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:45\",\"kcal\":769.0,\"hr\":112.0,\"src\":\"garmin\"},{\"date\":\"2026-05-05\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"01:03\",\"kcal\":763.0,\"hr\":138.0,\"src\":\"",
+"garmin\"},{\"date\":\"2026-04-30\",\"type\":\"Cardio\",\"titre\":\"\",\"dur\":\"00:06\",\"kcal\":67.0,\"hr\":116.0,\"src\":\"garmin\"}]}"
 ].join(""));
 
 // =================================================================
@@ -1009,8 +1014,33 @@ const SEANCE_CARDIO = {
   ]
 };
 
+// ---- Semaine « Holidays » : 5 jours en salle de club, machines guidées ----
+// Split volontaire : bas / haut poussée / cardio léger / haut tirage / full-body.
+// Les exercices sont ceux du programme habituel, donc les charges se suivent.
+const SEANCE_H1 = {
+  id:'H1', label:'Holidays · Lundi', sub:'Bas du corps', icon:'🏝️', tag:'tag-b', si:'si-b',
+  exercises:[ EXO.presse, EXO.fentes, EXO.rdl, EXO.crunch ]
+};
+const SEANCE_H2 = {
+  id:'H2', label:'Holidays · Mardi', sub:'Haut — poussée', icon:'🏝️', tag:'tag-a', si:'si-a',
+  exercises:[ EXO.bench, EXO.incline, EXO.lateral, EXO.triceps ]
+};
+const SEANCE_H3 = {
+  id:'H3', label:'Holidays · Mercredi', sub:'Cardio Zone 2 + gainage', icon:'🏝️', tag:'tag-cardio', si:'si-cardio',
+  exercises:[ SEANCE_CARDIO.exercises[0], EXO.planche ]
+};
+const SEANCE_H4 = {
+  id:'H4', label:'Holidays · Jeudi', sub:'Haut — tirage', icon:'🏝️', tag:'tag-a', si:'si-a',
+  exercises:[ EXO.pulldown, EXO.rowing, EXO.facepull, EXO.curl ]
+};
+const SEANCE_H5 = {
+  id:'H5', label:'Holidays · Vendredi', sub:'Full-body léger', icon:'🏝️', tag:'tag-b', si:'si-b',
+  exercises:[ EXO.presse, EXO.bench, EXO.pulldown, EXO.planche ]
+};
+
 // Accès par identifiant de séance
-const SEANCE_MAP = { S1:SEANCE_1, S2:SEANCE_2, S3:SEANCE_3, Z2:SEANCE_CARDIO };
+const SEANCE_MAP = { S1:SEANCE_1, S2:SEANCE_2, S3:SEANCE_3, Z2:SEANCE_CARDIO,
+  H1:SEANCE_H1, H2:SEANCE_H2, H3:SEANCE_H3, H4:SEANCE_H4, H5:SEANCE_H5 };
 // Séances muscu remontables dans le feedback / export (hors cardio)
 const SEANCES_MUSCU = [SEANCE_1, SEANCE_2, SEANCE_3];
 
@@ -1133,7 +1163,7 @@ let ST = {
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
   dailyWeights:{}, charges:{}, feedbacks:[],
   nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{}, mealLog:{},
-  sessionLog:[], pickedSeance:null, pickedDate:null, warmup:{}, visOpen:{},
+  sessionLog:[], pickedSeance:null, pickedDate:null, warmup:{}, visOpen:{}, extraExos:{},
   weekStart: weekStartDate(),
 };
 let restIntervals={};
@@ -1184,6 +1214,7 @@ function applyPayload(p){
   ST.pickedDate=p.pickedDate||null;
   ST.warmup=p.warmup||{};
   ST.visOpen=p.visOpen||{};
+  ST.extraExos=p.extraExos||{};
 }
 function load(){
   const s=localStorage.getItem(DKEY);
@@ -1193,7 +1224,7 @@ function load(){
 }
 function payload(){
   return {
-    v:24, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance, pickedDate:ST.pickedDate, warmup:ST.warmup, visOpen:ST.visOpen,
+    v:25, savedAt:new Date().toISOString(), sessionLog:ST.sessionLog, pickedSeance:ST.pickedSeance, pickedDate:ST.pickedDate, warmup:ST.warmup, visOpen:ST.visOpen, extraExos:ST.extraExos,
     balanceData:ST.balanceData, activities:ST.activities,
     doneExos:ST.doneExos, seriesState:ST.seriesState,
     dailyWeights:ST.dailyWeights, charges:ST.charges,
@@ -1244,6 +1275,15 @@ function scheduleSync(){
   if(!syncCfg())return;
   clearTimeout(syncTimer);
   syncTimer=setTimeout(function(){ syncNow(false); },8000);
+}
+// Envoi immédiat : appelé aux vrais points d'enregistrement (séance, pesée,
+// menu, calories) plutôt que d'attendre le débounce de 8 s.
+function flushSync(){
+  if(!syncCfg())return;
+  clearTimeout(syncTimer);
+  // Si un envoi est déjà en vol, la modification n'est pas perdue :
+  // on repasse par le débounce, qui repartira dans 8 s.
+  setTimeout(function(){ if(syncBusy){ scheduleSync(); return; } syncNow(false); },80);
 }
 function setSyncStatus(ok,msg){
   localStorage.setItem(SLKEY,JSON.stringify({ok:ok,msg:msg,at:new Date().toISOString()}));
@@ -1420,7 +1460,7 @@ function quickAddKcal(){
     const prev=ST.mealLog[d].manual||{};
     ST.mealLog[d].manual={kcal:k, prot:prev.prot!=null?prev.prot:null};
   }
-  save(); renderData(); renderHomeBuild();
+  save(); flushSync(); renderData(); renderHomeBuild();
   ki.value='';
   toast(k+' kcal enregistrées le '+fmtDate(d)+' ✓');
 }
@@ -1451,7 +1491,7 @@ function initPreloaded(){
 // =================================================================
 // NAV
 // =================================================================
-const PAGE_TITLES={pick:'Séance de sport',training:'Séance de sport',choose:'Séance de sport',menus:'Menu',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data'};
+const PAGE_TITLES={pick:'Séance de sport',training:'Séance de sport',choose:'Séance de sport',menus:'Menu',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data',holidays:'Séance Holidays'};
 function showPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+id); if(pg)pg.classList.add('active');
@@ -1471,11 +1511,51 @@ function showPage(id,btn){
   if(id==='poids')renderPoids();
   if(id==='data')renderData();
   if(id==='pick') renderPick();
+  if(id==='holidays') renderHolidays();
   if(id==='training'){ renderSession(); }
 }
 function goHome(){ showPage('home'); }
 const BACK_PARENT={training:'pick'};
-function openSeance(){ ST.currentWeekDay=todayIdx(); showPage('pick'); }
+function openSeance(){ BACK_PARENT.training='pick'; ST.currentWeekDay=todayIdx(); showPage('pick'); }
+
+// ---------- SEMAINE HOLIDAYS ----------
+// 5 jours d'affilée : on alterne bas / haut-poussée / cardio / haut-tirage / full-body
+// pour qu'aucun groupe musculaire ne travaille deux jours de suite.
+const HOLIDAY_ORDER=['H1','H2','H3','H4','H5'];
+const HOLIDAY_DAY={H1:'Lundi',H2:'Mardi',H3:'Mercredi',H4:'Jeudi',H5:'Vendredi'};
+function startHolidaySession(id){
+  if(!SEANCE_MAP[id])return;
+  BACK_PARENT.training='holidays';
+  ST.pickedSeance=id; ST.pickedDate=today(); ST.currentWeekDay=todayIdx();
+  save(); showPage('training');
+}
+function renderHolidays(){
+  const intro=document.getElementById('holidayIntro');
+  if(intro) intro.innerHTML=`
+    <div class="form-title" style="margin-bottom:8px">🏝️ Semaine en club — lundi → vendredi</div>
+    <div style="font-size:12.5px;color:var(--text2);line-height:1.65">
+      Cinq jours d'affilée, en salle de club : machines guidées, 45-50 min par séance.
+      Le mercredi est volontairement léger — cardio et gainage — pour que rien ne travaille
+      deux jours de suite. Les charges sont celles de ton programme habituel : ce que tu
+      enregistres ici alimente le même historique.
+    </div>`;
+  const el=document.getElementById('holidayList'); if(!el)return;
+  const doneIds={}; (ST.sessionLog||[]).filter(function(l){return l.date>=ST.weekStart;})
+    .forEach(function(l){ doneIds[l.seanceId]=l.date; });
+  el.innerHTML='<div class="form-title" style="margin:14px 0 8px">Le programme de la semaine</div>'
+    +HOLIDAY_ORDER.map(function(id){
+      const sn=SEANCE_MAP[id], svg=ILLUSTRATIONS[sn.exercises[0].svg]||'';
+      const done=doneIds[id];
+      const noms=sn.exercises.map(function(ex){return exVariantName(ex);}).join(' · ');
+      return `<button class="wz-opt" style="align-items:flex-start${done?';border-color:var(--accent)':''}" onclick="startHolidaySession('${id}')">
+        <div class="wz-opt-ic">${svg}</div>
+        <div style="flex:1;min-width:0">
+          <div class="wz-opt-tt">${HOLIDAY_DAY[id]} · ${sn.sub}</div>
+          <div class="wz-opt-ds" style="white-space:normal;line-height:1.5">${sn.exercises.length} exercices — ${noms}</div>
+        </div>
+        ${done?'<span class="wz-badge" style="background:var(--accent);color:#111">faite ✓</span>':''}</button>`;
+    }).join('');
+}
 
 // ---------- PAGE INTERMÉDIAIRE : objectif de la semaine + choix de la séance ----------
 function renderPick(){
@@ -1627,6 +1707,11 @@ function weekSessions(){ return (ST.sessionLog||[]).filter(l=>l.date>=ST.weekSta
 function sessionsOnDay(i){ return weekSessions().filter(l=>dayIdxOfDate(l.date)===i); }
 
 // Construit une entrée de journal à partir des séries stockées, quelle que soit la clé utilisée.
+function extraKey(seanceId,dateStr){ return seanceId+'|'+dateStr; }
+function getExtras(seanceId,dateStr){
+  ST.extraExos=ST.extraExos||{};
+  return ST.extraExos[extraKey(seanceId,dateStr)]||[];
+}
 function buildLogEntry(seanceId,dateStr,keyFn){
   const seance=SEANCE_MAP[seanceId]; if(!seance)return null;
   const exos=seance.exercises.map(function(ex,i){
@@ -1634,16 +1719,74 @@ function buildLogEntry(seanceId,dateStr,keyFn){
     const charge=(ST.charges[exChargeKey(ex)]||{}).charge ?? ex.initCharge;
     return {name:exVariantName(ex), sets:(ts.done||[]).slice(), charge:charge, isTime:!!ex.isTime};
   }).filter(function(e){return e.sets.length>0;});
-  if(!exos.length) return null;
-  const volume=exos.reduce(function(t,e){ return t+(e.isTime?0:e.sets.reduce(function(a,r){return a+r*(e.charge||0);},0)); },0);
+  // Exercices ajoutés à la main en fin de séance : mêmes champs, donc même
+  // traitement partout (volume, journal, feuille Google).
+  const extras=getExtras(seanceId,dateStr).map(function(x){
+    return {name:x.name, sets:new Array(x.sets).fill(x.reps), charge:x.charge||0, isTime:false, libre:true};
+  });
+  const all=exos.concat(extras);
+  if(!all.length) return null;
+  const volume=all.reduce(function(t,e){ return t+(e.isTime?0:e.sets.reduce(function(a,r){return a+r*(e.charge||0);},0)); },0);
   return {date:dateStr, seanceId:seanceId, label:seance.label, role:(SESSION_ROLE[seanceId]||{}).title||'',
-    exos:exos, volume:Math.round(volume), nbExos:exos.length, totalExos:seance.exercises.length,
+    exos:all, volume:Math.round(volume), nbExos:all.length, totalExos:seance.exercises.length+extras.length,
     warmup:warmupDone(seance), savedAt:new Date().toISOString()};
+}
+// ---- Ajout d'un exercice non prévu au programme ----
+function addExtraExo(){
+  const seance=curSeance(); if(!seance)return;
+  const d=ST.pickedDate||today();
+  const g=function(id){ const el=document.getElementById(id); return el?el.value:''; };
+  const name=(g('xx-name')||'').trim();
+  const charge=parseFloat(g('xx-charge'));
+  const reps=parseInt(g('xx-reps'),10);
+  const sets=parseInt(g('xx-sets'),10);
+  if(!name){ toast('Donne un nom à l\'exercice'); return; }
+  if(isNaN(reps)||reps<=0){ toast('Nombre de répétitions invalide'); return; }
+  if(isNaN(sets)||sets<=0){ toast('Nombre de séries invalide'); return; }
+  ST.extraExos=ST.extraExos||{};
+  const k=extraKey(seance.id,d);
+  ST.extraExos[k]=(ST.extraExos[k]||[]).concat([{name:name, charge:isNaN(charge)?0:charge, reps:reps, sets:sets}]);
+  save();
+  toast(name+' ajouté ✓');
+  renderSession();
+}
+function removeExtraExo(i){
+  const seance=curSeance(); if(!seance)return;
+  const d=ST.pickedDate||today(), k=extraKey(seance.id,d);
+  const a=(ST.extraExos||{})[k]||[];
+  a.splice(i,1); ST.extraExos[k]=a; save(); renderSession();
+}
+function extrasHTML(seance){
+  const d=ST.pickedDate||today();
+  const list=getExtras(seance.id,d);
+  const rows=list.map(function(x,i){
+    return `<div class="xx-row">
+      <div style="flex:1;min-width:0">
+        <div class="xx-nm">${x.name}</div>
+        <div class="xx-ds">${x.sets} × ${x.reps} reps${x.charge?' · '+x.charge+' kg':''}</div>
+      </div>
+      <button class="variant-btn" onclick="removeExtraExo(${i})">✕</button>
+    </div>`;
+  }).join('');
+  return `<div class="xx-block">
+    <div class="form-title" style="margin:0 0 8px;font-size:13px">➕ Ajouter un exercice</div>
+    <div style="font-size:11.5px;color:var(--text3);line-height:1.5;margin-bottom:10px">
+      Un exercice fait en plus du programme — il compte dans le volume et part dans l'historique.
+    </div>
+    ${rows}
+    <input type="text" id="xx-name" placeholder="Nom de l'exercice" autocomplete="off" class="xx-in">
+    <div class="xx-grid">
+      <div><label class="xx-lb">Poids (kg)</label><input type="number" id="xx-charge" step="2.5" min="0" placeholder="0" class="xx-in"></div>
+      <div><label class="xx-lb">Répétitions</label><input type="number" id="xx-reps" step="1" min="1" placeholder="10" class="xx-in"></div>
+      <div><label class="xx-lb">Séries</label><input type="number" id="xx-sets" step="1" min="1" placeholder="3" class="xx-in"></div>
+    </div>
+    <button class="btn" style="margin-top:10px;width:100%" onclick="addExtraExo()">Ajouter à la séance</button>
+  </div>`;
 }
 function pushLogEntry(e){
   if(!e)return false;
   ST.sessionLog=(ST.sessionLog||[]).filter(function(l){return !(l.date===e.date&&l.seanceId===e.seanceId);});
-  ST.sessionLog.push(e); ST.lastStrength=e.seanceId; save(); return true;
+  ST.sessionLog.push(e); ST.lastStrength=e.seanceId; save(); flushSync(); return true;
 }
 // Enregistrement automatique dès que toutes les séries de la séance sont validées.
 function autoLogIfComplete(){
@@ -1796,7 +1939,7 @@ function addPoids(){
   ST.dailyWeights[today()]=v;
   const ex=ST.balanceData.find(b=>b.date===today());
   if(ex) ex.poids=v; else ST.balanceData.push({date:today(),poids:v});
-  save(); document.getElementById('poids-add').value=''; renderPoids(); renderWeightPrev();
+  save(); flushSync(); document.getElementById('poids-add').value=''; renderPoids(); renderWeightPrev();
   toast('Pesée enregistrée : '+v+' kg ✓');
 }
 function renderData(){
@@ -1810,7 +1953,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v35 · 03/08/2026';
+const APP_BUILD='v36 · 23/08/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 function renderHomeBuild(){
@@ -1943,7 +2086,12 @@ function loggedHTML(){
 const WARM_MOBI={
   S1:{t:'Hanches & chevilles', d:'10 squats à vide profonds · 10 fentes marchées · 10 cercles de bras'},
   S2:{t:'Charnière de hanche', d:'10 good morning à vide · 10 chat-vache · 10 ponts fessiers'},
-  S3:{t:'Épaules & thoracique', d:'15 rotations d\'épaules · 10 dislocations élastique · 10 face pull légers'}
+  S3:{t:'Épaules & thoracique', d:'15 rotations d\'épaules · 10 dislocations élastique · 10 face pull légers'},
+  H1:{t:'Hanches & chevilles', d:'10 squats à vide profonds · 10 fentes marchées · 10 ponts fessiers'},
+  H2:{t:'Épaules & thoracique', d:'15 rotations d\'épaules · 10 dislocations élastique · 10 pompes inclinées'},
+  H3:{t:'Réveil articulaire', d:'10 cercles de bras · 10 chat-vache · 10 rotations de hanches'},
+  H4:{t:'Dos & omoplates', d:'10 dislocations élastique · 10 face pull légers · 10 chat-vache'},
+  H5:{t:'Corps entier', d:'10 squats à vide · 10 cercles de bras · 10 fentes marchées'}
 };
 const WARM_STEPS=['tapis','mobi','approche'];
 function warmupKey(seance){ return today()+'_'+seance.id; }
@@ -2404,12 +2552,14 @@ function renderSession(){
     const ts=ST.seriesState[seriesKey(seance,i)];
     if(ts&&ts.done&&ts.done.length){ nbDone++; nbSets+=ts.done.length; }
   });
+  const nbExtra=getExtras(seance.id,ST.pickedDate||today()).length;
   const all=nbDone>=seance.exercises.length;
   html+=`</div>
+    ${extrasHTML(seance)}
     <div style="padding:14px 16px;border-top:1px solid var(--border)">
-      <button class="btn ${nbDone?'btn-primary':''}" style="margin-top:0;width:100%${nbDone?'':';opacity:.5'}" onclick="saveSessionDone()">💾 Sauvegarder la séance</button>
+      <button class="btn ${(nbDone||nbExtra)?'btn-primary':''}" style="margin-top:0;width:100%${(nbDone||nbExtra)?'':';opacity:.5'}" onclick="saveSessionDone()">💾 Sauvegarder la séance</button>
       <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:8px">
-        ${nbDone?`${nbDone}/${seance.exercises.length} exercices · ${nbSets} séries — enregistrée au ${fmtDate(today())}${all?'':' (séance partielle)'}`
+        ${(nbDone||nbExtra)?`${nbDone}/${seance.exercises.length} exercices${nbExtra?' + '+nbExtra+' libre'+(nbExtra>1?'s':''):''} · ${nbSets} séries — enregistrée au ${fmtDate(ST.pickedDate||today())}${all?'':' (séance partielle)'}`
                 :'Valide au moins une série pour pouvoir enregistrer'}
       </div>
     </div>
@@ -2611,7 +2761,7 @@ function saveBalance(){
   if(!d.poids){ toast('Entrez au moins le poids'); return; }
   ST.balanceData.push(d);
   ST.dailyWeights[d.date]=d.poids;
-  save(); renderLastMetrics(); renderBalanceHist(); renderWeightPrev();
+  save(); flushSync(); renderLastMetrics(); renderBalanceHist(); renderWeightPrev();
   ['b-poids','b-img','b-hydra','b-gsc','b-gv','b-prot','b-age'].forEach(id=>document.getElementById(id).value='');
   toast('Mesure enregistrée ✓');
 }
@@ -2970,7 +3120,7 @@ function ingestCSV(text){
     });
     res=added+' mesure(s) importée(s)';
   } else throw new Error('colonnes non reconnues (ni activité, ni poids)');
-  save(); renderLastMetrics(); renderBalanceHist(); renderWeightPrev();
+  save(); flushSync(); renderLastMetrics(); renderBalanceHist(); renderWeightPrev();
   const el=document.getElementById('csv-result'); el.style.color='var(--accent)'; el.textContent='✓ '+res;
   toast('✓ '+res);
 }
@@ -3028,7 +3178,7 @@ function saveManualKcal(){
   const p=parseInt(document.getElementById('mk-prot').value,10);
   if(isNaN(k)||k<=0){ toast('Entre un total de calories'); return; }
   const log=getMealLog(d); log.manual={kcal:k, prot:isNaN(p)?null:p};
-  syncNutrition(d); save(); renderMenus();
+  syncNutrition(d); save(); flushSync(); renderMenus();
   toast(k+' kcal enregistrées le '+fmtDate(d)+' ✓');
 }
 function clearManualKcal(){
@@ -3047,8 +3197,8 @@ function renderManualKcal(){
     (log.manual? `<span style="color:var(--amber)">Saisie manuelle active sur le ${fmtDate(d)} — elle remplace les menus cochés ce jour-là.</span><br>`:'')
     + (hist.length? '5 derniers jours : '+hist.map(n=>`${fmtDate(n.date)} <b style="color:var(--text)">${n.kcal}</b>`).join(' · ') : 'Aucune journée enregistrée.');
 }
-function logMeal(slot,idx){ const log=getMealLog(today()); log[slot]=(log[slot]===idx?null:idx); syncNutrition(today()); save(); renderMenus(); }
-function toggleDayFlag(flag){ const log=getMealLog(today()); log[flag]=!log[flag]; syncNutrition(today()); save(); renderMenus(); }
+function logMeal(slot,idx){ const log=getMealLog(today()); log[slot]=(log[slot]===idx?null:idx); syncNutrition(today()); save(); flushSync(); renderMenus(); }
+function toggleDayFlag(flag){ const log=getMealLog(today()); log[flag]=!log[flag]; syncNutrition(today()); save(); flushSync(); renderMenus(); }
 
 function renderMenus(){
   const date=today(); const log=ST.mealLog[date]||{}; const t=dayTotals(date);
@@ -3103,6 +3253,11 @@ const SESSION_ROLE={
   S1:{ title:'Force', desc:'Séance lourde sur les gros mouvements (squat, développé couché). Objectif : entretenir la force et protéger le muscle pendant la sèche.' },
   S2:{ title:'Chaîne postérieure', desc:'Focus ischios, fessiers et tirage (soulevé de terre roumain, rowing). Équilibre le corps et renforce le dos.' },
   S3:{ title:'Volume', desc:'Plus de répétitions, plus léger sur les articulations. On accumule du volume et on congestionne.' },
+  H1:{ title:'Holidays — bas du corps', desc:'Presse, fentes et charnière de hanche sur machines. Le plus gros volume de la semaine.' },
+  H2:{ title:'Holidays — poussée', desc:'Pectoraux, épaules et triceps. Rien du bas du corps, qui récupère de la veille.' },
+  H3:{ title:'Holidays — cardio', desc:'Journée légère au milieu de la semaine : Zone 2 et gainage, pour tenir les cinq jours.' },
+  H4:{ title:'Holidays — tirage', desc:'Dos, arrière d\'épaules et biceps. Équilibre le travail de poussée du mardi.' },
+  H5:{ title:'Holidays — full-body', desc:'Trois gros mouvements en charges modérées pour finir la semaine sans creuser la fatigue.' },
 };
 function lastKnownWeight(){
   const dw=Object.keys(ST.dailyWeights).sort();
