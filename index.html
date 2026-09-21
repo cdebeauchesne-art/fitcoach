@@ -105,6 +105,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .hc-bar span{position:absolute;left:0;right:0;bottom:0;background:var(--accent);border-radius:3px 3px 0 0;display:block}
 .hc-mth{display:flex;gap:4px;margin-top:5px}
 .hc-mth div{flex:1;text-align:center;font-size:9px;color:var(--text3)}
+.hc-warn{margin-top:11px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.32);
+  border-radius:10px;padding:10px 11px;font-size:11.5px;line-height:1.5;color:var(--text2)}
 .gd-link{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;
   background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px 15px;margin-bottom:12px}
 .gd-link:active{transform:scale(.99)}
@@ -2095,18 +2097,22 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v40 · 21/09/2026';
+const APP_BUILD='v41 · 21/09/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
 // Une même journée n'est comptée qu'une fois, quelle que soit la source.
 function sessionDays(){
-  const set={};
-  (ST.sessionLog||[]).forEach(function(l){ if(l&&l.date) set[l.date]=1; });
+  return Object.keys(sessionSources().all).sort();
+}
+// Sépare les deux sources pour qu'on voie d'où vient chaque séance comptée.
+function sessionSources(){
+  const app={}, gar={}, all={};
+  (ST.sessionLog||[]).forEach(function(l){ if(l&&l.date){ app[l.date]=1; all[l.date]=1; } });
   (ST.activities||[]).forEach(function(a){
-    if(a&&a.date&&/muscu/i.test(a.type||'')) set[a.date]=1;
+    if(a&&a.date&&/muscu/i.test(a.type||'')){ all[a.date]=1; if(!app[a.date]) gar[a.date]=1; }
   });
-  return Object.keys(set).sort();
+  return {app:app, gar:gar, all:all};
 }
 function renderHomeCount(){
   const el=document.getElementById('homeCount'); if(!el)return;
@@ -2130,12 +2136,22 @@ function renderHomeCount(){
   const barsHTML=bars.map(function(c){
     return '<div class="hc-bar"><span style="height:'+Math.round(Math.max(c?18:3,c/max*34))+'px"></span></div>';
   }).join('');
+  const src=sessionSources();
+  const nApp=Object.keys(src.app).length, nGar=Object.keys(src.gar).length;
+  let detail='<span style="color:var(--accent)">'+nApp+'</span> validée'+(nApp>1?'s':'')+' dans l\u2019app';
+  if(nGar) detail+=' · <span style="color:var(--blue)">'+nGar+'</span> vue'+(nGar>1?'s':'')+' seulement par la montre';
+  let warn='';
+  if(!nApp && nGar){
+    warn='<div class="hc-warn">Aucune séance validée dans l\u2019app sur cet appareil. '
+      +'Le journal est stocké dans le navigateur : s\u2019il est rempli sur un autre téléphone, il n\u2019apparaît pas ici.</div>';
+  }
   el.innerHTML='<div class="hc-row">'
     +'<div class="hc-big">'+n+'</div>'
     +'<div style="flex:1"><div class="hc-lb">séance'+(n>1?'s':'')+' déjà faite'+(n>1?'s':'')+'</div>'
-    +'<div class="hc-ds">'+nSem+' cette semaine · '+nMois+' ce mois-ci · depuis le '+fmtDate(days[0])+'</div></div>'
+    +'<div class="hc-ds">'+nSem+' cette semaine · '+nMois+' ce mois-ci · depuis le '+fmtDate(days[0])+'</div>'
+    +'<div class="hc-ds">'+detail+'</div></div>'
     +'</div><div class="hc-bars">'+barsHTML+'</div>'
-    +'<div class="hc-ds" style="text-align:center;margin-top:6px">12 dernières semaines</div>';
+    +'<div class="hc-ds" style="text-align:center;margin-top:6px">12 dernières semaines</div>'+warn;
 }
 function renderHomeBuild(){
   const el=document.getElementById('homeBuild'); if(!el)return;
