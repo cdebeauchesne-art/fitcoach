@@ -2183,7 +2183,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v47 · 28/09/2026';
+const APP_BUILD='v48 · 28/09/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
@@ -2789,6 +2789,8 @@ function renderSession(){
     return;
   }
 
+  if(seance.id==='M1'){ document.getElementById('sessionContent').innerHTML=marcheHTML(); return; }
+
   const dayKey=dayName+'_'+ST.weekStart;
   let html=loggedHTML()+`<div class="session-card">
     <div class="session-header">
@@ -2907,6 +2909,85 @@ function renderSession(){
     </div>
   </div>`;
   document.getElementById('sessionContent').innerHTML=html;
+}
+
+// ---------- MARCHE : saisie manuelle des minutes ----------
+// Pas de chrono : il marche, il rentre, il saisit la durée.
+const MARCHE_MET=4.3;
+function marcheKcal(min){
+  const p=lastKnownWeight()||107;
+  return Math.round(MARCHE_MET*3.5*p/200*min);
+}
+function walkOfDay(d){
+  return (ST.activities||[]).filter(function(a){return a&&a.date===d&&WALK_RE.test(a.type||'');})[0]||null;
+}
+function saveMarche(){
+  const el=document.getElementById('mk-min'); if(!el)return;
+  const min=parseInt(el.value,10);
+  if(isNaN(min)||min<=0){ toast('Entre un nombre de minutes'); return; }
+  if(min>600){ toast('Durée invalide'); return; }
+  const d=ST.pickedDate||today();
+  const kcal=marcheKcal(min);
+  const dur=String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+  const rec={date:d, type:'Marche', titre:'Marche longue', dur:dur, kcal:kcal, src:'manuel'};
+  const i=(ST.activities||[]).findIndex(function(a){return a&&a.date===d&&a.src==='manuel'&&WALK_RE.test(a.type||'');});
+  if(i>=0) ST.activities[i]=rec; else ST.activities.push(rec);
+  save(); flushSync();
+  toast(min+' min de marche enregistrées \u2014 environ '+kcal+' kcal');
+  renderSession(); renderPick(); renderHomeCount();
+}
+function deleteMarche(){
+  const d=ST.pickedDate||today();
+  ST.activities=(ST.activities||[]).filter(function(a){return !(a&&a.date===d&&a.src==='manuel'&&WALK_RE.test(a.type||''));});
+  save(); flushSync(); renderSession(); renderPick(); toast('Marche supprimée');
+}
+function marcheHTML(){
+  const d=ST.pickedDate||today();
+  const cur=walkOfDay(d);
+  const manuel=cur&&cur.src==='manuel';
+  const curMin=cur?((+String(cur.dur||'00:00').split(':')[0])*60+(+String(cur.dur||'00:00').split(':')[1])):'';
+  const semaine=weekWalks();
+  let tot=0;
+  (ST.activities||[]).forEach(function(a){
+    if(!a||a.date<ST.weekStart||!WALK_RE.test(a.type||''))return;
+    const p=String(a.dur||'').split(':'); if(p.length>=2) tot+=(+p[0])*60+(+p[1]);
+  });
+  const CIBLE=150;
+  return `<div class="session-card">
+    <div class="session-header">
+      <div class="session-icon si-cardio">🚶</div>
+      <div><div class="session-title">Marche longue</div><div class="session-meta">${fmtDate(d)} · allure soutenue, FC 95-115</div></div>
+      <span class="session-tag tag-cardio">M1</span>
+    </div>
+    <div style="padding:16px">
+      <div style="font-size:12.5px;color:var(--text2);line-height:1.6;margin-bottom:14px">
+        Marche à 5-5,5 km/h, conversation encore possible. Terrain vallonné ou tapis incliné à 5 % si c'est plat.
+        C'est la durée qui fait fondre la graisse viscérale, pas l'intensité.
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Durée de la marche (minutes)</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" id="mk-min" inputmode="numeric" min="1" max="600" step="5" placeholder="90" value="${curMin}"
+          style="flex:1;background:var(--bg4);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px;font-size:17px;font-family:inherit;text-align:center">
+        <button class="btn btn-primary" style="margin-top:0;width:auto;padding:0 18px" onclick="saveMarche()">Enregistrer</button>
+      </div>
+      ${cur?`<div style="margin-top:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px 12px;display:flex;align-items:center;gap:10px">
+        <div style="flex:1;font-size:13px">✅ ${curMin} min enregistrées — environ <strong style="color:var(--accent)">${cur.kcal||marcheKcal(curMin)} kcal</strong>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${manuel?'saisie manuelle':'importée de la montre'}</div></div>
+        ${manuel?'<button class="variant-btn" onclick="deleteMarche()">✕</button>':''}
+      </div>`:''}
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:7px">
+          <span>Cette semaine</span><span>${tot} / ${CIBLE} min</span>
+        </div>
+        <div style="height:10px;background:var(--bg4);border-radius:5px;overflow:hidden">
+          <div style="height:10px;border-radius:5px;background:${tot>=CIBLE?'var(--accent)':'var(--blue)'};width:${Math.min(100,Math.round(tot/CIBLE*100))}%"></div>
+        </div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:8px;line-height:1.5">
+          ${semaine.length} sortie${semaine.length>1?'s':''} · cible 150 min par semaine, c'est le seuil à partir duquel la graisse viscérale répond.
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
 
 // ---- Variantes de machine (Basic-Fit) ----
