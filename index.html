@@ -377,8 +377,6 @@ select option{background:var(--bg3)}
 
 <!-- PAGE CHOIX DE SEANCE -->
 <div class="page" id="page-pick">
-  <div class="card" id="pickProgress"></div>
-  <div class="card" id="pickLast"></div>
   <div id="pickChoice"></div>
 </div>
 
@@ -2183,7 +2181,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v48 · 28/09/2026';
+const APP_BUILD='v51 · 09/11/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
@@ -3555,49 +3553,110 @@ function ingestCSV(text){
 // MENUS + suivi nutrition du jour
 // =================================================================
 const MENUS = {
-  pdej:{ label:'🍳 Petit-déjeuner', items:[
-    {n:'Omelette emmental', d:'3 œufs + 30g emmental + 1 tr pain complet', kcal:460, prot:32, gluc:15, lip:30, fib:3},
-    {n:'Œufs brouillés & avocat', d:'3 œufs + 2 tr jambon + ½ avocat + pain complet', kcal:500, prot:34, gluc:16, lip:33, fib:7},
-    {n:'Œufs & saumon fumé', d:'2 œufs + 60g saumon fumé + tomates + pain complet', kcal:420, prot:31, gluc:18, lip:24, fib:3},
-    {n:'Skyr, flocons & fruits rouges', d:'250g skyr + 40g flocons avoine + 100g fruits rouges + 10g amandes', kcal:405, prot:35, gluc:44, lip:8, fib:9},
-    {n:'Fromage blanc, pomme & noix', d:'300g fromage blanc 3% + 1 pomme + 20g noix', kcal:420, prot:28, gluc:35, lip:22, fib:5},
-    {n:'Pain complet, jambon & œufs durs', d:'2 tr pain complet + 2 tr jambon blanc + 2 œufs durs', kcal:400, prot:33, gluc:35, lip:14, fib:6},
-    {n:'Porridge protéiné', d:'50g flocons + 250ml lait ½ écrémé + 20g whey + cannelle', kcal:375, prot:30, gluc:45, lip:9, fib:5},
-    {n:'Brouillade champignons & feta', d:'3 œufs + 150g champignons + 40g feta + 1 tr pain complet', kcal:440, prot:32, gluc:20, lip:24, fib:5},
+  pdej:{label:'Petit-déjeuner', items:[
+    {n:'Skyr, avoine, myrtilles, amandes', d:'400g skyr 0% + 30g flocons + 100g myrtilles + 10g amandes', kcal:400, prot:42, gluc:42, lip:11, fib:7},
+    {n:'Omelette dinde & épinards', d:'3 œufs + 80g blanc de dinde + épinards + 1 tr. pain complet', kcal:410, prot:45, gluc:18, lip:20, fib:5},
+    {n:'Fromage blanc, banane, cacahuète', d:'400g FB 0% + 1 banane + 20g beurre de cacahuète + cannelle', kcal:420, prot:38, gluc:40, lip:17, fib:6},
+    {n:'Porridge whey & noix', d:'50g avoine + 200ml lait écrémé + 30g whey + 15g noix', kcal:430, prot:38, gluc:42, lip:15, fib:7},
+    {n:'Œufs brouillés, jambon, avocat', d:'3 œufs + 60g jambon + ½ avocat + 2 galettes de sarrasin', kcal:460, prot:36, gluc:30, lip:25, fib:8},
+    {n:'Skyr, muesli, kiwi, chia', d:'300g skyr + 40g muesli sans sucre + 1 kiwi + 10g chia', kcal:400, prot:35, gluc:45, lip:10, fib:9},
+    {n:'Tartines saumon fumé', d:'2 tr. pain complet + 100g saumon fumé + 60g fromage frais 0% + roquette', kcal:400, prot:35, gluc:32, lip:13, fib:6},
+    {n:'Cottage, œufs durs, tomates', d:'250g cottage + 2 œufs durs + tomates cerises + 1 tr. pain de seigle', kcal:410, prot:42, gluc:22, lip:15, fib:5},
+    {n:'Smoothie whey banane avoine', d:'30g whey + 250ml lait écrémé + 1 banane + 30g flocons + 10g amandes', kcal:430, prot:40, gluc:48, lip:12, fib:6},
+    {n:'Fromage blanc, compote, granola', d:'300g FB 0% + compote sans sucre + 30g granola protéiné + 10g graines de courge', kcal:410, prot:33, gluc:42, lip:12, fib:7},
+    {n:'Œufs au plat & haricots blancs', d:'3 œufs + 150g haricots blancs sauce tomate + 1 tr. pain complet', kcal:450, prot:32, gluc:40, lip:18, fib:12},
+    {n:'Skyr, poire, chocolat noir', d:'400g skyr + 1 poire + 2 carrés chocolat 85% + 15g noisettes', kcal:420, prot:40, gluc:38, lip:14, fib:8},
+    {n:'Wrap œufs & poulet', d:'1 wrap complet + 2 œufs + 60g blanc de poulet + poivrons', kcal:420, prot:42, gluc:30, lip:15, fib:6},
+    {n:'Yaourt grec protéiné, framboises', d:'300g yaourt grec 2% + 30g whey + 100g framboises', kcal:400, prot:48, gluc:20, lip:10, fib:8},
+    {n:'Tartines au thon', d:'2 tr. pain de seigle + 120g thon naturel + fromage frais + concombre', kcal:400, prot:38, gluc:32, lip:11, fib:6},
+    {n:'Pancakes protéinés & fraises', d:'30g whey + 1 œuf + 40g avoine + 100g fraises', kcal:420, prot:38, gluc:40, lip:12, fib:6},
+    {n:'Œufs cocotte épinards feta', d:'3 œufs + 100g épinards + 50g feta + 1 tr. pain complet', kcal:450, prot:33, gluc:22, lip:26, fib:5},
+    {n:"Skyr, pomme, beurre d'amande", d:"350g skyr + 25g flocons + 20g beurre d'amande + 1 pomme", kcal:420, prot:36, gluc:40, lip:16, fib:8},
+    {n:'Bol cottage, dinde, avocat', d:'250g cottage + 80g dinde fumée + ¼ avocat + 1 tr. pain complet', kcal:410, prot:40, gluc:20, lip:18, fib:6},
+    {n:'Porridge de quinoa & figue', d:'50g quinoa + lait écrémé + 30g whey + 1 figue séchée + 10g noix', kcal:440, prot:38, gluc:45, lip:14, fib:7},
+    {n:'Omelette blancs & champignons', d:'6 blancs + 2 œufs entiers + champignons + 2 tr. pain complet', kcal:420, prot:42, gluc:32, lip:14, fib:6},
   ]},
-  dej:{ label:'🍗 Déjeuner', items:[
-    {n:'Poulet riz brocolis', d:'180g poulet + 60g riz (cru) + brocolis + huile', kcal:660, prot:60, gluc:60, lip:18, fib:8},
-    {n:'Bœuf & patate douce', d:'200g bœuf 5% + 200g patate douce + haricots verts', kcal:670, prot:55, gluc:50, lip:22, fib:10},
-    {n:'Poisson blanc & quinoa', d:'200g cabillaud + 60g quinoa (cru) + courgettes', kcal:620, prot:48, gluc:55, lip:20, fib:8},
-    {n:'Cabillaud, pommes de terre & épinards', d:'200g cabillaud + 250g pdt vapeur + 200g épinards + 1 c.à.s huile', kcal:510, prot:48, gluc:46, lip:13, fib:8},
-    {n:'Poulet, boulgour & ratatouille', d:'180g poulet + 60g boulgour (cru) + 200g ratatouille', kcal:600, prot:65, gluc:51, lip:13, fib:9},
-    {n:'Steak 5%, lentilles & carottes', d:'150g steak 5% + 150g lentilles cuites + 200g carottes + huile', kcal:545, prot:47, gluc:42, lip:19, fib:14},
-    {n:'Salade thon & pois chiches', d:'150g thon naturel + 150g pois chiches + crudités + huile', kcal:555, prot:53, gluc:43, lip:15, fib:15},
-    {n:'Dinde, patate douce & haricots verts', d:'180g dinde + 250g patate douce + 200g haricots verts + huile', kcal:565, prot:50, gluc:55, lip:13, fib:12},
+  dej:{label:'Déjeuner', items:[
+    {n:'Poulet grillé, riz, brocolis', d:"180g poulet + 60g riz basmati cru + 200g brocolis + 1 c.à.s huile d'olive", kcal:600, prot:52, gluc:52, lip:18, fib:8},
+    {n:'Saumon, quinoa, courgettes', d:'150g saumon + 60g quinoa cru + 200g courgettes', kcal:610, prot:42, gluc:48, lip:24, fib:8},
+    {n:'Steak, patate douce, haricots', d:'180g steak 5% + 200g patate douce + 200g haricots verts', kcal:590, prot:45, gluc:48, lip:18, fib:10},
+    {n:'Cabillaud, lentilles, épinards', d:'200g cabillaud + 70g lentilles crues + épinards', kcal:580, prot:52, gluc:48, lip:12, fib:14},
+    {n:'Dinde, boulgour, ratatouille', d:'180g escalope de dinde + 60g boulgour cru + ratatouille', kcal:580, prot:48, gluc:50, lip:15, fib:10},
+    {n:'Bowl thon, riz complet, edamame', d:'150g thon naturel + 60g riz complet + 80g edamame + ¼ avocat', kcal:620, prot:52, gluc:50, lip:20, fib:11},
+    {n:'Poulet tandoori & pois chiches', d:'180g poulet + 60g semoule complète + 80g pois chiches + salade', kcal:630, prot:55, gluc:55, lip:15, fib:12},
+    {n:'Porc, pois cassés, chou-fleur', d:'180g filet de porc + 70g pois cassés crus + chou-fleur rôti', kcal:590, prot:50, gluc:45, lip:16, fib:13},
+    {n:'Saumon papillote, riz sauvage', d:'150g saumon + 60g riz sauvage cru + poireaux', kcal:600, prot:40, gluc:50, lip:22, fib:8},
+    {n:'Salade César protéinée', d:'200g poulet + romaine + 30g parmesan + sauce yaourt-citron + 30g croûtons', kcal:580, prot:58, gluc:25, lip:24, fib:6},
+    {n:'Chili con carne & riz', d:'180g bœuf 5% + 100g haricots rouges + tomates + 50g riz cru', kcal:610, prot:50, gluc:55, lip:14, fib:14},
+    {n:'Merlu, pommes de terre, fenouil', d:'200g merlu + 250g pommes de terre vapeur + fenouil braisé', kcal:560, prot:45, gluc:45, lip:14, fib:9},
+    {n:'Wok de bœuf & nouilles de riz', d:'170g bœuf + 60g nouilles de riz crues + légumes wok + sésame', kcal:620, prot:46, gluc:55, lip:18, fib:8},
+    {n:'Tortilla espagnole & poulet', d:'3 œufs + 200g pommes de terre + 100g blanc de poulet + salade', kcal:600, prot:48, gluc:38, lip:25, fib:6},
+    {n:'Curry de poulet au lait de coco', d:'180g poulet + lait de coco léger + 55g riz basmati cru + épinards', kcal:620, prot:50, gluc:48, lip:20, fib:8},
+    {n:'Colin & taboulé de quinoa', d:'200g dos de colin + 60g quinoa cru + menthe + concombre', kcal:570, prot:50, gluc:46, lip:14, fib:9},
+    {n:'Veau & orge perlé aux champignons', d:'170g rôti de veau + 60g orge perlé cru + champignons', kcal:600, prot:48, gluc:50, lip:17, fib:9},
+    {n:'Burger maison & patate douce', d:'pain complet + 150g steak 5% + 20g cheddar + crudités + 150g patate douce', kcal:640, prot:46, gluc:55, lip:20, fib:9},
+    {n:'Sardines, riz complet, poivrons', d:'180g sardines fraîches + 60g riz complet cru + poivrons grillés', kcal:610, prot:42, gluc:48, lip:24, fib:8},
+    {n:'Poulet & gratin de courgettes', d:'180g blanc de poulet + courgettes + 80g ricotta + 1 tr. pain complet', kcal:580, prot:55, gluc:30, lip:22, fib:7},
+    {n:'Tartare de thon & riz vinaigré', d:'160g thon + 60g riz cru + edamame + algues', kcal:590, prot:48, gluc:52, lip:16, fib:8},
   ]},
-  coll:{ label:'🥛 Collation', items:[
-    {n:'Fromage blanc & fruit', d:'300g fromage blanc 0% + 1 fruit', kcal:230, prot:25, gluc:25, lip:3, fib:3},
-    {n:'Shaker & banane', d:'30g whey + 1 banane', kcal:210, prot:26, gluc:24, lip:2, fib:3},
-    {n:'Skyr & amandes', d:'250g skyr + 15g amandes', kcal:240, prot:24, gluc:12, lip:10, fib:2},
-    {n:'Cottage & tomates cerises', d:'200g cottage + 150g tomates cerises', kcal:190, prot:23, gluc:11, lip:5, fib:2},
-    {n:'Œufs durs & crudités', d:'2 œufs durs + bâtonnets carotte / concombre', kcal:180, prot:14, gluc:7, lip:10, fib:3},
-    {n:'Skyr & fruits rouges', d:'250g skyr + 100g fruits rouges', kcal:195, prot:28, gluc:18, lip:0, fib:4},
-    {n:'Pain complet & jambon', d:'1 tr pain complet + 2 tr jambon blanc', kcal:165, prot:16, gluc:18, lip:3, fib:3},
-    {n:'Amandes & pomme', d:'25g amandes + 1 pomme — dépannage, peu de protéines', kcal:230, prot:5, gluc:22, lip:13, fib:7},
+  coll:{label:'Collation', items:[
+    {n:'Shaker whey & pomme', d:'30g whey + 1 pomme', kcal:230, prot:26, gluc:25, lip:3, fib:4},
+    {n:'Skyr & amandes', d:'250g skyr 0% + 10g amandes', kcal:220, prot:30, gluc:10, lip:8, fib:2},
+    {n:'Œufs durs & orange', d:'3 œufs durs + 1 orange', kcal:280, prot:20, gluc:15, lip:16, fib:4},
+    {n:'Cottage cheese & concombre', d:'200g cottage + concombre + poivre', kcal:190, prot:25, gluc:8, lip:5, fib:2},
+    {n:'Blanc de dinde & poire', d:'100g blanc de dinde + 1 poire', kcal:200, prot:24, gluc:20, lip:3, fib:5},
+    {n:'Fromage blanc cacao noisettes', d:'250g FB 0% + 1 c.c. cacao + 10g noisettes', kcal:230, prot:28, gluc:12, lip:9, fib:3},
+    {n:'Shaker whey & cacahuète', d:'30g whey + 15g beurre de cacahuète', kcal:250, prot:27, gluc:6, lip:13, fib:2},
+    {n:'Thon & galettes de riz', d:'120g thon naturel + 2 galettes de riz complet', kcal:230, prot:30, gluc:18, lip:3, fib:1},
+    {n:'Yaourt grec & framboises', d:'200g yaourt grec 2% + 100g framboises', kcal:200, prot:22, gluc:14, lip:5, fib:7},
+    {n:'Saumon fumé sur sarrasin', d:'80g saumon fumé + 1 galette de sarrasin', kcal:230, prot:22, gluc:15, lip:10, fib:2},
+    {n:"Skyr & flocons d'avoine", d:'200g skyr + 20g flocons + cannelle', kcal:220, prot:24, gluc:22, lip:3, fib:3},
+    {n:'Œufs durs & blanc de poulet', d:'2 œufs durs + 60g blanc de poulet', kcal:240, prot:28, gluc:1, lip:13, fib:0},
+    {n:'Shaker whey & banane', d:'30g whey + 1 banane', kcal:240, prot:26, gluc:28, lip:3, fib:3},
+    {n:'Cottage & ananas frais', d:'200g cottage + 50g ananas frais', kcal:190, prot:25, gluc:14, lip:5, fib:2},
+    {n:'Crevettes citron & galettes', d:'100g crevettes + citron + 2 galettes de riz', kcal:210, prot:25, gluc:18, lip:2, fib:1},
+    {n:'Fromage blanc & graines de courge', d:'250g FB 0% + 20g graines de courge', kcal:240, prot:28, gluc:10, lip:11, fib:3},
+    {n:'Rillettes de thon & carottes', d:'100g thon + 60g fromage frais 0% + bâtonnets de carotte', kcal:200, prot:28, gluc:10, lip:4, fib:4},
+    {n:'Shaker whey & avoine', d:'30g whey + 20g flocons + eau', kcal:230, prot:27, gluc:20, lip:3, fib:3},
+    {n:'Jambon, kiwi & noix', d:'100g jambon blanc + 1 kiwi + 10g noix', kcal:230, prot:22, gluc:12, lip:11, fib:3},
+    {n:'Skyr & chocolat noir', d:'250g skyr + 2 carrés chocolat 85%', kcal:230, prot:27, gluc:12, lip:9, fib:3},
+    {n:'Omelette 2 œufs & dinde', d:'2 œufs + 50g blanc de dinde', kcal:230, prot:26, gluc:1, lip:13, fib:0},
   ]},
-  diner:{ label:'🐟 Dîner', items:[
-    {n:'Saumon & lentilles', d:'150g saumon + légumes rôtis + 100g lentilles', kcal:640, prot:45, gluc:35, lip:32, fib:9},
-    {n:'Dinde & légumes', d:'180g dinde + poêlée légumes + 150g lentilles', kcal:560, prot:55, gluc:40, lip:16, fib:11},
-    {n:'Chili maison', d:'150g bœuf 5% + 150g haricots rouges + tomates', kcal:550, prot:45, gluc:42, lip:18, fib:13},
-    {n:'Cabillaud & ratatouille', d:'200g cabillaud + 300g ratatouille + 100g riz cuit', kcal:435, prot:44, gluc:42, lip:9, fib:7},
-    {n:'Poulet rôti & soupe de légumes', d:'180g poulet + 400ml soupe maison + 1 tr pain complet', kcal:515, prot:64, gluc:37, lip:11, fib:9},
-    {n:'Crevettes & nouilles complètes', d:'200g crevettes + 60g nouilles complètes (cru) + légumes wok', kcal:575, prot:51, gluc:53, lip:16, fib:9},
-    {n:'Sardines & salade de pois chiches', d:'150g sardines + 150g pois chiches + crudités', kcal:590, prot:48, gluc:41, lip:23, fib:14},
-    {n:'Steak, purée maison & haricots verts', d:'150g steak 5% + 250g purée maison + 200g haricots verts', kcal:470, prot:42, gluc:46, lip:12, fib:10},
+  diner:{label:'Dîner', items:[
+    {n:'Cabillaud, patate douce, épinards', d:"200g cabillaud + 250g patate douce + épinards à l'ail", kcal:580, prot:48, gluc:50, lip:14, fib:10},
+    {n:'Poulet rôti & légumes au four', d:'180g poulet + courgette-poivron-oignon + 60g riz complet cru', kcal:620, prot:52, gluc:48, lip:18, fib:9},
+    {n:'Saumon, lentilles corail, kale', d:'160g saumon + 70g lentilles corail crues + chou kale', kcal:650, prot:48, gluc:45, lip:24, fib:14},
+    {n:'Spaghetti complets à la dinde', d:'180g dinde hachée + 60g spaghetti complets crus + sauce tomate', kcal:600, prot:50, gluc:50, lip:15, fib:11},
+    {n:'Soupe de légumes & omelette', d:'soupe maison + 4 œufs + 30g comté + salade', kcal:560, prot:38, gluc:25, lip:32, fib:8},
+    {n:"Crevettes à l'ail, riz, brocolis", d:'200g crevettes + 60g riz basmati cru + brocolis', kcal:580, prot:48, gluc:50, lip:14, fib:8},
+    {n:'Porc & gratin de chou-fleur', d:'170g rôti de porc + chou-fleur + béchamel légère + salade', kcal:610, prot:48, gluc:30, lip:28, fib:9},
+    {n:'Papillote de lieu, quinoa, poireaux', d:'200g lieu + 60g quinoa cru + poireaux fondus', kcal:590, prot:46, gluc:48, lip:16, fib:9},
+    {n:'Blanquette de veau allégée', d:'170g veau + 55g riz cru + carottes + crème légère', kcal:630, prot:46, gluc:48, lip:22, fib:7},
+    {n:'Steak, purée céleri, haricots verts', d:'180g steak 5% + purée céleri-pommes de terre + haricots verts', kcal:580, prot:46, gluc:38, lip:20, fib:11},
+    {n:'Dahl de lentilles au poulet', d:'100g lentilles crues + 150g blanc de poulet + 40g riz cru', kcal:650, prot:52, gluc:65, lip:12, fib:16},
+    {n:'Truite, pommes de terre, épinards', d:'180g truite + 250g pommes de terre + épinards', kcal:600, prot:44, gluc:45, lip:22, fib:8},
+    {n:'Brochettes de dinde & taboulé', d:'180g dinde + 60g boulgour cru + crudités + menthe', kcal:580, prot:50, gluc:50, lip:14, fib:10},
+    {n:'Chou farci allégé', d:'180g bœuf 5% + chou vert + 200g pommes de terre', kcal:590, prot:46, gluc:45, lip:18, fib:10},
+    {n:'Cabillaud provençal & polenta', d:'200g cabillaud + 60g polenta crue + courgettes + tomates', kcal:570, prot:46, gluc:48, lip:14, fib:8},
+    {n:'Poulet basquaise & riz complet', d:'180g poulet + 55g riz complet cru + piperade', kcal:600, prot:52, gluc:48, lip:16, fib:10},
+    {n:'Maquereau & écrasé de pois cassés', d:'150g maquereau + 70g pois cassés crus + salade verte', kcal:650, prot:44, gluc:42, lip:28, fib:14},
+    {n:'Wok tofu-crevettes & soba', d:'200g tofu ferme + 100g crevettes + 60g soba crues + légumes', kcal:620, prot:46, gluc:55, lip:18, fib:10},
+    {n:'Escalope de veau, quinoa, asperges', d:'180g veau + 60g quinoa cru + asperges', kcal:600, prot:50, gluc:46, lip:18, fib:9},
+    {n:'Saumon mi-cuit, lentilles, betterave', d:'160g saumon + 70g lentilles crues + betterave', kcal:640, prot:46, gluc:45, lip:24, fib:14},
+    {n:'Boulettes de dinde & courge spaghetti', d:'180g dinde hachée + courge spaghetti + sauce tomate + 1 tr. pain', kcal:560, prot:48, gluc:38, lip:18, fib:12},
   ]},
 };
 const SLOT_ORDER=['pdej','dej','coll','diner'];
-const SPORT_BONUS={kcal:300,prot:5,gluc:55,lip:5,fib:2};
+// Rotation sur 21 jours : chaque creneau propose 3 plats par jour, pris aux index
+// d, d+7 et d+14 du pool de 21. Deux jours consecutifs n'ont donc jamais un plat
+// en commun, et chaque plat revient exactement tous les 7 jours.
+const MENU_EPOCH='2026-11-09';
+function menuDayIdx(d){
+  const t=Math.floor((Date.parse(d+'T00:00:00')-Date.parse(MENU_EPOCH+'T00:00:00'))/864e5);
+  return ((t%21)+21)%21;
+}
+function dayChoices(slot,d){ const i=menuDayIdx(d); return [i,(i+7)%21,(i+14)%21]; }
+const SPORT_BONUS={kcal:250,prot:5,gluc:45,lip:5,fib:2};
 const ALCOOL_ITEM={kcal:270,prot:0,gluc:10,lip:0,fib:0};
 // Règle FGP : Fibres + Graisses + Protéines à chaque repas. Les seuils ci-dessous
 // sont ceux à partir desquels un repas tient réellement jusqu'au suivant.
@@ -3657,14 +3716,14 @@ function toggleDayFlag(flag){ const log=getMealLog(today()); log[flag]=!log[flag
 function renderMenus(){
   const date=today(); const log=ST.mealLog[date]||{}; const t=dayTotals(date);
   const last=ST.balanceData.filter(b=>b.poids).slice(-1)[0]; const cut=(last?.poids||107)>95.5;
-  const targetK = log.sport ? (cut?2400:2750) : (cut?2050:2450);
+  const targetK = log.sport ? (cut?2150:2750) : (cut?1900:2450);
   const targetP = cut?160:150;
   const pct=Math.min(100,Math.round(t.kcal/targetK*100)); const rem=targetK-t.kcal;
   document.getElementById('kcalTarget').innerHTML=`
     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Objectif du jour</div>
     <div style="font-family:'DM Serif Display',serif;font-size:44px;line-height:1.2;color:var(--accent)">${targetK}</div>
     <div style="font-size:13px;color:var(--text2)">kcal · ${targetP} g de protéines</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px">${log.sport?'Jour de séance (+300 kcal)':'Jour sans séance'}</div>`;
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">${log.sport?'Jour de séance (+250 kcal)':'Jour sans séance'} · jour ${menuDayIdx(date)+1}/21 du cycle</div>`;
   document.getElementById('dayTracker').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
       <div class="form-title" style="margin:0">Aujourd'hui</div>
@@ -3688,7 +3747,7 @@ function renderMenus(){
   ba.style.background=log.alcool?'var(--red)':'var(--bg3)'; ba.style.color=log.alcool?'#fff':'var(--accent)';
   document.getElementById('menuSlots').innerHTML=SLOT_ORDER.map(slot=>{ const m=MENUS[slot];
     return `<div><div class="form-title" style="margin:14px 0 8px">${m.label}</div>${
-      m.items.map((it,idx)=>{ const sel=log[slot]===idx;
+      dayChoices(slot,date).map(idx=>{ const it=m.items[idx]; const sel=log[slot]===idx;
         return `<div class="menu-opt${sel?' sel':''}" onclick="logMeal('${slot}',${idx})">
           <div style="flex:1"><div class="menu-n">${it.n}</div><div class="menu-d">${it.d}</div></div>
           <div class="menu-badges"><span class="b b-kcal">${it.kcal}</span><span class="b b-prot">${it.prot}g P</span><span class="b b-fib">${it.fib||0}g F</span>${fgpOK(it,slot)?'<span class="b b-fgp">FGP</span>':''}</div>
