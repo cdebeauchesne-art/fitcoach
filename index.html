@@ -304,6 +304,27 @@ select option{background:var(--bg3)}
 .backbar span{font-size:14px;color:var(--text2);font-weight:500}
 .act-chip{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:9px 14px;font-size:13px;color:var(--text);cursor:pointer;font-family:inherit;font-weight:500}
 .act-chip:active{background:var(--bg4)}
+.mn-row{display:flex;align-items:center;gap:10px}
+.mn-ar{width:38px;height:38px;flex:0 0 38px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--accent);font-size:20px;line-height:1;cursor:pointer}
+.mn-ar:disabled{opacity:.25;cursor:default}
+.mn-mid{flex:1;min-width:0;text-align:center}
+.mn-d{font-size:15px;font-weight:600}
+.mn-d::first-letter{text-transform:uppercase}
+.mn-s{font-size:11px;color:var(--text3);margin-top:2px}
+.mn-today{margin-top:10px;width:100%;padding:8px;border-radius:10px;border:1px solid var(--border);
+  background:var(--bg3);color:var(--accent);font-size:12px;cursor:pointer}
+.crs-r{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);
+  margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.crs-r:first-child{margin-top:0}
+.crs-l{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13.5px}
+.crs-l b{color:var(--accent);font-variant-numeric:tabular-nums;white-space:nowrap}
+.crs-j{padding:9px 0;border-bottom:1px solid var(--line)}
+.crs-j:last-child{border-bottom:0}
+.crs-jd{font-size:12px;color:var(--text3);margin-bottom:4px}
+.crs-jd::first-letter{text-transform:uppercase}
+.crs-p{font-size:13px;color:var(--text2);padding:1px 0}
+.crs-p.sel{color:var(--accent)}
 </style>
 </head>
 <body>
@@ -505,6 +526,8 @@ select option{background:var(--bg3)}
 
 <!-- PAGE MENUS -->
 <div class="page" id="page-menus">
+  <div class="card" id="menuNav" style="margin-bottom:12px"></div>
+  <button class="btn" style="margin:0 0 12px" onclick="openCourses()">🛒 Liste de courses de la semaine</button>
   <div id="kcalTarget" style="text-align:center;padding:18px 0 14px"></div>
   <div class="fgp-note">
     <div class="fgp-t">La règle FGP — Fibres, Graisses, Protéines</div>
@@ -546,6 +569,12 @@ select option{background:var(--bg3)}
   </div>
   <div class="section-title">Menus<div class="section-sub">Choisis, tape « J'ai mangé ça » — le suivi se remplit tout seul</div></div>
   <div id="menuSlots"></div>
+</div>
+
+<!-- PAGE LISTE DE COURSES -->
+<div class="page" id="page-courses">
+  <div class="section-title">Liste de courses<div class="section-sub">Semaine par semaine, à partir du planning</div></div>
+  <div id="coursesBody"></div>
 </div>
 
 <!-- PAGE CHOIX SÉANCE -->
@@ -1656,7 +1685,7 @@ function initPreloaded(){
 // =================================================================
 // NAV
 // =================================================================
-const PAGE_TITLES={pick:'Séance de sport',training:'Séance de sport',choose:'Séance de sport',menus:'Menu',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data',holidays:'Séance Holidays'};
+const PAGE_TITLES={pick:'Séance de sport',training:'Séance de sport',choose:'Séance de sport',menus:'Menu',courses:'Liste de courses',poids:'Poids',balance:'Poids',progress:'Calorie',garmin:'DATA',data:'Data',holidays:'Séance Holidays'};
 function showPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg=document.getElementById('page-'+id); if(pg)pg.classList.add('active');
@@ -1673,6 +1702,7 @@ function showPage(id,btn){
   if(id==='progress')renderProgress();
   if(id==='garmin')renderFeedbackHist();
   if(id==='menus')renderMenus();
+  if(id==='courses')renderCourses();
   if(id==='poids')renderPoids();
   if(id==='data')renderData();
   if(id==='pick') renderPick();
@@ -1680,7 +1710,7 @@ function showPage(id,btn){
   if(id==='training'){ renderSession(); }
 }
 function goHome(){ renderHomeCount(); showPage('home'); }
-const BACK_PARENT={training:'pick'};
+const BACK_PARENT={training:'pick',courses:'menus'};
 function openSeance(){ BACK_PARENT.training='pick'; ST.currentWeekDay=todayIdx(); showPage('pick'); }
 
 // ---------- SEMAINE HOLIDAYS ----------
@@ -2181,7 +2211,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v51 · 09/11/2026';
+const APP_BUILD='v52 · 09/11/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
@@ -3646,11 +3676,66 @@ const MENUS = {
     {n:'Boulettes de dinde & courge spaghetti', d:'180g dinde hachée + courge spaghetti + sauce tomate + 1 tr. pain', kcal:560, prot:48, gluc:38, lip:18, fib:12},
   ]},
 };
+const ING={
+  pdej:[[["Skyr 0%",400,"g"],["Flocons d'avoine",30,"g"],["Myrtilles",100,"g"],["Amandes",10,"g"]],[["Œufs",3,"p"],["Blanc de dinde",80,"g"],["Épinards",100,"g"],["Pain complet",1,"tr"]],[["Fromage blanc 0%",400,"g"],["Banane",1,"p"],["Beurre de cacahuète",20,"g"]],[["Flocons d'avoine",50,"g"],["Lait écrémé",200,"ml"],
+["Whey",30,"g"],["Noix",15,"g"]],[["Œufs",3,"p"],["Jambon blanc",60,"g"],["Avocat",1,"p"],["Galettes de sarrasin",2,"p"]],[["Skyr 0%",300,"g"],["Muesli sans sucre",40,"g"],["Kiwi",1,"p"],["Graines de chia",10,"g"]],[["Pain complet",2,"tr"],["Saumon fumé",100,"g"],["Fromage frais 0%",60,"g"],["Roquette",50,"g"]],
+[["Cottage cheese",250,"g"],["Œufs",2,"p"],["Tomates cerises",100,"g"],["Pain de seigle",1,"tr"]],[["Whey",30,"g"],["Lait écrémé",250,"ml"],["Banane",1,"p"],["Flocons d'avoine",30,"g"],["Amandes",10,"g"]],[["Fromage blanc 0%",300,"g"],["Compote sans sucre",1,"p"],["Granola protéiné",30,"g"],["Graines de courge",10,"g"]],
+[["Œufs",3,"p"],["Haricots blancs",150,"g"],["Pain complet",1,"tr"]],[["Skyr 0%",400,"g"],["Poire",1,"p"],["Chocolat noir 85%",20,"g"],["Noisettes",15,"g"]],[["Wrap complet",1,"p"],["Œufs",2,"p"],["Blanc de poulet",60,"g"],["Poivron",1,"p"]],[["Yaourt grec 2%",300,"g"],["Whey",30,"g"],["Framboises",100,"g"]],
+[["Pain de seigle",2,"tr"],["Thon au naturel",120,"g"],["Fromage frais 0%",40,"g"],["Concombre",1,"p"]],[["Whey",30,"g"],["Œufs",1,"p"],["Flocons d'avoine",40,"g"],["Fraises",100,"g"]],[["Œufs",3,"p"],["Épinards",100,"g"],["Feta",50,"g"],["Pain complet",1,"tr"]],[["Skyr 0%",350,"g"],["Flocons d'avoine",25,"g"],
+["Beurre d'amande",20,"g"],["Pomme",1,"p"]],[["Cottage cheese",250,"g"],["Dinde fumée",80,"g"],["Avocat",1,"p"],["Pain complet",1,"tr"]],[["Quinoa",50,"g"],["Lait écrémé",200,"ml"],["Whey",30,"g"],["Figues séchées",20,"g"],["Noix",10,"g"]],[["Blancs d'œufs",180,"g"],["Œufs",2,"p"],["Champignons",150,"g"],
+["Pain complet",2,"tr"]]],
+  dej:[[["Blanc de poulet",180,"g"],["Riz basmati",60,"g"],["Brocolis",200,"g"],["Huile d'olive",15,"ml"]],[["Saumon",150,"g"],["Quinoa",60,"g"],["Courgettes",200,"g"]],[["Steak haché 5%",180,"g"],["Patate douce",200,"g"],["Haricots verts",200,"g"]],[["Cabillaud",200,"g"],["Lentilles",70,"g"],["Épinards",150,"g"]],
+[["Escalope de dinde",180,"g"],["Boulgour",60,"g"],["Légumes à ratatouille",300,"g"]],[["Thon au naturel",150,"g"],["Riz complet",60,"g"],["Edamame",80,"g"],["Avocat",1,"p"]],[["Blanc de poulet",180,"g"],["Semoule complète",60,"g"],["Pois chiches",80,"g"],["Salade verte",50,"g"]],[["Filet de porc",180,"g"],
+["Pois cassés",70,"g"],["Chou-fleur",250,"g"]],[["Saumon",150,"g"],["Riz sauvage",60,"g"],["Poireaux",200,"g"]],[["Blanc de poulet",200,"g"],["Laitue romaine",150,"g"],["Parmesan",30,"g"],["Yaourt grec 2%",50,"g"],["Pain complet",1,"tr"]],[["Bœuf haché 5%",180,"g"],["Haricots rouges",100,"g"],["Tomates concassées",200,"g"],
+["Riz basmati",50,"g"]],[["Merlu",200,"g"],["Pommes de terre",250,"g"],["Fenouil",200,"g"]],[["Bœuf",170,"g"],["Nouilles de riz",60,"g"],["Légumes pour wok",200,"g"],["Graines de sésame",10,"g"]],[["Œufs",3,"p"],["Pommes de terre",200,"g"],["Blanc de poulet",100,"g"],["Salade verte",50,"g"]],[["Blanc de poulet",180,"g"],
+["Lait de coco léger",100,"ml"],["Riz basmati",55,"g"],["Épinards",150,"g"]],[["Dos de colin",200,"g"],["Quinoa",60,"g"],["Concombre",1,"p"],["Menthe",1,"p"]],[["Rôti de veau",170,"g"],["Orge perlé",60,"g"],["Champignons",200,"g"]],[["Steak haché 5%",150,"g"],["Pain à burger complet",1,"p"],["Cheddar",20,"g"],
+["Patate douce",150,"g"],["Salade verte",30,"g"]],[["Sardines fraîches",180,"g"],["Riz complet",60,"g"],["Poivron",2,"p"]],[["Blanc de poulet",180,"g"],["Courgettes",250,"g"],["Ricotta",80,"g"],["Pain complet",1,"tr"]],[["Thon",160,"g"],["Riz basmati",60,"g"],["Edamame",60,"g"],["Algues nori",5,"g"]]],
+  coll:[[["Whey",30,"g"],["Pomme",1,"p"]],[["Skyr 0%",250,"g"],["Amandes",10,"g"]],[["Œufs",3,"p"],["Orange",1,"p"]],[["Cottage cheese",200,"g"],["Concombre",1,"p"]],[["Blanc de dinde",100,"g"],["Poire",1,"p"]],[["Fromage blanc 0%",250,"g"],["Cacao non sucré",5,"g"],["Noisettes",10,"g"]],[["Whey",30,"g"],
+["Beurre de cacahuète",15,"g"]],[["Thon au naturel",120,"g"],["Galettes de riz",2,"p"]],[["Yaourt grec 2%",200,"g"],["Framboises",100,"g"]],[["Saumon fumé",80,"g"],["Galettes de sarrasin",1,"p"]],[["Skyr 0%",200,"g"],["Flocons d'avoine",20,"g"]],[["Œufs",2,"p"],["Blanc de poulet",60,"g"]],[["Whey",30,"g"],["Banane",1,"p"]],
+[["Cottage cheese",200,"g"],["Ananas frais",50,"g"]],[["Crevettes",100,"g"],["Galettes de riz",2,"p"],["Citron",1,"p"]],[["Fromage blanc 0%",250,"g"],["Graines de courge",20,"g"]],[["Thon au naturel",100,"g"],["Fromage frais 0%",60,"g"],["Carottes",100,"g"]],[["Whey",30,"g"],["Flocons d'avoine",20,"g"]],
+[["Jambon blanc",100,"g"],["Kiwi",1,"p"],["Noix",10,"g"]],[["Skyr 0%",250,"g"],["Chocolat noir 85%",20,"g"]],[["Œufs",2,"p"],["Blanc de dinde",50,"g"]]],
+  diner:[[["Cabillaud",200,"g"],["Patate douce",250,"g"],["Épinards",200,"g"]],[["Blanc de poulet",180,"g"],["Courgettes",150,"g"],["Poivron",1,"p"],["Oignon",1,"p"],["Riz complet",60,"g"]],[["Saumon",160,"g"],["Lentilles corail",70,"g"],["Chou kale",150,"g"]],[["Dinde hachée",180,"g"],["Spaghetti complets",60,"g"],
+["Tomates concassées",200,"g"],["Basilic",1,"p"]],[["Œufs",4,"p"],["Comté",30,"g"],["Légumes à soupe",400,"g"],["Salade verte",50,"g"]],[["Crevettes",200,"g"],["Riz basmati",60,"g"],["Brocolis",200,"g"],["Ail",1,"p"]],[["Rôti de porc",170,"g"],["Chou-fleur",250,"g"],["Lait écrémé",150,"ml"],["Salade verte",50,"g"]],
+[["Lieu",200,"g"],["Quinoa",60,"g"],["Poireaux",250,"g"]],[["Rôti de veau",170,"g"],["Riz basmati",55,"g"],["Carottes",200,"g"],["Crème légère",50,"g"]],[["Steak haché 5%",180,"g"],["Céleri-rave",200,"g"],["Pommes de terre",150,"g"],["Haricots verts",200,"g"]],[["Lentilles corail",100,"g"],["Blanc de poulet",150,"g"],
+["Riz basmati",40,"g"],["Lait de coco léger",50,"ml"]],[["Truite",180,"g"],["Pommes de terre",250,"g"],["Épinards",200,"g"]],[["Escalope de dinde",180,"g"],["Boulgour",60,"g"],["Crudités",200,"g"],["Menthe",1,"p"]],[["Bœuf haché 5%",180,"g"],["Chou vert",300,"g"],["Pommes de terre",200,"g"]],[["Cabillaud",200,"g"],
+["Polenta",60,"g"],["Courgettes",200,"g"],["Tomates concassées",150,"g"]],[["Blanc de poulet",180,"g"],["Riz complet",55,"g"],["Poivron",2,"p"],["Oignon",1,"p"],["Tomates concassées",150,"g"]],[["Maquereau",150,"g"],["Pois cassés",70,"g"],["Salade verte",80,"g"]],[["Tofu ferme",200,"g"],["Crevettes",100,"g"],
+["Nouilles soba",60,"g"],["Légumes pour wok",200,"g"]],[["Escalope de veau",180,"g"],["Quinoa",60,"g"],["Asperges",250,"g"]],[["Saumon",160,"g"],["Lentilles",70,"g"],["Betterave cuite",150,"g"]],[["Dinde hachée",180,"g"],["Courge spaghetti",400,"g"],["Tomates concassées",200,"g"],["Pain complet",1,"tr"]]],
+};
+const RAYON={"Ail":"Primeur","Algues nori":"Épicerie","Amandes":"Épicerie","Ananas frais":"Primeur","Asperges":"Primeur","Avocat":"Primeur","Banane":"Primeur","Basilic":"Primeur","Betterave cuite":"Primeur","Beurre d'amande":"Épicerie","Beurre de cacahuète":"Épicerie","Blanc de dinde":"Boucherie","Blanc de poulet":"Boucherie",
+"Blancs d'œufs":"Crémerie","Boulgour":"Épicerie","Brocolis":"Primeur","Bœuf":"Boucherie","Bœuf haché 5%":"Boucherie","Cabillaud":"Poissonnerie","Cacao non sucré":"Épicerie","Carottes":"Primeur","Champignons":"Primeur","Cheddar":"Crémerie","Chocolat noir 85%":"Épicerie","Chou kale":"Primeur","Chou vert":"Primeur",
+"Chou-fleur":"Primeur","Citron":"Primeur","Compote sans sucre":"Épicerie","Comté":"Crémerie","Concombre":"Primeur","Cottage cheese":"Crémerie","Courge spaghetti":"Primeur","Courgettes":"Primeur","Crevettes":"Poissonnerie","Crudités":"Primeur","Crème légère":"Crémerie","Céleri-rave":"Primeur","Dinde fumée":"Boucherie",
+"Dinde hachée":"Boucherie","Dos de colin":"Poissonnerie","Edamame":"Épicerie","Escalope de dinde":"Boucherie","Escalope de veau":"Boucherie","Fenouil":"Primeur","Feta":"Crémerie","Figues séchées":"Épicerie","Filet de porc":"Boucherie","Flocons d'avoine":"Épicerie","Fraises":"Primeur","Framboises":"Primeur",
+"Fromage blanc 0%":"Crémerie","Fromage frais 0%":"Crémerie","Galettes de riz":"Épicerie","Galettes de sarrasin":"Boulangerie","Graines de chia":"Épicerie","Graines de courge":"Épicerie","Graines de sésame":"Épicerie","Granola protéiné":"Épicerie","Haricots blancs":"Épicerie","Haricots rouges":"Épicerie",
+"Haricots verts":"Primeur","Huile d'olive":"Épicerie","Jambon blanc":"Boucherie","Kiwi":"Primeur","Lait de coco léger":"Épicerie","Lait écrémé":"Crémerie","Laitue romaine":"Primeur","Lentilles":"Épicerie","Lentilles corail":"Épicerie","Lieu":"Poissonnerie","Légumes pour wok":"Primeur","Légumes à ratatouille":"Primeur",
+"Légumes à soupe":"Primeur","Maquereau":"Poissonnerie","Menthe":"Primeur","Merlu":"Poissonnerie","Muesli sans sucre":"Épicerie","Myrtilles":"Primeur","Noisettes":"Épicerie","Noix":"Épicerie","Nouilles de riz":"Épicerie","Nouilles soba":"Épicerie","Oignon":"Primeur","Orange":"Primeur","Orge perlé":"Épicerie",
+"Pain complet":"Boulangerie","Pain de seigle":"Boulangerie","Pain à burger complet":"Boulangerie","Parmesan":"Crémerie","Patate douce":"Primeur","Poire":"Primeur","Poireaux":"Primeur","Pois cassés":"Épicerie","Pois chiches":"Épicerie","Poivron":"Primeur","Polenta":"Épicerie","Pomme":"Primeur","Pommes de terre":"Primeur",
+"Quinoa":"Épicerie","Ricotta":"Crémerie","Riz basmati":"Épicerie","Riz complet":"Épicerie","Riz sauvage":"Épicerie","Roquette":"Primeur","Rôti de porc":"Boucherie","Rôti de veau":"Boucherie","Salade verte":"Primeur","Sardines fraîches":"Poissonnerie","Saumon":"Poissonnerie","Saumon fumé":"Poissonnerie",
+"Semoule complète":"Épicerie","Skyr 0%":"Crémerie","Spaghetti complets":"Épicerie","Steak haché 5%":"Boucherie","Thon":"Poissonnerie","Thon au naturel":"Épicerie","Tofu ferme":"Crémerie","Tomates cerises":"Primeur","Tomates concassées":"Épicerie","Truite":"Poissonnerie","Whey":"Épicerie","Wrap complet":"Boulangerie",
+"Yaourt grec 2%":"Crémerie","Épinards":"Primeur","Œufs":"Crémerie"};
+const RAYON_ORDRE=['Primeur','Boucherie','Poissonnerie','Crémerie','Boulangerie','Épicerie'];
 const SLOT_ORDER=['pdej','dej','coll','diner'];
 // Rotation sur 21 jours : chaque creneau propose 3 plats par jour, pris aux index
 // d, d+7 et d+14 du pool de 21. Deux jours consecutifs n'ont donc jamais un plat
 // en commun, et chaque plat revient exactement tous les 7 jours.
 const MENU_EPOCH='2026-11-09';
+const MENU_START='2026-11-09', MENU_END='2026-12-31';
+const JOURS_FR=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+let MENU_VIEW=null;
+function menuDate(){
+  let d=MENU_VIEW||today();
+  if(d<MENU_START)d=MENU_START; if(d>MENU_END)d=MENU_END;
+  return d;
+}
+function fmtLong(d){
+  const p=d.split('-'), x=new Date(d+'T12:00:00');
+  return JOURS_FR[(x.getDay()+6)%7]+' '+(+p[2])+' '+MOIS_FR[+p[1]-1]+' '+p[0];
+}
+function shiftMenuDate(n){
+  const d=dateAddDays(menuDate(),n);
+  if(d<MENU_START||d>MENU_END)return;
+  MENU_VIEW=d; renderMenus();
+}
+function menuToday(){ MENU_VIEW=null; renderMenus(); }
 function menuDayIdx(d){
   const t=Math.floor((Date.parse(d+'T00:00:00')-Date.parse(MENU_EPOCH+'T00:00:00'))/864e5);
   return ((t%21)+21)%21;
@@ -3710,11 +3795,99 @@ function renderManualKcal(){
     (log.manual? `<span style="color:var(--amber)">Saisie manuelle active sur le ${fmtDate(d)} — elle remplace les menus cochés ce jour-là.</span><br>`:'')
     + (hist.length? '5 derniers jours : '+hist.map(n=>`${fmtDate(n.date)} <b style="color:var(--text)">${n.kcal}</b>`).join(' · ') : 'Aucune journée enregistrée.');
 }
-function logMeal(slot,idx){ const log=getMealLog(today()); log[slot]=(log[slot]===idx?null:idx); syncNutrition(today()); save(); flushSync(); renderMenus(); }
-function toggleDayFlag(flag){ const log=getMealLog(today()); log[flag]=!log[flag]; syncNutrition(today()); save(); flushSync(); renderMenus(); }
+function logMeal(slot,idx){
+  const d=menuDate();
+  if(d>today()){ toast('Jour à venir — planification seulement'); return; }
+  const log=getMealLog(d); log[slot]=(log[slot]===idx?null:idx);
+  syncNutrition(d); save(); flushSync(); renderMenus();
+}
+function toggleDayFlag(flag){
+  const d=menuDate();
+  if(d>today()){ toast('Jour à venir — planification seulement'); return; }
+  const log=getMealLog(d); log[flag]=!log[flag];
+  syncNutrition(d); save(); flushSync(); renderMenus();
+}
+
+// ---- Liste de courses de la semaine ----
+// Pour chaque jour de la semaine et chaque creneau : le plat coche s'il y en a un,
+// sinon la proposition n°1. Les quantites sont ensuite additionnees par ingredient.
+let COURSE_MON=null;
+function lundiDe(d){ const x=new Date(d+'T12:00:00'); return dateAddDays(d,-((x.getDay()+6)%7)); }
+function courseMon(){
+  let m=COURSE_MON||lundiDe(today()<MENU_START?MENU_START:(today()>MENU_END?MENU_END:today()));
+  if(m<lundiDe(MENU_START))m=lundiDe(MENU_START);
+  if(m>lundiDe(MENU_END))m=lundiDe(MENU_END);
+  return m;
+}
+function shiftCourseWeek(n){
+  const m=dateAddDays(courseMon(),7*n);
+  if(m<lundiDe(MENU_START)||m>lundiDe(MENU_END))return;
+  COURSE_MON=m; renderCourses();
+}
+function semaineJours(){
+  const m=courseMon(), out=[];
+  for(let i=0;i<7;i++){ const d=dateAddDays(m,i); if(d>=MENU_START&&d<=MENU_END) out.push(d); }
+  return out;
+}
+function platDuJour(slot,d){
+  const log=ST.mealLog[d]||{};
+  return (log[slot]!=null)?log[slot]:dayChoices(slot,d)[0];
+}
+function listeCourses(){
+  const agg={};
+  semaineJours().forEach(function(d){
+    SLOT_ORDER.forEach(function(sl){
+      const idx=platDuJour(sl,d), ings=(ING[sl]||[])[idx]||[];
+      ings.forEach(function(it){
+        const k=it[0]+'|'+it[2];
+        if(!agg[k]) agg[k]={nom:it[0], q:0, u:it[2], rayon:RAYON[it[0]]||'Épicerie'};
+        agg[k].q+=it[1];
+      });
+    });
+  });
+  return Object.keys(agg).map(function(k){return agg[k];});
+}
+function qLabel(x){
+  if(x.u==='g') return x.q>=1000 ? (x.q/1000).toFixed(x.q%1000?1:0)+' kg' : x.q+' g';
+  if(x.u==='ml') return x.q>=1000 ? (x.q/1000).toFixed(1)+' L' : x.q+' ml';
+  if(x.u==='tr') return x.q+' tranche'+(x.q>1?'s':'');
+  return x.q+(x.q>1?' pièces':' pièce');
+}
+function renderCourses(){
+  const el=document.getElementById('coursesBody'); if(!el)return;
+  const js=semaineJours(), m=courseMon();
+  if(!js.length){ el.innerHTML='<div class="card">Aucun jour du planning sur cette semaine.</div>'; return; }
+  const liste=listeCourses();
+  const parRayon=RAYON_ORDRE.map(function(r){
+    const items=liste.filter(function(x){return x.rayon===r;}).sort(function(a,b){return a.nom.localeCompare(b.nom);});
+    if(!items.length)return '';
+    return '<div class="crs-r">'+r+'</div>'+items.map(function(x){
+      return '<div class="crs-l"><span>'+x.nom+'</span><b>'+qLabel(x)+'</b></div>';
+    }).join('');
+  }).join('');
+  const jours=js.map(function(d){
+    const noms=SLOT_ORDER.map(function(sl){
+      const idx=platDuJour(sl,d); const choisi=(ST.mealLog[d]||{})[sl]!=null;
+      return '<div class="crs-p'+(choisi?' sel':'')+'">'+MENUS[sl].items[idx].n+'</div>';
+    }).join('');
+    return '<div class="crs-j"><div class="crs-jd">'+fmtLong(d)+'</div>'+noms+'</div>';
+  }).join('');
+  el.innerHTML=
+    '<div class="card"><div class="mn-row">'
+    +'<button class="mn-ar" onclick="shiftCourseWeek(-1)" '+(m<=lundiDe(MENU_START)?'disabled':'')+'>‹</button>'
+    +'<div class="mn-mid"><div class="mn-d">Semaine du '+fmtDate(js[0])+' au '+fmtDate(js[js.length-1])+'</div>'
+    +'<div class="mn-s">'+js.length+' jour'+(js.length>1?'s':'')+' · '+liste.length+' ingrédients</div></div>'
+    +'<button class="mn-ar" onclick="shiftCourseWeek(1)" '+(m>=lundiDe(MENU_END)?'disabled':'')+'>›</button></div></div>'
+    +'<div class="card"><div class="form-title" style="margin-bottom:10px">À acheter</div>'+parRayon
+    +'<div style="font-size:11px;color:var(--text3);margin-top:12px;line-height:1.5">'
+    +'Calculé sur la proposition n°1 de chaque créneau, sauf les repas déjà cochés dans le menu — '
+    +'coche tes plats et la liste se recalcule.</div></div>'
+    +'<div class="card"><div class="form-title" style="margin-bottom:10px">Les repas de la semaine</div>'+jours+'</div>';
+}
+function openCourses(){ showPage('courses'); }
 
 function renderMenus(){
-  const date=today(); const log=ST.mealLog[date]||{}; const t=dayTotals(date);
+  const date=menuDate(); const log=ST.mealLog[date]||{}; const t=dayTotals(date); const futur=date>today();
   const last=ST.balanceData.filter(b=>b.poids).slice(-1)[0]; const cut=(last?.poids||107)>95.5;
   const targetK = log.sport ? (cut?2150:2750) : (cut?1900:2450);
   const targetP = cut?160:150;
@@ -3723,10 +3896,19 @@ function renderMenus(){
     <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Objectif du jour</div>
     <div style="font-family:'DM Serif Display',serif;font-size:44px;line-height:1.2;color:var(--accent)">${targetK}</div>
     <div style="font-size:13px;color:var(--text2)">kcal · ${targetP} g de protéines</div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px">${log.sport?'Jour de séance (+250 kcal)':'Jour sans séance'} · jour ${menuDayIdx(date)+1}/21 du cycle</div>`;
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">${log.sport?'Jour de séance (+250 kcal)':'Jour sans séance'}</div>`;
+  const nav=document.getElementById('menuNav');
+  if(nav) nav.innerHTML=`
+    <div class="mn-row">
+      <button class="mn-ar" onclick="shiftMenuDate(-1)" ${date<=MENU_START?'disabled':''}>‹</button>
+      <div class="mn-mid"><div class="mn-d">${fmtLong(date)}</div>
+        <div class="mn-s">jour ${menuDayIdx(date)+1}/21 du cycle${date===today()?" · aujourd'hui":(futur?' · à venir':' · passé')}</div></div>
+      <button class="mn-ar" onclick="shiftMenuDate(1)" ${date>=MENU_END?'disabled':''}>›</button>
+    </div>
+    ${date===today()?'':'<button class="mn-today" onclick="menuToday()">Revenir à aujourd\u2019hui</button>'}`;
   document.getElementById('dayTracker').innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
-      <div class="form-title" style="margin:0">Aujourd'hui</div>
+      <div class="form-title" style="margin:0">${date===today()?"Aujourd'hui":fmtLong(date)}</div>
       <div style="font-size:12px;color:var(--text2)">cible ${targetK} kcal</div>
     </div>
     ${t.manual?'<div style="font-size:11px;color:var(--amber);margin-bottom:8px">✍️ Total saisi manuellement — les menus cochés ne sont pas comptés aujourd\'hui.</div>':''}
@@ -3751,7 +3933,7 @@ function renderMenus(){
         return `<div class="menu-opt${sel?' sel':''}" onclick="logMeal('${slot}',${idx})">
           <div style="flex:1"><div class="menu-n">${it.n}</div><div class="menu-d">${it.d}</div></div>
           <div class="menu-badges"><span class="b b-kcal">${it.kcal}</span><span class="b b-prot">${it.prot}g P</span><span class="b b-fib">${it.fib||0}g F</span>${fgpOK(it,slot)?'<span class="b b-fgp">FGP</span>':''}</div>
-          <div class="menu-check">${sel?'✓':'+'}</div>
+          <div class="menu-check">${sel?'✓':(futur?'📅':'+')}</div>
         </div>`; }).join('')}</div>`;
   }).join('');
   renderManualKcal();
