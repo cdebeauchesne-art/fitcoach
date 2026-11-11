@@ -140,6 +140,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .pend{display:flex;align-items:center;gap:10px;margin-top:11px;background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.32);border-radius:10px;padding:10px 11px;font-size:12.5px;line-height:1.4}
 .pend-d{font-size:11.5px;color:var(--text2);margin-top:2px}
 .pend-b{flex:0 0 auto;background:var(--amber);color:#111;border:none;border-radius:8px;padding:8px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.pend-x{flex:0 0 auto;background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:12px;cursor:pointer}
 .chg-grid{display:flex;gap:8px;margin-bottom:10px}
 .chg-box{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:9px 10px}
 .chg-box.goal{border-color:var(--accent)}
@@ -399,6 +400,7 @@ select option{background:var(--bg3)}
 <!-- PAGE CHOIX DE SEANCE -->
 <div class="page" id="page-pick">
   <div id="pickChoice"></div>
+  <div class="card" id="pickLast" style="margin-top:16px"></div>
 </div>
 
 <!-- PAGE SEANCE HOLIDAYS -->
@@ -1840,6 +1842,18 @@ function pendingSessions(){
   });
   return out.sort(function(a,b){return a.date<b.date?1:-1;});
 }
+// Ecarte une seance restee en brouillon : on supprime ses series non enregistrees
+// pour qu'elle cesse d'apparaitre, sans toucher au journal.
+function ignorePending(id,date){
+  const it=pendingSessions().filter(function(x){return x.seanceId===id&&x.date===date;})[0];
+  if(!it){ renderPickLast(); return; }
+  Object.keys(ST.seriesState||{}).forEach(function(k){
+    const m=/^t_(S\d+)_(.+)_(\d+)$/.exec(k); if(!m)return;
+    let d=/^[0-6]$/.test(m[2])?dateAddDays(ST.weekStart,+m[2]):m[2];
+    if(m[1]===id&&d===date) delete ST.seriesState[k];
+  });
+  save(); flushSync(); renderPickLast(); toast('Séance écartée');
+}
 function recoverSession(id,date){
   const it=pendingSessions().filter(function(x){return x.seanceId===id&&x.date===date;})[0];
   if(!it){ toast('Séance introuvable'); return; }
@@ -1864,7 +1878,7 @@ function renderPickLast(){
   const L=lastLoggedSession();
   if(!L){
     el.innerHTML='<div class="form-title" style="margin:0 0 6px">Derni\u00e8re s\u00e9ance r\u00e9alis\u00e9e</div>'
-      +'<div class="last-empty">Aucune s\u00e9ance enregistr\u00e9e pour l\u2019instant. Choisis-en une ci-dessous \u2014 elle appara\u00eetra ici une fois termin\u00e9e.</div>'
+      +'<div class="last-empty">Aucune s\u00e9ance enregistr\u00e9e pour l\u2019instant. Choisis-en une ci-dessus \u2014 elle appara\u00eetra ici une fois termin\u00e9e.</div>'
       +pendingHTML();
     return;
   }
@@ -1884,14 +1898,17 @@ function renderPickLast(){
     +pendingHTML();
 }
 function pendingHTML(){
-  const ps=pendingSessions(); if(!ps.length)return '';
+  const lim=dateAddDays(today(),-10);
+  const ps=pendingSessions().filter(function(x){return x.date>=lim;});
+  if(!ps.length)return '';
   return ps.slice(0,3).map(function(x){
     const s=SEANCE_MAP[x.seanceId];
     const n=daysAgo(x.date);
     const quand=n===0?"aujourd\u2019hui":(n===1?'hier':'le '+fmtDate(x.date));
     return '<div class="pend"><div style="flex:1;min-width:0"><b>'+s.label+'</b> \u2014 '+quand
       +'<div class="pend-d">'+x.n+' exercice'+(x.n>1?'s':'')+' rempli'+(x.n>1?'s':'')+', pas encore enregistr\u00e9'+(x.n>1?'s':'')+' au journal</div></div>'
-      +'<button class="pend-b" onclick="recoverSession(\''+x.seanceId+'\',\''+x.date+'\')">Enregistrer</button></div>';
+      +'<button class="pend-b" onclick="recoverSession(\''+x.seanceId+'\',\''+x.date+'\')">Enregistrer</button>'
+      +'<button class="pend-x" onclick="ignorePending(\''+x.seanceId+'\',\''+x.date+'\')" title="Ignorer">✕</button></div>';
   }).join('');
 }
 function startSeance(id){
@@ -2211,7 +2228,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v52 · 09/11/2026';
+const APP_BUILD='v53 · 11/11/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
