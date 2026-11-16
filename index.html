@@ -159,6 +159,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .muscle-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(200,240,96,.12);color:var(--accent)}
 /* CHARGE */
 .charge-block{padding:12px 16px;border-bottom:1px solid var(--border)}
+.chg-ok{margin-top:8px;font-size:11.5px;color:var(--accent);line-height:1.45}
 .charge-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .charge-label{font-size:12px;color:var(--text2);min-width:80px}
 .charge-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:-.5px}
@@ -2298,7 +2299,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v55 · 13/11/2026';
+const APP_BUILD='v56 · 16/11/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
@@ -2923,6 +2924,12 @@ function renderSession(){
     const chKey=exChargeKey(ex);
     const charge=ST.charges[chKey]?.charge ?? ex.initCharge;
     const goal=goalCharge(ex,charge);
+    // Si une charge a deja ete enregistree pour la seance de ce jour, c'est elle
+    // qui reste dans le champ : l'objectif n'est qu'une proposition de depart.
+    const chRec=ST.charges[chKey];
+    const sDate=ST.pickedDate||today();
+    const chSet=(chRec&&chRec.date===sDate)?chRec.charge:null;
+    const chVal=(chSet!=null)?chSet:goal.next;
     const nSets=exSets(ex,ts);
     const doneCount=ts.done.length;
     const allDone=doneCount>=nSets;
@@ -2989,9 +2996,10 @@ function renderSession(){
           </div>
           <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Charge réellement utilisée :</div>
           <div class="charge-inputs">
-            <input type="number" id="ci-${i}" value="${goal.next}" step="2.5" min="0">
+            <input type="number" id="ci-${i}" value="${chVal}" step="2.5" min="0">
             <button class="charge-save-btn" onclick="saveCharge(${i})">Enregistrer</button>
           </div>
+          ${chSet!=null?`<div class="chg-ok">✓ Charge du jour enregistrée : <b>${chSet} kg</b>${chSet!==goal.next?' — tu as modifié l\u2019objectif de '+goal.next+' kg':''}</div>`:''}
         </div>`:''}
         ${seriesHTML}
         ${progHint}
@@ -3167,8 +3175,8 @@ function saveCharge(i){
   const ex=curEx(i); if(!ex)return;
   const val=parseFloat(document.getElementById('ci-'+i).value);
   if(isNaN(val)){ toast('Charge invalide'); return; }
-  ST.charges[exChargeKey(ex)]={charge:val, date:today()};
-  save(); renderSession(); openExo(i);
+  ST.charges[exChargeKey(ex)]={charge:val, date:ST.pickedDate||today()};
+  save(); flushSync&&flushSync(); renderSession(); openExo(i);
   toast('Charge : '+val+' kg ✓');
 }
 
