@@ -159,7 +159,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .muscle-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:rgba(200,240,96,.12);color:var(--accent)}
 /* CHARGE */
 .charge-block{padding:12px 16px;border-bottom:1px solid var(--border)}
-.chg-ok{margin-top:8px;font-size:11.5px;color:var(--accent);line-height:1.45}
+.wrm{background:rgba(255,255,255,.025)}
+.wrm-edit{flex:0 0 auto;background:transparent;color:var(--text3);border:1px solid var(--border);
+  border-radius:8px;padding:7px 12px;font-family:inherit;font-size:12px;cursor:pointer}
+.wrm-in{display:flex;gap:6px;flex:1;min-width:0;justify-content:center}
+.wrm-in input{width:72px;text-align:center;padding:7px 4px;font-size:14px}
+.pal-on{font-size:12.5px;color:var(--amber);line-height:1.5}
+.pal-off{font-size:12.5px;color:var(--text2);line-height:1.5}
+.pal-btns{display:flex;gap:8px;margin-top:10px}
+.pal-btns .sbtn{flex:1}
+.mrc-slots{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+.mrc-s{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px;color:var(--text3)}
+.mrc-s.on{color:var(--text)}
+.mrc-s.on .mrc-v{color:var(--blue);font-weight:600}
+.mrc-note{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.45}
 .charge-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .charge-label{font-size:12px;color:var(--text2);min-width:80px}
 .charge-val{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);letter-spacing:-.5px}
@@ -402,6 +415,7 @@ select option{background:var(--bg3)}
 <div class="page" id="page-pick">
   <div class="card" id="pickProgress"></div>
   <div id="pickChoice"></div>
+  <div class="card" id="palierCard" style="margin-top:16px"></div>
   <div class="card" id="pickLast" style="margin-top:16px"></div>
 </div>
 
@@ -1228,9 +1242,9 @@ const SEANCE_H5 = {
 // Marche longue : le seul levier qui attaque vraiment la graisse viscérale.
 // Durée avant intensité — c'est le temps passé en zone basse qui compte.
 const SEANCE_MARCHE = {
-  id:'M1', label:'Marche longue', sub:'90 min · FC 95-115', icon:'🚶', tag:'tag-cardio', si:'si-cardio',
+  id:'M1', label:'Marche longue', sub:'60 à 120 min · FC 95-115', icon:'🚶', tag:'tag-cardio', si:'si-cardio',
   exercises:[
-    {id:'marche', name:'Marche soutenue — 90 min', sets:1, reps:0, restSec:0, initCharge:0, prog:0,
+    {id:'marche', name:'Marche soutenue', sets:1, reps:0, restSec:0, initCharge:0, prog:0,
      isTime:true, timeReps:5400, muscles:['Cardio','Endurance','Graisse viscérale'],
      tip:'Allure soutenue mais conversation possible : 5 à 5,5 km/h, FC 95-115 bpm. Terrain vallonné ou tapis incliné à 5 % si c\'est plat. Ce n\'est pas l\'intensité qui fait fondre la graisse viscérale, c\'est la durée — mieux vaut 90 min tranquilles que 30 min rapides.',
      svg:'z2'}
@@ -1360,7 +1374,7 @@ const ILLUSTRATIONS = {
 let ST = {
   currentWeekDay: new Date().getDay()===0?6:new Date().getDay()-1,
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
-  dailyWeights:{}, charges:{}, feedbacks:[],
+  dailyWeights:{}, charges:{}, feedbacks:[], palierUntil:null,
   nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{}, mealLog:{},
   sessionLog:[], pickedSeance:null, pickedDate:null, warmup:{}, visOpen:{}, extraExos:{},
   weekStart: weekStartDate(),
@@ -1409,6 +1423,7 @@ function applyPayload(p){
   ST.dailyWeights=p.dailyWeights||{};
   ST.charges=p.charges||{};
   ST.feedbacks=p.feedbacks||[];
+  ST.palierUntil=p.palierUntil||null;
   ST.nutrition=p.nutrition||[];
   ST.lastStrength=p.lastStrength||null;
   ST.lastWizard=p.lastWizard||null;
@@ -1486,6 +1501,7 @@ function payload(){
     dailyWeights:ST.dailyWeights, charges:ST.charges,
     feedbacks:ST.feedbacks, nutrition:ST.nutrition,
     lastStrength:ST.lastStrength, lastWizard:ST.lastWizard, exoVariant:ST.exoVariant, mealLog:ST.mealLog,
+    palierUntil:ST.palierUntil||null,
   };
 }
 function save(){
@@ -1646,6 +1662,7 @@ function mergePayload(p){
     if(!a || nb>=na) ST.seriesState[k]=b;
   });
   ST.warmup=ST.warmup||{}; Object.assign(ST.warmup, p.warmup||{});
+  if((p.palierUntil||'')>(ST.palierUntil||'')) ST.palierUntil=p.palierUntil;
   const dB=new Set(ST.balanceData.map(b=>b.date));
   (p.balanceData||[]).forEach(b=>{ if(!dB.has(b.date)) ST.balanceData.push(b); });
   const dA=new Set(ST.activities.map(a=>a.date+'|'+(a.type||'')+'|'+(a.kcal||'')+'|'+(a.dur||'')));
@@ -1852,13 +1869,15 @@ function renderPick(){
         <span style="color:var(--text2)">${o.done>=o.total?'Objectif atteint 💪':(o.total-o.done)+' restante'+((o.total-o.done)>1?'s':'')}</span>
       </div>
       <div style="height:10px;background:var(--bg4);border-radius:5px;overflow:hidden;margin-top:12px">
-        <div style="height:10px;border-radius:5px;background:var(--blue);width:${Math.min(100,Math.round(o.walks/o.walkTotal*100))}%;transition:width .4s"></div>
+        <div style="height:10px;border-radius:5px;background:${o.walkOK?'var(--accent)':'var(--blue)'};width:${Math.min(100,Math.round(o.walkMin/o.walkCible*100))}%;transition:width .4s"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px">
-        <span style="color:${o.walks>=o.walkTotal?'var(--blue)':'var(--text)'};font-weight:700">🚶 ${o.walks}/${o.walkTotal} marche longue</span>
-        <span style="color:var(--text2)">${o.walks>=o.walkTotal?'faite ✓':'cible graisse viscérale'}</span>
-      </div>`;
+        <span style="color:${o.walkOK?'var(--accent)':'var(--text)'};font-weight:700">🚶 ${o.walkMin}/${o.walkCible} min de marche</span>
+        <span style="color:var(--text2)">${o.walkOK?'objectif atteint ✓':(o.walkCible-o.walkMin)+' min restantes'}</span>
+      </div>
+      <div class="mrc-slots">${marcheSlotsHTML(o)}</div>`;
   }
+  renderPalier();
   renderPickLast();
   const c=document.getElementById('pickChoice'); if(!c)return;
   const reco=nextStrength();
@@ -1875,12 +1894,12 @@ function renderPick(){
       ${done?'<span class="wz-badge" style="background:var(--accent);color:#111">faite ✓</span>'
             :(isReco?'<span class="wz-badge">conseillé</span>':'')}</button>`;
   }).join('');
-  const wDone=weekWalks().length>0;
+  const wDone=weekWalkMin()>=MARCHE_CIBLE_MIN;
   const marche=`<button class="wz-opt${wDone?'':' reco'}" style="${wDone?'border-color:var(--blue)':''}" onclick="startSeance('M1')">
       <div class="wz-opt-ic">${ILLUSTRATIONS.z2||'🚶'}</div>
       <div style="flex:1;min-width:0">
-        <div class="wz-opt-tt">Marche longue · 90 min</div>
-        <div class="wz-opt-ds">FC 95-115 · la séance qui attaque la graisse viscérale</div>
+        <div class="wz-opt-tt">Marche longue · 60 à 120 min</div>
+        <div class="wz-opt-ds">FC 95-115 · ${weekWalkMin()}/${MARCHE_CIBLE_MIN} min cette semaine</div>
       </div>
       ${wDone?'<span class="wz-badge" style="background:var(--blue);color:#111">faite ✓</span>'
              :'<span class="wz-badge" style="background:var(--blue);color:#111">à faire</span>'}</button>`;
@@ -1943,6 +1962,21 @@ function daysAgo(d){
   if(!d)return null;
   const a=new Date(d+'T00:00:00'), b=new Date(today()+'T00:00:00');
   return Math.round((b-a)/86400000);
+}
+// Deux creneaux d'affichage, remplis par les sorties reellement faites, dans
+// l'ordre ou elles arrivent. Aucun jour n'est impose : c'est le total qui compte.
+function marcheSlotsHTML(o){
+  const out=[];
+  for(let k=0;k<Math.max(MARCHE_SORTIES,o.walkOut.length);k++){
+    const w=o.walkOut[k];
+    out.push('<div class="mrc-s'+(w?' on':'')+'">'
+      +'<span class="mrc-n">Sortie '+(k+1)+'</span>'
+      +'<span class="mrc-v">'+(w?(fmtDate(w.date)+' · '+(w.min?w.min+' min':'durée à saisir')):'—')+'</span></div>');
+  }
+  return out.join('')
+    +'<div class="mrc-note">'+(o.walkOK
+      ? 'Les '+o.walkCible+' min sont faites — le nombre de sorties n\u2019a pas d\u2019importance.'
+      : 'L\u2019objectif tombe dès '+o.walkCible+' min au total, en une sortie ou en deux.')+'</div>';
 }
 function renderPickLast(){
   const el=document.getElementById('pickLast'); if(!el)return;
@@ -2057,11 +2091,21 @@ function buildLogEntry(seanceId,dateStr,keyFn){
   const all=list.map(function(ex,i){
     const ts=ST.seriesState[keyFn(i,ex)]||{done:[]};
     const charge=(ST.charges[exChargeKey(ex)]||{}).charge ?? ex.initCharge;
-    return {name:exVariantName(ex), sets:(ts.done||[]).slice(), charge:charge,
-            isTime:!!ex.isTime, libre:!!ex.libre};
+    const ws=Array.isArray(ts.w)?ts.w.slice(0,(ts.done||[]).length):[];
+    const nums=ws.filter(function(x){return typeof x==='number'&&x>0;});
+    // charge de reference du journal = la plus legere des series de travail,
+    // c'est-a-dire le poids reellement tenu sur toutes les series.
+    const chEff=nums.length?Math.min.apply(null,nums):charge;
+    return {name:exVariantName(ex), sets:(ts.done||[]).slice(), w:ws, charge:chEff,
+            warm:ts.warm||null, isTime:!!ex.isTime, libre:!!ex.libre};
   }).filter(function(e){return e.sets.length>0;});
   if(!all.length) return null;
-  const volume=all.reduce(function(t,e){ return t+(e.isTime?0:e.sets.reduce(function(a,r){return a+r*(e.charge||0);},0)); },0);
+  const volume=all.reduce(function(t,e){
+    if(e.isTime) return t;
+    return t+e.sets.reduce(function(a,r,k){
+      const w=(e.w&&typeof e.w[k]==='number'&&e.w[k]>0)?e.w[k]:(e.charge||0);
+      return a+r*w; },0);
+  },0);
   return {date:dateStr, seanceId:seanceId, label:seance.label, role:(SESSION_ROLE[seanceId]||{}).title||'',
     exos:all, volume:Math.round(volume), nbExos:all.length, totalExos:list.length,
     warmup:warmupDone(seance), savedAt:new Date().toISOString()};
@@ -2160,11 +2204,37 @@ function weekWalks(){
   });
   return Object.keys(set).sort();
 }
+// Cible hebdomadaire de marche, en MINUTES. Deux creneaux sont proposes parce
+// que c'est le rythme reel (une longue, une plus courte), mais l'objectif se
+// juge sur le total : 150 min en une seule sortie valent 150 min en deux.
+const MARCHE_CIBLE_MIN=150, MARCHE_SORTIES=2;
+function durMin(d){
+  const p=String(d||'').split(':');
+  if(p.length<2) return 0;
+  return (+p[0])*60+(+p[1]);
+}
+function weekWalkOutings(){
+  const byDate={};
+  (ST.activities||[]).forEach(function(a){
+    if(!a||a.date<ST.weekStart||!WALK_RE.test(a.type||''))return;
+    byDate[a.date]=(byDate[a.date]||0)+durMin(a.dur);
+  });
+  (ST.sessionLog||[]).forEach(function(l){
+    if(l&&l.date>=ST.weekStart&&l.seanceId==='M1'&&byDate[l.date]==null) byDate[l.date]=0;
+  });
+  return Object.keys(byDate).sort().map(function(d){ return {date:d, min:Math.round(byDate[d])}; });
+}
+function weekWalkMin(){
+  return weekWalkOutings().reduce(function(a,x){ return a+x.min; },0);
+}
 function weekObjective(){
   const done=weekSessions().filter(function(l){return l.seanceId!=='M1';}).length;
   const total=3;
-  const walks=weekWalks().length, walkTotal=1;
-  return {done:Math.min(done,total), total, walks:walks, walkTotal:walkTotal,
+  const sorties=weekWalkOutings(), min=weekWalkMin();
+  return {done:Math.min(done,total), total,
+    walks:sorties.length, walkTotal:MARCHE_SORTIES,
+    walkMin:min, walkCible:MARCHE_CIBLE_MIN, walkOut:sorties,
+    walkOK:min>=MARCHE_CIBLE_MIN,
     pctRemaining:Math.max(0,Math.round((total-done)/total*100))};
 }
 function renderWeekObjective(){
@@ -2299,7 +2369,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v56 · 16/11/2026';
+const APP_BUILD='v59 · 19/11/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
@@ -2936,10 +3006,11 @@ function renderSession(){
     const unit=ex.isTime?'s':' reps';
 
     // Lignes de séries — un bouton "Valider" par série, chrono auto
-    let seriesHTML='<div class="sets-wrap">';
+    let seriesHTML='<div class="sets-wrap">'+warmRow(tk,i,ex);
     for(let s=0;s<nSets;s++){
       if(s<doneCount){
-        seriesHTML+=`<div class="set-row"><div class="set-lbl done">✓ Série ${s+1}</div><div class="set-done-val">${ts.done[s]}${unit}</div></div>`;
+        const wS=(ts.w&&ts.w[s]!=null)?ts.w[s]:null;
+        seriesHTML+=`<div class="set-row"><div class="set-lbl done">✓ Série ${s+1}</div><div class="set-done-val">${ts.done[s]}${unit}${(!ex.isTime&&wS)?' × <b style="color:var(--accent)">'+wS+' kg</b>':''}</div></div>`;
       } else if(s===doneCount && ts.resting){
         seriesHTML+=`<div class="rest-row"><div class="set-lbl" style="color:var(--amber)">⏱ Repos</div><div class="cd" id="cd-${tk}">${ts.restLeft}s</div><button class="set-validate rest" onclick="skipRest('${tk}',${i})">Passer ⏭</button></div>`;
       } else if(s===doneCount){
@@ -2958,7 +3029,7 @@ function renderSession(){
     seriesHTML+='</div>';
 
     let progHint='';
-    if(allDone && !ex.isTime && ex.prog>0){
+    if(allDone && !ex.isTime && ex.prog>0 && !palierActif()){
       const minReps=Math.min(...ts.done);
       if(minReps>=ex.reps) progHint=`<div style="padding:8px 16px;font-size:12px;color:var(--accent)">🎯 Objectifs atteints — vise ${(charge+ex.prog)} kg la prochaine fois.</div>`;
     }
@@ -2989,17 +3060,16 @@ function renderSession(){
               <div class="chg-d">${goal.prevDate?fmtDate(goal.prevDate):'charge de référence'}</div>
             </div>
             <div class="chg-box goal">
-              <div class="chg-k" style="color:var(--accent)">Objectif du jour</div>
-              <div class="chg-v" style="color:var(--accent)">${goal.next}<span class="charge-unit"> kg</span></div>
-              <div class="chg-d">${goal.why}</div>
+              <div class="chg-k" style="color:var(--accent)">${chSet!=null?'Charge du jour':'Objectif du jour'}</div>
+              <div class="chg-v" style="color:var(--accent)">${chVal}<span class="charge-unit"> kg</span></div>
+              <div class="chg-d">${chSet==null?goal.why:(chSet===goal.next?'conforme à l\u2019objectif ✓':'objectif '+goal.next+' kg — tu as choisi '+chSet)}</div>
             </div>
           </div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Charge réellement utilisée :</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:6px">Charge de la prochaine série :</div>
           <div class="charge-inputs">
             <input type="number" id="ci-${i}" value="${chVal}" step="2.5" min="0">
             <button class="charge-save-btn" onclick="saveCharge(${i})">Enregistrer</button>
           </div>
-          ${chSet!=null?`<div class="chg-ok">✓ Charge du jour enregistrée : <b>${chSet} kg</b>${chSet!==goal.next?' — tu as modifié l\u2019objectif de '+goal.next+' kg':''}</div>`:''}
         </div>`:''}
         ${seriesHTML}
         ${progHint}
@@ -3155,12 +3225,36 @@ function lastLoggedExo(name){
   }
   return null;
 }
+// Palier : periode pendant laquelle les charges ne montent plus, meme si toutes
+// les series sont validees. Sert a casser la saturation avant de repartir.
+function palierActif(){ return !!(ST.palierUntil && ST.palierUntil>=today()); }
+function setPalier(sem){
+  ST.palierUntil = sem ? dateAddDays(today(), sem*7) : null;
+  save(); if(typeof flushSync==='function') flushSync();
+  renderPalier(); if(typeof renderSession==='function') renderSession();
+  toast(sem ? ('Palier posé jusqu\u2019au '+fmtDate(ST.palierUntil)) : 'Progression relancée');
+}
+function renderPalier(){
+  const el=document.getElementById('palierCard'); if(!el)return;
+  const a=palierActif();
+  el.innerHTML='<div class="form-title" style="margin:0 0 8px">Progression des charges</div>'
+    +(a ? '<div class="pal-on">⏸ Palier en cours jusqu\u2019au <b>'+fmtDate(ST.palierUntil)
+          +'</b>. Les charges ne montent plus : l\u2019objectif reste sur la dernière charge utilisée.</div>'
+        : '<div class="pal-off">Les charges montent de +prog dès que toutes les séries sont validées. '
+          +'Pose un palier si tu satures : même charge pendant une semaine ou deux, puis on repart.</div>')
+    +'<div class="pal-btns">'
+    +(a ? '<button class="sbtn sbtn-add" onclick="setPalier(0)">▶ Relancer la progression</button>'
+        : '<button class="sbtn sbtn-reset" onclick="setPalier(1)">⏸ Palier 1 semaine</button>'
+         +'<button class="sbtn sbtn-reset" onclick="setPalier(2)">⏸ Palier 2 semaines</button>')
+    +'</div>';
+}
 function goalCharge(ex,charge){
   const last=lastLoggedExo(exVariantName(ex));
   if(!last||!last.e.charge){ return {prev:charge, prevDate:null, next:charge, why:'même charge pour caler la technique'}; }
   const prev=last.e.charge;
   const sets=(last.e.sets||[]).filter(function(x){return typeof x==='number';});
   const full=sets.length>=ex.sets && sets.length>0 && Math.min.apply(null,sets)>=(ex.isTime?ex.timeReps:ex.reps);
+  if(palierActif()) return {prev:prev, prevDate:last.date, next:prev, why:'palier jusqu\u2019au '+fmtDate(ST.palierUntil)+' — on garde la charge'};
   if(!ex.isTime && ex.prog>0 && full) return {prev:prev, prevDate:last.date, next:prev+ex.prog, why:'toutes les séries validées → +'+ex.prog+' kg'};
   return {prev:prev, prevDate:last.date, next:prev, why:'on reste dessus jusqu\'à valider toutes les séries'};
 }
@@ -3192,6 +3286,32 @@ function toggleExpand(i){
 // =================================================================
 // SÉRIES — bouton "Valider" par série + chrono (pas de bulles)
 // =================================================================
+// Serie a blanc : une mise en place avant les series de travail. Poids et reps
+// libres (0 kg accepte = a vide). Elle ne compte ni dans le volume ni dans la
+// decision de progression : c'est un reglage, pas du travail.
+function warmRow(tk,i,ex){
+  if(ex.isTime || !(ex.initCharge>0)) return '';
+  const ts=getTS(tk);
+  if(ts.warm && ts.warm.r!=null){
+    return '<div class="set-row wrm"><div class="set-lbl done">✓ À blanc</div>'
+      +'<div class="set-done-val">'+ts.warm.r+' reps'+(ts.warm.w>0?' × '+ts.warm.w+' kg':' · à vide')+'</div>'
+      +'<button class="wrm-edit" onclick="clearWarm(\''+tk+'\','+i+')">Modifier</button></div>';
+  }
+  return '<div class="set-row wrm"><div class="set-lbl">À blanc</div>'
+    +'<div class="wrm-in"><input type="number" id="ww-'+tk+'" placeholder="kg" step="2.5" min="0">'
+    +'<input type="number" id="wr-'+tk+'" placeholder="reps" step="1" min="0"></div>'
+    +'<button class="set-validate" onclick="saveWarm(\''+tk+'\','+i+')">Valider ✓</button></div>';
+}
+function saveWarm(tk,i){
+  const ts=getTS(tk);
+  const ew=document.getElementById('ww-'+tk), er=document.getElementById('wr-'+tk);
+  const w=parseFloat(ew?ew.value:''), r=parseInt(er?er.value:'',10);
+  if(isNaN(r)){ toast('Indique au moins le nombre de reps'); return; }
+  ts.warm={w:isNaN(w)?0:w, r:r};
+  save(); if(typeof flushSync==='function') flushSync();
+  renderSession(); openExo(i); toast('Série à blanc notée');
+}
+function clearWarm(tk,i){ const ts=getTS(tk); ts.warm=null; save(); renderSession(); openExo(i); }
 function getTS(tk){
   let t=ST.seriesState[tk];
   if(!t || !Array.isArray(t.done)){ t={done:[],resting:false,restLeft:0,pending:null}; ST.seriesState[tk]=t; }
@@ -3207,6 +3327,11 @@ function stepReps(tk,i,d){
 function validateSet(tk,i){
   const ex=curEx(i); if(!ex)return; const ts=getTS(tk);
   const reps=ex.isTime?ex.timeReps:(ts.pending ?? ex.reps);
+  // Chaque serie fige la charge affichee au moment ou elle est validee :
+  // changer la charge entre deux series donne donc bien deux poids differents.
+  ts.w=Array.isArray(ts.w)?ts.w:[];
+  while(ts.w.length<ts.done.length) ts.w.push(null);
+  ts.w.push(ex.isTime?null:((ST.charges[exChargeKey(ex)]||{}).charge ?? ex.initCharge));
   ts.done.push(reps); ts.pending=null;
   beep(880,120); setTimeout(()=>beep(1100,160),140);
   if(ts.done.length>=exSets(ex,ts)){ ST.doneExos[curExoKey(i)]=true; save(); toast('Exercice terminé ✓'); autoLogIfComplete(); renderSession(); openExo(i); }
