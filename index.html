@@ -166,8 +166,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .wrm-in input{width:72px;text-align:center;padding:7px 4px;font-size:14px}
 .pal-on{font-size:12.5px;color:var(--amber);line-height:1.5}
 .pal-off{font-size:12.5px;color:var(--text2);line-height:1.5}
-.pal-btns{display:flex;gap:8px;margin-top:10px}
-.pal-btns .sbtn{flex:1}
+.cel{position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;
+  background:rgba(8,8,8,.86);animation:celIn .22s ease-out;cursor:pointer;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.cel.out{animation:celOut .6s forwards}
+.cel-box{text-align:center;max-width:320px}
+.cel-emo{font-size:86px;line-height:1;animation:celJump .66s cubic-bezier(.28,.84,.42,1) infinite}
+.cel-t{font-family:'DM Serif Display',serif;font-size:46px;color:var(--accent);
+  margin-top:12px;letter-spacing:1px;text-wrap:balance}
+.cel-s{font-size:14px;color:var(--text2);margin-top:10px;line-height:1.55}
+.cel-x{font-size:11px;color:var(--text3);margin-top:22px;text-transform:uppercase;letter-spacing:1px}
+@keyframes celJump{0%,100%{transform:translateY(0) scale(1)}
+  28%{transform:translateY(-40px) scale(1.09)}
+  52%{transform:translateY(0) scale(.93)}
+  70%{transform:translateY(-13px) scale(1.03)}
+  86%{transform:translateY(0) scale(.98)}}
+@keyframes celIn{from{opacity:0}to{opacity:1}}
+@keyframes celOut{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cel-emo{animation:none}.cel{animation:none}}
+.sw{display:flex;align-items:center;gap:12px;margin-top:10px}
+.sw-t{position:relative;width:52px;height:30px;flex:0 0 52px;display:block}
+.sw-t input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:relative;z-index:2}
+.sw-b{position:absolute;inset:0;border-radius:15px;background:var(--bg4);
+  border:1px solid var(--border);transition:background .2s,border-color .2s;pointer-events:none}
+.sw-b::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:var(--text3);transition:left .2s,background .2s}
+.sw-t input:checked ~ .sw-b{background:rgba(163,230,53,.22);border-color:var(--accent)}
+.sw-t input:checked ~ .sw-b::after{left:27px;background:var(--accent)}
+.sw-t input:focus-visible ~ .sw-b{outline:2px solid var(--accent);outline-offset:2px}
+.sw-l{font-size:13.5px;font-weight:600;line-height:1.35}
+.pal-warn{margin-top:10px;font-size:12px;color:var(--amber);line-height:1.5;
+  background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:9px 11px}
 .mrc-slots{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
 .mrc-s{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px;color:var(--text3)}
 .mrc-s.on{color:var(--text)}
@@ -1374,7 +1403,7 @@ const ILLUSTRATIONS = {
 let ST = {
   currentWeekDay: new Date().getDay()===0?6:new Date().getDay()-1,
   balanceData:[], activities:[], doneExos:{}, seriesState:{},
-  dailyWeights:{}, charges:{}, feedbacks:[], palierUntil:null,
+  dailyWeights:{}, charges:{}, feedbacks:[], progOn:true, progOffSince:null, celebre:null,
   nutrition:[], lastStrength:null, lastWizard:null, exoVariant:{}, mealLog:{},
   sessionLog:[], pickedSeance:null, pickedDate:null, warmup:{}, visOpen:{}, extraExos:{},
   weekStart: weekStartDate(),
@@ -1423,7 +1452,9 @@ function applyPayload(p){
   ST.dailyWeights=p.dailyWeights||{};
   ST.charges=p.charges||{};
   ST.feedbacks=p.feedbacks||[];
-  ST.palierUntil=p.palierUntil||null;
+  ST.progOn = (p.progOn===undefined) ? !(p.palierUntil && p.palierUntil>=today()) : (p.progOn!==false);
+  ST.progOffSince = p.progOffSince || (ST.progOn?null:today());
+  ST.celebre = p.celebre || null;
   ST.nutrition=p.nutrition||[];
   ST.lastStrength=p.lastStrength||null;
   ST.lastWizard=p.lastWizard||null;
@@ -1501,7 +1532,7 @@ function payload(){
     dailyWeights:ST.dailyWeights, charges:ST.charges,
     feedbacks:ST.feedbacks, nutrition:ST.nutrition,
     lastStrength:ST.lastStrength, lastWizard:ST.lastWizard, exoVariant:ST.exoVariant, mealLog:ST.mealLog,
-    palierUntil:ST.palierUntil||null,
+    progOn:ST.progOn!==false, progOffSince:ST.progOffSince||null, celebre:ST.celebre||null,
   };
 }
 function save(){
@@ -1662,7 +1693,10 @@ function mergePayload(p){
     if(!a || nb>=na) ST.seriesState[k]=b;
   });
   ST.warmup=ST.warmup||{}; Object.assign(ST.warmup, p.warmup||{});
-  if((p.palierUntil||'')>(ST.palierUntil||'')) ST.palierUntil=p.palierUntil;
+  if((p.celebre||'')>(ST.celebre||'')) ST.celebre=p.celebre;
+  if(p.progOn!==undefined && (p.progOffSince||'')>(ST.progOffSince||'')){
+    ST.progOn=p.progOn!==false; ST.progOffSince=p.progOffSince||null;
+  }
   const dB=new Set(ST.balanceData.map(b=>b.date));
   (p.balanceData||[]).forEach(b=>{ if(!dB.has(b.date)) ST.balanceData.push(b); });
   const dA=new Set(ST.activities.map(a=>a.date+'|'+(a.type||'')+'|'+(a.kcal||'')+'|'+(a.dur||'')));
@@ -1894,17 +1928,26 @@ function renderPick(){
       ${done?'<span class="wz-badge" style="background:var(--accent);color:#111">faite ✓</span>'
             :(isReco?'<span class="wz-badge">conseillé</span>':'')}</button>`;
   }).join('');
-  const wDone=weekWalkMin()>=MARCHE_CIBLE_MIN;
-  const marche=`<button class="wz-opt${wDone?'':' reco'}" style="${wDone?'border-color:var(--blue)':''}" onclick="startSeance('M1')">
+  // Deux sorties distinctes. Aucun jour impose : elles se remplissent dans
+  // l'ordre ou les marches arrivent, et l'objectif se juge sur le total.
+  const wOut=weekWalkOutings(), wMin=weekWalkMin(), wOK=wMin>=MARCHE_CIBLE_MIN;
+  let marche='';
+  for(let k=0;k<Math.max(MARCHE_SORTIES,wOut.length);k++){
+    const w=wOut[k], f=!!w;
+    marche+=`<button class="wz-opt${f?'':' reco'}" style="${f?'border-color:var(--blue)':''}" onclick="startSeance('M1')">
       <div class="wz-opt-ic">${ILLUSTRATIONS.z2||'🚶'}</div>
       <div style="flex:1;min-width:0">
-        <div class="wz-opt-tt">Marche longue · 60 à 120 min</div>
-        <div class="wz-opt-ds">FC 95-115 · ${weekWalkMin()}/${MARCHE_CIBLE_MIN} min cette semaine</div>
+        <div class="wz-opt-tt">Marche · sortie ${k+1}</div>
+        <div class="wz-opt-ds">${f?(fmtDate(w.date)+' · '+(w.min?w.min+' min':'durée à saisir')):'FC 95-115 · durée libre'}</div>
       </div>
-      ${wDone?'<span class="wz-badge" style="background:var(--blue);color:#111">faite ✓</span>'
-             :'<span class="wz-badge" style="background:var(--blue);color:#111">à faire</span>'}</button>`;
+      ${f?('<span class="wz-badge" style="background:var(--blue);color:#111">'+(w.min?w.min+' min':'notée')+'</span>')
+         :'<span class="wz-badge" style="background:var(--blue);color:#111">à faire</span>'}</button>`;
+  }
+  marche+=`<div class="mrc-note" style="padding:2px 2px 0">${wMin}/${MARCHE_CIBLE_MIN} min cette semaine — `
+    +`${wOK?'objectif atteint ✓, le nombre de sorties n\u2019a pas d\u2019importance.'
+          :'l\u2019objectif tombe dès '+MARCHE_CIBLE_MIN+' min au total, en une sortie ou en deux.'}</div>`;
   c.innerHTML=`<div class="form-title" style="margin:16px 0 10px">Quelle séance veux-tu faire aujourd'hui ?</div>${blocs}`
-    +`<div class="form-title" style="margin:18px 0 10px">Sortie de la semaine</div>${marche}`;
+    +`<div class="form-title" style="margin:18px 0 10px">Sorties de la semaine</div>${marche}`;
 }
 function dateAddDays(d,n){
   const t=new Date(d+'T00:00:00'); t.setDate(t.getDate()+n);
@@ -2159,10 +2202,39 @@ function extrasHTML(seance){
     <button class="btn" style="margin-top:10px;width:100%" onclick="addExtraExo()">Ajouter à la séance</button>
   </div>`;
 }
+// Petite fete quand l'objectif de la semaine vient d'etre atteint. Une seule
+// fois par semaine : la cle est le lundi de la semaine, et elle part a la synchro
+// pour que l'autre appareil ne la rejoue pas.
+function celebrer(titre,sous){
+  const d=document.createElement('div');
+  d.className='cel';
+  d.innerHTML='<div class="cel-box"><div class="cel-emo">🎉</div>'
+    +'<div class="cel-t">'+titre+'</div>'
+    +(sous?'<div class="cel-s">'+sous+'</div>':'')
+    +'<div class="cel-x">Touche pour fermer</div></div>';
+  d.onclick=function(){ if(d.parentNode) d.parentNode.removeChild(d); };
+  document.body.appendChild(d);
+  try{ beep(784,130); setTimeout(function(){beep(988,130);},160);
+       setTimeout(function(){beep(1319,260);},330); }catch(e){}
+  setTimeout(function(){ if(d.parentNode) d.classList.add('out'); },3000);
+  setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); },3700);
+}
+function checkSemaineComplete(){
+  let o; try{ o=weekObjective(); }catch(e){ return false; }
+  if(!o || o.done<o.total) return false;
+  if(ST.celebre===ST.weekStart) return false;
+  ST.celebre=ST.weekStart; save();
+  celebrer('BRAVO !', o.walkOK
+    ? 'Les '+o.total+' séances et les '+o.walkCible+' min de marche — semaine complète.'
+    : 'Les '+o.total+' séances de la semaine sont faites.');
+  return true;
+}
 function pushLogEntry(e){
   if(!e)return false;
   ST.sessionLog=(ST.sessionLog||[]).filter(function(l){return !(l.date===e.date&&l.seanceId===e.seanceId);});
-  ST.sessionLog.push(e); ST.lastStrength=e.seanceId; save(); flushSync(); return true;
+  ST.sessionLog.push(e); ST.lastStrength=e.seanceId; save(); flushSync();
+  if(e.seanceId!=='M1') setTimeout(checkSemaineComplete,350);
+  return true;
 }
 // Enregistrement automatique dès que toutes les séries de la séance sont validées.
 function autoLogIfComplete(){
@@ -2369,7 +2441,7 @@ function renderData(){
   const qd=document.getElementById('qk-date'); if(qd&&!qd.value) qd.value=today();
 }
 window.addEventListener('online',function(){ if(typeof syncNow==='function') syncNow(false); });
-const APP_BUILD='v59 · 19/11/2026';
+const APP_BUILD='v62 · 20/11/2026';
 // Version visible dès la page d'accueil : c'est le seul moyen de savoir en 2 secondes
 // si la mise en ligne a bien pris ou si l'iPhone sert encore l'ancienne version en cache.
 // Jours où une séance de muscu a eu lieu : journal de l'app + activités Garmin.
@@ -3139,17 +3211,17 @@ function marcheHTML(){
   const cur=walkOfDay(d);
   const manuel=cur&&cur.src==='manuel';
   const curMin=cur?((+String(cur.dur||'00:00').split(':')[0])*60+(+String(cur.dur||'00:00').split(':')[1])):'';
-  const semaine=weekWalks();
-  let tot=0;
-  (ST.activities||[]).forEach(function(a){
-    if(!a||a.date<ST.weekStart||!WALK_RE.test(a.type||''))return;
-    const p=String(a.dur||'').split(':'); if(p.length>=2) tot+=(+p[0])*60+(+p[1]);
-  });
-  const CIBLE=150;
+  const outs=weekWalkOutings();
+  const tot=weekWalkMin();
+  const CIBLE=MARCHE_CIBLE_MIN;
+  // Rang de la sortie du jour dans la semaine, pour que l'ecran dise laquelle.
+  let rang=outs.findIndex(function(x){return x.date===d;});
+  if(rang<0) rang=outs.length;
+  const sousTitre='Sortie '+(rang+1)+' · '+fmtDate(d)+' · FC 95-115';
   return `<div class="session-card">
     <div class="session-header">
       <div class="session-icon si-cardio">🚶</div>
-      <div><div class="session-title">Marche longue</div><div class="session-meta">${fmtDate(d)} · allure soutenue, FC 95-115</div></div>
+      <div><div class="session-title">Marche longue</div><div class="session-meta">${sousTitre}</div></div>
       <span class="session-tag tag-cardio">M1</span>
     </div>
     <div style="padding:16px">
@@ -3170,13 +3242,13 @@ function marcheHTML(){
       </div>`:''}
       <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:14px">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:7px">
-          <span>Cette semaine</span><span>${tot} / ${CIBLE} min</span>
+          <span>Cette semaine · ${outs.length} sortie${outs.length>1?'s':''}</span><span>${tot} / ${CIBLE} min</span>
         </div>
         <div style="height:10px;background:var(--bg4);border-radius:5px;overflow:hidden">
           <div style="height:10px;border-radius:5px;background:${tot>=CIBLE?'var(--accent)':'var(--blue)'};width:${Math.min(100,Math.round(tot/CIBLE*100))}%"></div>
         </div>
         <div style="font-size:11.5px;color:var(--text3);margin-top:8px;line-height:1.5">
-          ${semaine.length} sortie${semaine.length>1?'s':''} · cible 150 min par semaine, c'est le seuil à partir duquel la graisse viscérale répond.
+          Cible ${CIBLE} min par semaine, en une ou deux sorties — c'est le seuil à partir duquel la graisse viscérale répond. Le nombre de sorties n'entre pas dans l'objectif.
         </div>
       </div>
     </div>
@@ -3227,26 +3299,30 @@ function lastLoggedExo(name){
 }
 // Palier : periode pendant laquelle les charges ne montent plus, meme si toutes
 // les series sont validees. Sert a casser la saturation avant de repartir.
-function palierActif(){ return !!(ST.palierUntil && ST.palierUntil>=today()); }
-function setPalier(sem){
-  ST.palierUntil = sem ? dateAddDays(today(), sem*7) : null;
+function palierActif(){ return ST.progOn===false; }
+function toggleProg(on){
+  ST.progOn=!!on;
+  ST.progOffSince = on ? null : today();
   save(); if(typeof flushSync==='function') flushSync();
   renderPalier(); if(typeof renderSession==='function') renderSession();
-  toast(sem ? ('Palier posé jusqu\u2019au '+fmtDate(ST.palierUntil)) : 'Progression relancée');
+  toast(on ? 'Augmentation des charges : ON' : 'Charges figées');
 }
 function renderPalier(){
   const el=document.getElementById('palierCard'); if(!el)return;
-  const a=palierActif();
-  el.innerHTML='<div class="form-title" style="margin:0 0 8px">Progression des charges</div>'
-    +(a ? '<div class="pal-on">⏸ Palier en cours jusqu\u2019au <b>'+fmtDate(ST.palierUntil)
-          +'</b>. Les charges ne montent plus : l\u2019objectif reste sur la dernière charge utilisée.</div>'
-        : '<div class="pal-off">Les charges montent de +prog dès que toutes les séries sont validées. '
-          +'Pose un palier si tu satures : même charge pendant une semaine ou deux, puis on repart.</div>')
-    +'<div class="pal-btns">'
-    +(a ? '<button class="sbtn sbtn-add" onclick="setPalier(0)">▶ Relancer la progression</button>'
-        : '<button class="sbtn sbtn-reset" onclick="setPalier(1)">⏸ Palier 1 semaine</button>'
-         +'<button class="sbtn sbtn-reset" onclick="setPalier(2)">⏸ Palier 2 semaines</button>')
-    +'</div>';
+  const on=!palierActif();
+  const n=(!on&&ST.progOffSince)?daysAgo(ST.progOffSince):null;
+  const depuis=(n==null)?'' : (n===0?" depuis aujourd\u2019hui":(n===1?' depuis hier':' depuis '+n+' jours'));
+  el.innerHTML='<div class="form-title" style="margin:0 0 2px">Augmentation des charges</div>'
+    +'<div class="sw"><label class="sw-t"><input type="checkbox" id="swProg"'+(on?' checked':'')
+      +' onchange="toggleProg(this.checked)"><span class="sw-b"></span></label>'
+    +'<span class="sw-l" style="color:'+(on?'var(--accent)':'var(--amber)')+'">'
+      +(on?'ON — les charges montent':'OFF — charges figées'+depuis)+'</span></div>'
+    +'<div class="'+(on?'pal-off':'pal-on')+'" style="margin-top:10px">'
+    +(on ? 'Dès que toutes les séries d\u2019un exercice passent, l\u2019objectif de la fois suivante monte de son pas de progression.'
+         : 'L\u2019objectif reste collé à la dernière charge utilisée. Rebascule à ON quand tu veux repartir.')
+    +'</div>'
+    +((!on && n!=null && n>=21) ? '<div class="pal-warn">Plus de trois semaines sans progression. '
+      +'Si la saturation est passée, c\u2019est le moment de relancer — sinon le corps n\u2019a plus de raison de s\u2019adapter.</div>' : '');
 }
 function goalCharge(ex,charge){
   const last=lastLoggedExo(exVariantName(ex));
@@ -3254,7 +3330,7 @@ function goalCharge(ex,charge){
   const prev=last.e.charge;
   const sets=(last.e.sets||[]).filter(function(x){return typeof x==='number';});
   const full=sets.length>=ex.sets && sets.length>0 && Math.min.apply(null,sets)>=(ex.isTime?ex.timeReps:ex.reps);
-  if(palierActif()) return {prev:prev, prevDate:last.date, next:prev, why:'palier jusqu\u2019au '+fmtDate(ST.palierUntil)+' — on garde la charge'};
+  if(palierActif()) return {prev:prev, prevDate:last.date, next:prev, why:'augmentation des charges sur OFF — on garde la charge'};
   if(!ex.isTime && ex.prog>0 && full) return {prev:prev, prevDate:last.date, next:prev+ex.prog, why:'toutes les séries validées → +'+ex.prog+' kg'};
   return {prev:prev, prevDate:last.date, next:prev, why:'on reste dessus jusqu\'à valider toutes les séries'};
 }
@@ -4172,7 +4248,7 @@ const SESSION_ROLE={
   H2:{ title:'Holidays — poussée', desc:'Pectoraux, épaules et triceps. Rien du bas du corps, qui récupère de la veille.' },
   H3:{ title:'Holidays — cardio', desc:'Journée légère au milieu de la semaine : Zone 2 et gainage, pour tenir les cinq jours.' },
   H4:{ title:'Holidays — tirage', desc:'Dos, arrière d\'épaules et biceps. Équilibre le travail de poussée du mardi.' },
-  M1:{ title:'Marche longue', desc:'Sortie de 90 minutes en zone basse. C\'est la séance qui cible la graisse viscérale : le déficit se creuse par la durée, pas par l\'intensité.' },
+  M1:{ title:'Marche longue', desc:'Deux sorties en zone basse dans la semaine, 150 min au total — ou une seule si tu préfères tout faire d\'un coup. C\'est la séance qui cible la graisse viscérale : le déficit se creuse par la durée, pas par l\'intensité.' },
   H5:{ title:'Holidays — full-body', desc:'Trois gros mouvements en charges modérées pour finir la semaine sans creuser la fatigue.' },
 };
 function lastKnownWeight(){
